@@ -32,6 +32,8 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Detalle: Altitud, pH del suelo, Estación (mes con mayúscula), Cosecha hoy (SI/NO + causa en llano), Hábitat (solo categoría, detalle en hover).
 - Fichas de Especie estilo dashboard + selectores con estado que ocultan tarjetas (localStorage).
 - Retiradas todas las menciones a sporas.io.
+- Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).
+- Lluvia AEMET OpenData (`app.js?v=1.11`): Open-Meteo subestimaba en sierra (Rascafría 1–4 oct 2026: modelo 9,9 mm vs pluviómetro 55,6 mm). Con clave integrada (ofuscada: invertida + base64 en `AEMET_KX`, se reconstruye con `aemetBuiltin()`; sin campo en la web: si caduca se sustituye en código), la lluvia P14/P30 y tmin/tmax salen SOLO del pluviómetro más cercano (≤25 km, serie 60 d), sin mezclas: las ventanas terminan en el último dato del pluviómetro (lag ~3 d); si la estación lleva >10 d desactualizada, se vuelve al modelo. Fila «Estación meteo» en Suelo y clima (nombre + distancia, o «Modelo Open-Meteo»). Ojo técnico: AEMET sirve ISO-8859-15 (hace falta `TextDecoder`, `response.json()` rompería) y coords en DMS compacto (`405323N`). La ofuscación no es seguridad real (el navegador usa la clave en claro); si el repo es público, cualquiera puede extraerla.
 
 ## Para ejecutar
 Sin build: `python3 -m http.server` en la carpeta y abrir `http://localhost:8000`

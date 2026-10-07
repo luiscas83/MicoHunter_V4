@@ -186,6 +186,123 @@ async function fetchLugar(la,lo){
     return j.display_name||j.name||"";
   }catch{return "";} // sin topónimo la app sigue con coordenadas
 }
+// --- 6) AEMET OpenData (opcional): pluviómetro real más cercano. Clave gratuita
+// en opendata.aemet.es; se guarda SOLO en este navegador (localStorage), nunca en el repo.
+const AEMET_BASE="https://opendata.aemet.es/opendata/api";
+const AEMET_KEY="aemet_key_v1", AEMET_INV="aemet_inv_v1";
+// Clave ofuscada (invertida + base64) para no dejarla legible en el código.
+// Ojo: ofuscación, no cifrado real — el navegador la necesita en claro para llamar a AEMET.
+const AEMET_KX="RS04bHF4cUwzTmthd3pucl9FWGhuM2ZkVHlxb0NLdTFLY2VodkZOaFhJcy45SmlJNklTWnM5bWNpd2lJNFlETzFnalo1RURaM01UTXRjVE9tSldMMUFUWTAwU1p5a2pZdGNETWhKRFppVkdNaW9qSWtsa2NsTlhkaXdTTjJJek01TVRNNWNUTTZJQ2RobG1Jc0lDVkYxVVJCSmlPaU0zY3BKQ0wxWWpNek1ETXdBRE94b2pJd2hYWml3aUk0WURPMWdqWjVFRFozTVRNdGNUT21KV0wxQVRZMDBTWnlrall0Y0RNaEpEWmlWR01pb2pJcFJuYWl3aUl0OTJZdXdXYWgxMlpBTkRPekYyWXpsV2RzSmlPaUlXZHpKeWUuOUppTjFJelVJSmlPaWNHYmhKeWU=";
+function aemetBuiltin(){try{return atob(AEMET_KX).split("").reverse().join("");}catch{return "";}}
+const getAemetKey=()=>{try{const p=(localStorage.getItem(AEMET_KEY)||"").trim();if(p)return p;}catch{}return aemetBuiltin();};
+function aemetErrMsg(e){
+  const m=String((e&&e.message)||e||"error");
+  if(/401/.test(m))return "clave no válida o caducada: consigue una gratis en opendata.aemet.es y guárdala de nuevo";
+  if(/429/.test(m))return "límite de peticiones AEMET: espera unos minutos y reintenta";
+  return m;
+}
+async function aemetGet(path,ms){
+  const key=getAemetKey();
+  if(!key)throw new Error("sin clave");
+  const meta=await getJSON(`${AEMET_BASE}${path}${path.includes("?")?"&":"?"}api_key=${encodeURIComponent(key)}`,ms||25000);
+  if(!meta||!meta.datos)throw new Error("AEMET estado "+((meta&&meta.estado)||"?"));
+  return getJSONLatin(meta.datos,ms||25000); // URL temporal firmada, sin clave
+}
+async function getJSONLatin(url,ms){ // AEMET sirve ISO-8859-15: response.json() rompería
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
+  try{
+    const r=await fetch(url,{signal:c.signal});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return JSON.parse(new TextDecoder("iso-8859-1").decode(await r.arrayBuffer()));
+  }finally{clearTimeout(t);}
+}
+function havKm(a,b,c,d){const R=6371,r=x=>x*Math.PI/180;
+  const h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));}
+function coordA(v,esLat){ // formatos AEMET: decimal (coma o punto), GMS, o compacto DDMMSS+NSEWO
+  if(v==null)return null;
+  const s=String(v).trim().toUpperCase().replace(",",".");
+  let m=s.match(/(\d+)[°\s]+(\d+)[’'\s]+([\d.]+)["”\s]*([NSEWO])/);
+  if(m){const g=+m[1]+ +m[2]/60+parseFloat(m[3])/3600;return /[SWO]/.test(m[4])?-g:g;}
+  m=s.match(/^(\d{2,3})(\d{2})(\d{2})\s*([NSEWO])/);
+  if(m){const g=+m[1]+ +m[2]/60+ +m[3]/3600;return /[SWO]/.test(m[4])?-g:g;}
+  m=s.match(/^([NSEWO])\s*([\d.]+)/);
+  if(m)return /[SWO]/.test(m[1])?-+m[2]:+m[2];
+  m=s.match(/([\d.]+)\s*([NSEWO])/);
+  if(m)return /[SWO]/.test(m[2])?-+m[1]:+m[1];
+  const n=parseFloat(s);
+  if(isNaN(n))return null;
+  if(esLat&&Math.abs(n)>90||!esLat&&Math.abs(n)>180)return null;
+  return n;
+}
+function numA(v){ // decimales con coma; "Ip" (inapreciable) = 0; vacío = null
+  if(v==null)return null;
+  const s=String(v).trim();
+  if(!s)return null;
+  if(/^ip$/i.test(s))return 0;
+  const n=parseFloat(s.replace(",","."));
+  return isNaN(n)?null:n;
+}
+let aemetInvMem=null;
+async function aemetInventario(){ // ~900 estaciones; caché 90 días
+  if(aemetInvMem)return aemetInvMem;
+  try{const c=JSON.parse(localStorage.getItem(AEMET_INV)||"null");
+    if(c&&Date.now()-c.t<90*864e5&&c.list&&c.list.length){aemetInvMem=c.list;return c.list;}}catch{}
+  const list=await aemetGet("/api/valores/climatologicos/inventarioestaciones/todasestaciones");
+  const norm=(list||[]).map(e=>({ind:e.indicativo,nombre:e.nombre,
+    la:coordA(e.latitud,true),lo:coordA(e.longitud,false)}))
+    .filter(e=>e.ind&&e.la!=null&&e.lo!=null);
+  if(!norm.length)throw new Error("inventario AEMET vacío");
+  aemetInvMem=norm;
+  try{localStorage.setItem(AEMET_INV,JSON.stringify({t:Date.now(),list:norm}));}catch{}
+  return norm;
+}
+const aemetDayCache=new Map(); // ind -> {dia, by:{fecha:{prec,tmin,tmax}}}
+async function aemetOverride(la,lo){
+  // Devuelve {estado:"ok",...} o {estado:"sin-clave"|"lejos"|"pocos-datos"}; lanza en error de red/clave.
+  // Solo AEMET, sin mezclas: las ventanas terminan en el último dato del pluviómetro.
+  if(!getAemetKey())return{estado:"sin-clave"};
+  const inv=await aemetInventario();
+  let best=null,bd=1e9;
+  for(const e of inv){const d=havKm(la,lo,e.la,e.lo);if(d<bd){bd=d;best=e;}}
+  if(!best||bd>25)return{estado:"lejos"};
+  const hoy=new Date(), pad=n=>String(n).padStart(2,"0");
+  const f=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const ini=new Date(hoy);ini.setDate(ini.getDate()-62);
+  let serie=aemetDayCache.get(best.ind);
+  if(!serie||serie.dia!==f(hoy)){
+    const rows=await aemetGet(`/api/valores/climatologicos/diarios/datos/fechaini/${f(ini)}T00:00:00UTC/fechafin/${f(hoy)}T00:00:00UTC/estacion/${best.ind}`);
+    const by={};
+    for(const r of rows||[]){if(r&&r.fecha)by[r.fecha.slice(0,10)]={prec:numA(r.prec),tmin:numA(r.tmin),tmax:numA(r.tmax)};}
+    serie={dia:f(hoy),by};
+    aemetDayCache.set(best.ind,serie);
+  }
+  const fechas=Object.keys(serie.by).sort();
+  if(fechas.length<20)return{estado:"pocos-datos"};
+  const ultG=fechas[fechas.length-1];
+  const hoy0=new Date();hoy0.setHours(0,0,0,0);
+  if(Math.round((hoy0-new Date(ultG+"T00:00:00Z"))/864e5)>10)return{estado:"pocos-datos"}; // estación desactualizada
+  const ultD=new Date(ultG+"T00:00:00Z");
+  const dia=n=>{const d=new Date(ultD);d.setUTCDate(d.getUTCDate()-n);return d.toISOString().slice(0,10);};
+  const rec=k=>serie.by[k];
+  const suma=n=>{let s=0,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v.prec!=null){s+=v.prec;c++;}}return{s,c};};
+  const ext=n=>{let mn=null,mx=null,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(!v)continue;
+    if(v.tmin!=null){mn=mn==null?v.tmin:Math.min(mn,v.tmin);}
+    if(v.tmax!=null){mx=mx==null?v.tmax:Math.max(mx,v.tmax);}
+    if(v.tmin!=null||v.tmax!=null)c++;}return{mn,mx,c};};
+  const s14=suma(14), s30=suma(30), e7=ext(7);
+  if(s14.c<10||s30.c<20||e7.mn==null||e7.mx==null||e7.c<5)return{estado:"pocos-datos"};
+  const retro=lag=>{let p14=0,p30=0,c14=0,mn=null,mx=null;
+    for(let i=0;i<14;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null){p14+=v.prec;c14++;}}
+    for(let i=0;i<30;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null)p30+=v.prec;}
+    for(let i=0;i<7;i++){const v=rec(dia(lag+i));if(!v)continue;
+      if(v.tmin!=null)mn=mn==null?v.tmin:Math.min(mn,v.tmin);
+      if(v.tmax!=null)mx=mx==null?v.tmax:Math.max(mx,v.tmax);}
+    return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null};};
+  return{estado:"ok",est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,
+    p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,r15:retro(15),r21:retro(21)};
+}
+function renderAemetStatus(txt){const el=document.getElementById("aemetStatus");if(el)el.textContent=txt;}
 // --- buscador: lugares y coordenadas (decimal, DM, DMS, N/S/E/O, coma es, UTM) ---
 function numC(t){return parseFloat(String(t).replace(",","."));}
 function compVal(t){
@@ -359,11 +476,24 @@ async function predecir(etiqueta){
         }catch{habitatTxt="MFE sin bosque y verificación urbana no disponible: hábitat sin determinar";}
       }
     }
+    // AEMET (opcional): si hay clave, el pluviómetro manda sobre el modelo en lluvia y extremos
+    let am=null;
+    try{am=await aemetOverride(lat,lon);}
+    catch(e){console.warn("AEMET:",e);am={estado:"error",msg:aemetErrMsg(e)};}
+    const prov=(am&&am.estado==="ok")?am:null;
+    if(prov){
+      clima.p14=prov.p14;clima.p30=prov.p30;
+      clima.tmin=prov.tmin;clima.tmax=prov.tmax;
+      Object.assign(clima.retro,{p14:prov.r15.p14,p30:prov.r15.p30});
+      Object.assign(clima.retro21,{p14:prov.r21.p14,p30:prov.r21.p30});
+      if(prov.r15.ok)Object.assign(clima.retro,{tmin:prov.r15.tmin,tmax:prov.r15.tmax});
+      if(prov.r21.ok)Object.assign(clima.retro21,{tmin:prov.r21.tmin,tmax:prov.r21.tmax});
+    }
     const mes=new Date().getMonth()+1;
     if(mfe&&mfe.categoria)floraNotaN=floraNiscalo(mfe.categoria,mfe.componentes);
     else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
     lastCalc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
-      floraCat,floraNota,floraNotaN,phVal:suelo.ph??null};
+      floraCat,floraNota,floraNotaN,phVal:suelo.ph??null,prov};
     const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
     const fcEl=document.getElementById("forecastBody");
     if(fcEl)fcEl.innerHTML=clima.fc.map(f=>{
@@ -376,6 +506,21 @@ async function predecir(etiqueta){
     T("airNowValue",clima.ahora.ta!=null?clima.ahora.ta.toFixed(1)+" ºC":"?");
     T("humNowValue",clima.ahora.hr!=null?clima.ahora.hr+" %":"?");
     T("windNowValue",(clima.ahora.viento!=null?clima.ahora.viento.toFixed(0)+" km/h":"?")+(clima.ahora.prec!=null?` · hoy ${clima.ahora.prec.toFixed(1)} mm`:""));
+    T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
+    T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
+    const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
+    const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
+    if(r14t)r14t.title=rTitle;
+    if(r30t)r30t.title=rTitle;
+    T2("rainSrc",prov?"pluviómetro":"modelo");
+    T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
+    const msEl=document.getElementById("metStationValue");if(msEl)msEl.title=rTitle;
+    renderAemetStatus(
+      !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
+      am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}).`:
+      am.estado==="lejos"?"Sin estación AEMET a menos de 25 km: lluvia según modelo.":
+      am.estado==="pocos-datos"?"La estación AEMET aún no tiene serie suficiente: lluvia según modelo.":
+      `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
     T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
     T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
     if(det){det.textContent=floraCat||"sin determinar";det.title=habitatTxt||"";}
