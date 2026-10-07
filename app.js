@@ -40,7 +40,7 @@ function scoreNiscalo(o){
   const ter=fAlt2(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMes2(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
   return{score:sc,clima:+clima.toFixed(3),d,terreno:ter,suelo:sue,flora:flo,temp:tem,
-    veto:vd.veto,vetoList:vd.list,nivel:sc<25?"frío":sc<50?"tibio":sc<75?"caliente":"óptimo",pico:sc>=40?NIS_LAG:null};
+    veto:vd.veto,vetoList:vd.list,nivel:sc<25?"nulo":sc<50?"regular":sc<75?"bueno":"excelente",pico:sc>=40?NIS_LAG:null};
 }
 function score(o){
   const veto=o.tmin<=0||o.tmax>=28||o.viento;
@@ -49,7 +49,7 @@ function score(o){
   const ter=fAlt(o.alt),sue=fPH(o.ph),flo=FLORA[o.flora]??0,tem=fMes(o.mes);
   const prob=clima*ter*sue*flo*tem;
   return {score:+(prob*100).toFixed(1),clima:+clima.toFixed(3),d,terreno:ter,suelo:sue,flora:flo,temp:tem,veto,
-    pico:prob*100>=40?15:null,nivel:prob*100<25?"frío":prob*100<50?"tibio":prob*100<75?"caliente":"óptimo"};
+    pico:prob*100>=40?15:null,nivel:prob*100<25?"nulo":prob*100<50?"regular":prob*100<75?"bueno":"excelente"};
 }
 // --- helpers ---
 async function getJSON(url,ms,headers,reintento){
@@ -501,13 +501,13 @@ const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
 const RING_C=2*Math.PI*54;
 function badge(nota){return nota>=0.8?'<span class="condition-status ok">Bien</span>':nota>=0.4?'<span class="condition-status warning">Flojo</span>':'<span class="condition-status danger">Mal</span>';}
-function nivelClase(n){return n==="óptimo"?"nivel-alto":n==="caliente"?"nivel-medio":n==="tibio"?"nivel-bajo":"nivel-nulo";}
+function nivelClase(n){return n==="excelente"?"nivel-alto":n==="bueno"?"nivel-medio":n==="regular"?"nivel-bajo":"nivel-nulo";}
 function T2(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 function setHTML(id,h){const el=document.getElementById(id);if(el)el.innerHTML=h;}
 const VETO_TXT={Helada:"Helada (mínima 7 días ≤ 0 ºC): quema los primordios bajo la hojarasca. El aborto es total, no hay cosecha que salvar.",
 Calor:"Calor (máxima 7 días ≥ 28 ºC): deshidrata el micelio y el primordio; a más de 21 ºC en suelo ya aborta, a 28 en aire se veta.",
 Viento:"Viento (racha máxima > 45 km/h): seca la seta en horas aunque el suelo esté húmedo. Es el que más cosechas arruina con buena lluvia."};
-function nivelIcon(n){return n==="óptimo"?"🟢":n==="caliente"?"🟡":n==="tibio"?"🟠":"🔴";}
+function nivelIcon(n){return n==="excelente"?"🟢":n==="bueno"?"🟡":n==="regular"?"🟠":"🔴";}
 const calcCache=new Map(); // punto -> {t, calc}: sin recargar antes de 10 min
 function pintar(calc,ageMin){
   lastCalc=calc;
@@ -661,7 +661,7 @@ function renderAll(){
   r.suelo=phV!=null?r.suelo:1.0;
   r.flora=floraNota??0.70;
   r.score=+(r.clima*r.terreno*r.suelo*r.flora*r.temp*100).toFixed(1);
-  r.nivel=r.score<25?"frío":r.score<50?"tibio":r.score<75?"caliente":"óptimo";
+  r.nivel=r.score<25?"nulo":r.score<50?"regular":r.score<75?"bueno":"excelente";
   r.pico=r.score>=40?15:null;
   const floraTxt=floraCat||"sin hábitat conocido", sueloTxt=phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH";
   const rf=document.getElementById("ringFill");if(rf)rf.style.strokeDasharray=`${(r.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;

@@ -172,7 +172,7 @@ def score(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
         "flora": round(flora_s, 3),
         "temporada": round(temp, 3),
         "ventana_pico_dias": 15 if out >= 40 else None,
-        "nivel": "frío" if out < 25 else ("tibio" if out < 50 else ("caliente" if out < 75 else "óptimo")),
+        "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
     }
 
 
