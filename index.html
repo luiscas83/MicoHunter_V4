@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.21</p>
+        <p class="version" title="Versión de la aplicación">v1.22</p>
       </div>
     </div>
       </div>
@@ -85,9 +85,10 @@
           </div>
         </div>
         <div class="probability-ring">
-          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/></svg>
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/><circle class="ring-bg2" cx="60" cy="60" r="44"/><circle class="ring-fill ring-fill2" id="ringFill2" cx="60" cy="60" r="44"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
+        <div class="ring-sub" id="ringSub">Cosecha hoy: —</div>
         <div class="prediction-banner nivel-nulo" id="banner"><span>🔍</span><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
                 <div class="conditions-list" id="condList"></div>
         <div class="mushroom-details" id="detailList"></div>
@@ -101,9 +102,10 @@
           </div>
         </div>
         <div class="probability-ring">
-          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/></svg>
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/><circle class="ring-bg2" cx="60" cy="60" r="44"/><circle class="ring-fill ring-fill2" id="ringFillN2" cx="60" cy="60" r="44"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
+        <div class="ring-sub" id="ringSubN">Cosecha hoy: —</div>
         <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
         <div class="conditions-list" id="condListN"></div>
         <div class="mushroom-details" id="detailListN"></div>
@@ -210,6 +212,7 @@
       <dt><span class="indice-badge nivel-medio">50–75 caliente</span></dt><dd>Casi todo a favor; falta lluvia o el suelo aún está cálido.</dd>
       <dt><span class="indice-badge nivel-bajo">25–50 tibio</span></dt><dd>Algún factor flojo. Vigila la próxima lluvia.</dd>
       <dt><span class="indice-badge nivel-nulo">&lt;25 frío</span></dt><dd>Veto activo o hábitat incompatible. No salir por esta especie.</dd>
+      <dt><strong>Doble anillo</strong></dt><dd>Exterior: potencial futuro (pico en +15/+21 días). Interior verde: cosecha hoy según lo de hace 15/21 días.</dd>
       <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>Ventana observada 30d+hoy. Veto por helada (Tmin ≤ 0), calor (Tmax ≥ 28) o viento &gt;45 km/h.</dd>
       <dt><strong>Terreno</strong></dt><dd>Altitud 600–1800 m. Fuera decae; por debajo de 400 o sobre 2000 anula.</dd>
       <dt><strong>Suelo</strong></dt><dd>pH 4,5–6,5 óptimo. SoilGrids 5-15cm interpolado a 250 m.</dd>
@@ -220,10 +223,10 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.21 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.22 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.21"></script>
+<script src="app.js?v=1.22"></script>
 </body>
 </html>

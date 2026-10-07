@@ -489,7 +489,7 @@ let marker=L.marker([41.76,-2.46]).addTo(map), lat=41.76, lon=-2.46;
 map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});
 const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
-const RING_C=2*Math.PI*54;
+const RING_C=2*Math.PI*54, RING_C2=2*Math.PI*44;
 function badge(nota){return nota>=0.8?'<span class="condition-status ok">Bien</span>':nota>=0.4?'<span class="condition-status warning">Flojo</span>':'<span class="condition-status danger">Mal</span>';}
 function nivelClase(n){return n==="óptimo"?"nivel-alto":n==="caliente"?"nivel-medio":n==="tibio"?"nivel-bajo":"nivel-nulo";}
 function T2(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
@@ -651,6 +651,8 @@ function renderAll(){
   rR.score=+(rR.clima*rR.terreno*rR.suelo*rR.flora*rR.temp*100).toFixed(1);
   const hoy=r.score>=40, hubo=rR.score>=40;
   lastCalc.r=r;lastCalc.rR=rR;lastCalc.cR=cR;
+  const rf2=document.getElementById("ringFill2");if(rf2)rf2.style.strokeDasharray=`${(rR.score/100*RING_C2).toFixed(1)} ${RING_C2.toFixed(1)}`;
+  T2("ringSub",`Cosecha hoy: ${rR.score}`);
   T2("bannerTxt",
     hoy&&hubo?`🟢 En pico: salir ya. Sigue bueno, más en +15 días.`:
     !hoy&&hubo?`🟡 El pico es ahora; la ventana se cierra.`:
@@ -710,6 +712,8 @@ function renderNiscalo(){
     ...base,tmin:cN.tmin,tmax:cN.tmax,vientoMax:cN.vientoMax,floraNota:fN??0.70});
   const hoy=rN.score>=40, hubo=rNR.score>=40;
   lastCalc.rN=rN;lastCalc.rNR=rNR;lastCalc.cRN=cN;
+  const rfN2=document.getElementById("ringFillN2");if(rfN2)rfN2.style.strokeDasharray=`${(rNR.score/100*RING_C2).toFixed(1)} ${RING_C2.toFixed(1)}`;
+  T2("ringSubN",`Cosecha hoy: ${rNR.score}`);
   const rfN=document.getElementById("ringFillN");if(rfN)rfN.style.strokeDasharray=`${(rN.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPctN",rN.score);
   T2("ringNivelN",rN.nivel);
