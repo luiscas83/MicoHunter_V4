@@ -65,6 +65,13 @@ async function getJSON(url,ms,headers,reintento){
   finally{clearTimeout(t);}
 }
 const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando hoy: días que faltan al pico
+  for(let d=arr.length-1;d>=13;d--){ // día D más reciente cuya ventana de 14 d alcanzó el óptimo
+    let s=0;for(let i=d-13;i<=d;i++)s+=arr[i]??0;
+    if(s>=umb)return Math.max(0,lag-(arr.length-1-d));
+  }
+  return lag; // sin disparador claro: el plazo entero
+}
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
 async function fetchClima(la,lo){
   const [d,h,hh]=await Promise.all([
@@ -81,6 +88,7 @@ async function fetchClima(la,lo){
   const hoyP=D.precipitation_sum[n]??0;
   const p14=P.slice(-14).reduce((s,v)=>s+v,0)+hoyP;
   const p30=P.reduce((s,v)=>s+v,0)+hoyP;
+  const hist45=P.slice(-44).concat(hoyP); // 45 días terminando hoy, para el disparador
   const HT=h.hourly.soil_temperature_18cm.filter(v=>v!=null);
   const ts=avg(HT.slice(-168)); // media 7 días a 18 cm
   const tsR=avg(HT.slice(-(15*24+168),-(15*24))); // misma ventana, 15 días atrás
@@ -115,7 +123,8 @@ async function fetchClima(la,lo){
     }
   }catch(e){hoyTramos=[];}
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia,hoyTramos};
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia,hoyTramos,
+    restB:restantes(hist45,15,60),restN:restantes(hist45,21,50)};
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
@@ -340,10 +349,11 @@ async function aemetOverride(la,lo){
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r21=retro(21);
   const semana=[];for(let i=6;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
+  const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
     ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
-    r15,r21};
+    r15,r21,serie45};
 }
 const aemetLiveCache=new Map(); // ind -> {t, live} (el directo cambia cada hora: TTL 30 min)
 async function aemetAhora(ind){ // parte horario en directo: temp/HR/viento ahora + lluvia de hoy
@@ -513,9 +523,11 @@ function pintar(calc,ageMin){
   T("locationName",lugar||"Punto manual");
   T("coordinatesValue",`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
   T("altitudeValue",alt!=null?Math.round(alt)+" m":"?");
-  T("airNowValue",clima.ahora.ta!=null?clima.ahora.ta.toFixed(1)+" ºC":"?");
-  T("humNowValue",clima.ahora.hr!=null?clima.ahora.hr+" %":"?");
-  T("windNowValue",(clima.ahora.viento!=null?clima.ahora.viento.toFixed(0)+" km/h":"?")+(clima.ahora.prec!=null?` · hoy ${clima.ahora.prec.toFixed(1)} mm`:""));
+  T("airNowValue",live&&live.ta!=null?live.ta.toFixed(1)+" ºC":(clima.ahora.ta!=null?clima.ahora.ta.toFixed(1)+" ºC":"?"));
+  T("humNowValue",live&&live.hr!=null?live.hr+" %":(clima.ahora.hr!=null?clima.ahora.hr+" %":"?"));
+  T("windNowValue",live&&live.vv!=null?(live.vv*3.6).toFixed(0)+" km/h"+` · hoy ${live.precHoy.toFixed(1)} mm`:((clima.ahora.viento!=null?clima.ahora.viento.toFixed(0)+" km/h":"?")+(clima.ahora.prec!=null?` · hoy ${clima.ahora.prec.toFixed(1)} mm`:"")));
+  const ahT=document.getElementById("airNowValue");
+  if(ahT)ahT.title=live&&live.ta!=null?`Directo de ${prov.est}`:"Modelo Open-Meteo";
   T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
   T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
   const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
@@ -555,8 +567,7 @@ async function predecir(etiqueta){
   const pkey=lat.toFixed(4)+","+lon.toFixed(4);
   const hit=calcCache.get(pkey); // punto ya visitado: sin red si tiene menos de 10 min
   if(ringPctEl)ringPctEl.textContent="…";
-  const rp2=document.getElementById("ringPct2"), rpN2=document.getElementById("ringPctN2");
-  if(rp2)rp2.textContent="…";if(rpN2)rpN2.textContent="…";
+  const rpN=document.getElementById("ringPctN");if(rpN)rpN.textContent="…";
   if(bannerTxtEl)bannerTxtEl.textContent="Detectando parámetros del punto…";
   try{
     if(hit&&Date.now()-hit.t<10*60e3){
@@ -613,6 +624,11 @@ async function predecir(etiqueta){
       }else{
         clima.p14=prov.p14;clima.p30=prov.p30;
       }
+      const arr45=[...prov.serie45];
+      if(prov.hoyParcial)arr45.push(prov.hoyParcial.mm);
+      const gapD=Math.max(0,Math.round((Date.now()-new Date(prov.fecha+"T00:00:00Z"))/864e5));
+      clima.restB=Math.max(0,restantes(arr45,15,60)-gapD);
+      clima.restN=Math.max(0,restantes(arr45,21,50)-gapD);
       clima.tmin=prov.tmin;clima.tmax=prov.tmax;
       if(prov.ta!=null)clima.ta=prov.ta;
       if(prov.hr!=null)clima.hr=prov.hr;
@@ -670,12 +686,12 @@ function renderAll(){
   rR.score=+(rR.clima*rR.terreno*rR.suelo*rR.flora*rR.temp*100).toFixed(1);
   const hoy=r.score>=40, hubo=rR.score>=40;
   lastCalc.r=r;lastCalc.rR=rR;lastCalc.cR=cR;
-  const rf2=document.getElementById("ringFill2");if(rf2)rf2.style.strokeDasharray=`${(rR.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
-  T2("ringPct2",rR.score);
+  const rb=clima.restB??15;
+  T2("ringCap",rb>0?`Futuro +${rb} d`:"Pico ahora");
   T2("bannerTxt",
-    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +15 días.`:
+    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +${rb} días.`:
     !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
-    hoy&&!hubo?`Sin cosecha hoy; pico en +15 días si se mantiene.`:
+    hoy&&!hubo?`Sin cosecha hoy; pico en +${rb} días si se mantiene.`:
     `Sin ventana de fructificación.`);
   const ci=(k,v,n)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} ${badge(n)}</span></div>`;
   setHTML("condList",
@@ -731,16 +747,16 @@ function renderNiscalo(){
     ...base,tmin:cN.tmin,tmax:cN.tmax,vientoMax:cN.vientoMax,floraNota:fN??0.70});
   const hoy=rN.score>=40, hubo=rNR.score>=40;
   lastCalc.rN=rN;lastCalc.rNR=rNR;lastCalc.cRN=cN;
-  const rfN2=document.getElementById("ringFillN2");if(rfN2)rfN2.style.strokeDasharray=`${(rNR.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
-  T2("ringPctN2",rNR.score);
   const rfN=document.getElementById("ringFillN");if(rfN)rfN.style.strokeDasharray=`${(rN.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPctN",rN.score);
   T2("ringNivelN",rN.nivel);
   const bN=document.getElementById("bannerN");if(bN)bN.className="prediction-banner "+nivelClase(rN.nivel);
+  const rn=clima.restN??21;
+  T2("ringCapN",rn>0?`Futuro +${rn} d`:"Pico ahora");
   T2("bannerTxtN",
-    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +21 días.`:
+    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +${rn} días.`:
     !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
-    hoy&&!hubo?`Sin cosecha hoy; pico en +21 días si se mantiene.`:
+    hoy&&!hubo?`Sin cosecha hoy; pico en +${rn} días si se mantiene.`:
     `Sin ventana de fructificación.`);
   const vn=[];if(clima.tmin<=-3)vn.push("Helada");if(clima.tmax>=28)vn.push("Calor");if(clima.vientoMax>45)vn.push("Viento");
   const vtxt=n=>n==="Helada"?"Helada con mínimas de −3 ºC o menos: quema los primordios. El aborto es total.":VETO_TXT[n];

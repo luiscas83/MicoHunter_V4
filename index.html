@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.25">
+<link rel="stylesheet" href="styles.css?v=1.29">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.25</p>
+        <p class="version" title="Versión de la aplicación">v1.29</p>
       </div>
     </div>
       </div>
@@ -84,18 +84,11 @@
             <span class="mushroom-scientific">Boletus edulis</span>
           </div>
         </div>
-        <div class="rings-row">
-          <div class="probability-ring">
-            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/></svg>
-            <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
-            <div class="ring-cap">Futuro +15 d</div>
-          </div>
-          <div class="probability-ring">
-            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill ring-fill2" id="ringFill2" cx="60" cy="60" r="54" fill="none"/></svg>
-            <div class="ring-text"><span class="percentage" id="ringPct2">—</span><span class="label">Hoy</span></div>
-            <div class="ring-cap">Cosecha hoy</div>
-          </div>
+        <div class="probability-ring">
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/></svg>
+          <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
+        <div class="ring-cap" id="ringCap">Futuro +15 d</div>
         <div class="prediction-banner nivel-nulo" id="banner"><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
                 <div class="conditions-list" id="condList"></div>
         <div class="mushroom-details" id="detailList"></div>
@@ -108,18 +101,11 @@
             <span class="mushroom-scientific">Lactarius deliciosus</span>
           </div>
         </div>
-        <div class="rings-row">
-          <div class="probability-ring">
-            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/></svg>
-            <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
-            <div class="ring-cap">Futuro +21 d</div>
-          </div>
-          <div class="probability-ring">
-            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill ring-fill2" id="ringFillN2" cx="60" cy="60" r="54" fill="none"/></svg>
-            <div class="ring-text"><span class="percentage" id="ringPctN2">—</span><span class="label">Hoy</span></div>
-            <div class="ring-cap">Cosecha hoy</div>
-          </div>
+        <div class="probability-ring">
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/></svg>
+          <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
+        <div class="ring-cap" id="ringCapN">Futuro +21 d</div>
         <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
         <div class="conditions-list" id="condListN"></div>
         <div class="mushroom-details" id="detailListN"></div>
@@ -182,39 +168,42 @@
     <h3>La idea en una frase</h3>
     <p>Pulsas un punto del monte y la app comprueba si el <strong>tiempo de las últimas semanas</strong>, el <strong>suelo</strong> y el <strong>bosque que hay allí</strong> son los que les gustan al boleto y al níscalo. Con eso te dice si merece la pena ir: ahora, dentro de unos días o mejor quedarse en casa.</p>
     <h4>La pregunta de cada seta</h4>
-    <p>Las setas no salen porque sí: el micelio, que vive todo el año bajo tierra, solo fabrica setas cuando se juntan agua, temperatura suave y su árbol. La app traduce eso a cinco preguntas por especie. Cada una se responde con una nota y al final se combinan en un número de 0 a 100.</p>
+    <p>Las setas no salen porque sí: el micelio, que vive todo el año bajo tierra, solo fabrica setas cuando se juntan agua, temperatura suave y su árbol. La app traduce eso a cinco preguntas por especie. Cada una se responde con una nota de 0 a 1 y al final se combinan en un número de 0 a 100.</p>
     <ol class="method-list">
-      <li><strong>¿Ha llovido bastante?</strong> Mira la lluvia de los últimos 14 y 30 días. El boleto necesita unos 40 mm para arrancar y rinde con 60–100; el níscalo, más agradecido, arranca con 25 y rinde con 50–90. Sin agua no hay nada, por mucho que lo demás acompañe.</li>
-      <li><strong>¿Hace la temperatura justa?</strong> El boleto quiere fresquito otoñal (unos 13 ºC en el aire) y el níscalo algo más de margen (12–18 ºC). El suelo a 18 cm de profundidad, donde vive el micelio, debe estar templado. La helada, el calor fuerte o mucho viento lo estropean todo, y eso veta: pone el marcador a cero directamente.</li>
-      <li><strong>¿Hay bosque del bueno?</strong> Pregunta al Mapa Forestal oficial qué árboles hay en ese punto. El boleto acepta pinar, hayedo, robledal y castañar; el níscalo, solo pinar. Pradera o ciudad valen cero para los dos. Si el bosque es mezcla, cuenta el mejor árbol.</li>
-      <li><strong>¿Es su época, su altura y su suelo?</strong> El boleto sale de septiembre a noviembre con pico en octubre (600–1800 m, suelo ácido); el níscalo de septiembre a diciembre con pico en noviembre (100–1600 m, le vale casi cualquier pH).</li>
+      <li><strong>¿Ha llovido bastante? (40 % del clima)</strong> Lluvia de los últimos 14 días: el boleto puntúa desde 30 mm, rinde al máximo entre 60 y 100, y penaliza el encharque por encima de 100; el níscalo arranca en 25 y rinde entre 50 y 90. La reserva de 30 días aporta otro 20 %: por debajo de 30 mm el suelo se considera seco y la primera lluvia solo recarga.</li>
+      <li><strong>¿Hace la temperatura justa? (20 % aire + 10 % suelo + 10 % humedad)</strong> El boleto quiere fresquito otoñal (óptimo 13,2 ºC, útil entre 6 y 28); el níscalo tiene más margen (óptimo 12–18 ºC, útil entre 5 y 24). El suelo a 18 cm, donde vive el micelio, rinde entre 12 y 16 ºC. La humedad relativa acompaña desde el 75 % y es óptima desde el 80 %.</li>
+      <li><strong>¿Hay bosque del bueno?</strong> El boleto acepta pinar (1), hayedo (0,95), robledal y castañar (0,9); en bosque mixto cuenta el mejor árbol. El níscalo solo admite pinar (mixto con pino vale). Pradera, pasto y ciudad valen cero para los dos; el matorral casi cero (0,1).</li>
+      <li><strong>¿Es su época, su altura y su suelo?</strong> Boleto: septiembre–noviembre con pico en octubre, 600–1800 m, pH ácido 4,5–6,5. Níscalo: septiembre–diciembre con pico en noviembre, 100–1600 m, pH 4,5–8 (le importa poco).</li>
+      <li><strong>¿Hay veto?</strong> La helada (mínimas ≤ 0 ºC en boleto, ≤ −3 ºC en níscalo), el calor (máximas ≥ 28 ºC) o el viento fuerte (rachas &gt; 45 km/h) ponen el clima a cero directamente, aunque llueva bien.</li>
     </ol>
     <p class="hint">El truco del cálculo: las cinco notas se <strong>multiplican</strong>, no se suman. Si una vale cero (sin lluvia, helada o sin bosque), el total es cero aunque las otras cuatro sean perfectas. Por eso a veces el día está precioso y la app dice que no vayas.</p>
     <h4>La doble comprobación: mirar atrás para acertar hoy</h4>
     <p>Una seta tarda en salir: unos <strong>15 días</strong> el boleto y unos <strong>21 días</strong> el níscalo desde que llueve bien. Por eso la app mira dos veces:</p>
     <ul class="method-list">
-      <li><strong>Lo de hoy</strong> → ¿habrá cosecha dentro de 15/21 días? Es la lectura de futuro.</li>
-      <li><strong>Lo de hace 15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha.</li>
+      <li><strong>Lo de hoy</strong> → ¿habrá cosecha? Es la lectura de futuro (anillo grande).</li>
+      <li><strong>Lo de hace 15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha (detalle «Cosecha hoy»).</li>
     </ul>
-    <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy, pico en +15/+21 días</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna).</p>
+    <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy, pico en +N días</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna). La N no es fija: se cuenta desde la lluvia que disparó el proceso (el día más reciente en que 14 días sumaron 60 mm para el boleto o 50 para el níscalo), así que si llovió bien hace 10 días verás +5 y no +15. Si no hubo tal disparador, se muestra el plazo entero.</p>
     <h4>De dónde salen los datos</h4>
     <ul class="method-list">
-      <li><strong>El tiempo</strong> — estaciones meteorológicas reales de los últimos 55 días más el día actual (Open-Meteo). Para el pasado se usa lo observado, no previsiones: lo que llovió, llovió. La temperatura del suelo se mide a 18 cm, la profundidad del micelio.</li>
-      <li><strong>La lluvia, con pluviómetro si se puede</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Por eso, si la app lleva clave de AEMET, casi todo el clima sale del pluviómetro oficial más cercano (menos de 25 km), sin mezclas con el modelo: lluvia de 14/30 días, mínimas/máximas, temperatura media, humedad media y racha de viento. Las ventanas usan el diario validado más lo que lleva hoy según el parte horario en directo (todo AEMET). Los días intermedios aún sin validar (p. ej. 5–6 oct) no existen en ninguna fuente oficial hasta que se publican; solo los tiene el archivo privado de x-y.es. Su nombre y distancia se ven en la fila «Estación meteo», y la fila «Ahora en estación» trae el parte horario en directo (temp, humedad y lo que lleva hoy). Del modelo solo quedan la temperatura del suelo a 18 cm (AEMET no guarda histórico) y la altitud del punto.</li>
-      <li><strong>El suelo</strong> — mapa mundial de suelos SoilGrids: acidez, tipo de tierra y materia orgánica a 5–15 cm. Es una estimación por cuadrícula de 250 m, no un análisis de tu parcela.</li>
-      <li><strong>El bosque</strong> — Mapa Forestal de España del Ministerio (MITECO): se preguntan una por una unas 36 formaciones (¿hay hayedo aquí? ¿pinar de albar?…) en 120 m a la redonda, y se lee el nombre científico del árbol dominante. Si no hay bosque, su capa de usos dice si es pradera, pasto o matorral con el código oficial.</li>
-      <li><strong>La ciudad</strong> — mapa OpenStreetMap, solo como último recurso para distinguir una plaza de un descampado contando edificios en 150 m. Nunca se usa para el bosque.</li>
-      <li><strong>El nombre del pueblo</strong> — OpenStreetMap; si falla, verás las coordenadas.</li>
+      <li><strong>El tiempo base (Open-Meteo)</strong> — 55 días observados más el día actual y 8 de previsión (el día actual es el antepenúltimo bloque, no el último). Para el pasado se usa lo observado, no previsiones. De aquí salen la lluvia diaria, las temperaturas del aire, la humedad, el viento, la temperatura del suelo a 18 cm (media de 7 días, la profundidad del micelio), la previsión de 7 días y los tramos hora a hora de hoy. La altitud del punto viene de su servicio de elevación.</li>
+      <li><strong>La lluvia y los extremos, con pluviómetro (AEMET OpenData)</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Con la clave integrada, del pluviómetro oficial más cercano (menos de 25 km) salen la lluvia de 14/30 días, las mínimas/máximas, la temperatura media, la humedad media y la racha de viento, con sus lecturas de hace 15/21 días. Las ventanas usan el diario validado (el «día» AEMET va de 07 a 07) más lo que lleva hoy según el parte horario en directo; todo AEMET, sin mezclas. Los días intermedios aún sin validar no existen en ninguna fuente oficial hasta que se publican. Su nombre y distancia se ven en la fila «Estación meteo», y la fila «Ahora en estación» trae el directo (temp, humedad y lo de hoy). Del modelo solo quedan la temperatura del suelo a 18 cm (AEMET no guarda histórico) y la altitud.</li>
+      <li><strong>El suelo (SoilGrids)</strong> — mapa mundial de suelos: acidez, tipo de tierra (arena/limo/arcilla) y materia orgánica a 5–15 cm, en cuadrícula de 250 m. Es una estimación interpolada, no un análisis de tu parcela.</li>
+      <li><strong>El bosque (Mapa Forestal de España, MITECO)</strong> — se preguntan una por una 36 formaciones (¿hay hayedo aquí? ¿pinar de albar?…) en 120 m a la redonda, leyendo el nombre científico del árbol dominante. Si no hay bosque, su capa de usos dice si es pradera, pasto, matorral o dehesa con el código oficial LULUCF.</li>
+      <li><strong>La ciudad (OpenStreetMap)</strong> — solo como último recurso: si no hay bosque ni uso claro, se cuentan edificios en 150 m (10 o más = urbano, veto). Nunca se usa para el bosque; si falla, no pasa nada.</li>
+      <li><strong>El nombre del pueblo y el buscador</strong> — OpenStreetMap; acepta localidades y coordenadas en decimal, grados/minutos/segundos y UTM. Si falla, verás las coordenadas.</li>
+      <li><strong>Caché de 10 minutos</strong> — un punto ya visitado no vuelve a la red hasta pasados 10 minutos: se repinta al instante indicando la antigüedad («Datos de hace X min»).</li>
     </ul>
     <h4>Qué pasa cuando falta un dato</h4>
-    <p>La app no te pide nada a mano, así que si una fuente falla usa un valor neutro y te lo dice: hábitat sin determinar cuenta 0,70 y sin pH el suelo no penaliza. Un dato ausente no hunde la predicción, pero tampoco la decide.</p>
+    <p>La app no te pide nada a mano: si una fuente falla, usa un valor neutro y te lo dice. Hábitat sin determinar cuenta 0,70 y sin pH el suelo no penaliza (vale 1). El pluviómetro exige una serie mínima (10 de 14 días, 20 de 30, estación a menos de 25 km y actualizada hace menos de 10 días); si no llega, se usa el modelo y la fila de estación dice el motivo. Cada petición a internet se reintenta una vez ante fallos de red. Un dato ausente no hunde la predicción, pero tampoco la decide.</p>
     <h4>Lo que no puede hacer</h4>
     <ul class="method-list">
-      <li>No confirma setas ni puntos exactos: orienta a escala de monte, el último paso es tu ojo.</li>
+      <li>No confirma setas ni puntos exactos: orienta a escala de monte (120 m de bosque, 250 m de suelo, ~10 km de modelo), el último paso es tu ojo.</li>
       <li>El pinar joven del níscalo no se distingue en el mapa: cuenta cualquier pinar.</li>
       <li>Un año raro (una sola tormenta, otoño tardío) despista a cualquier modelo, a este también.</li>
+      <li>Las fichas son guía divulgativa, no identificación: ante la duda, asociación micológica o experto.</li>
     </ul>
-    <p class="hint">La ciencia detrás: producción de micorrizas en pinares de Soria (Martínez-Peña 2012 y siguientes), micelio y suelo (Santolamazza-Carbone 2023) y óptimo de 13,2 ºC medido en campo (2025). Los umbrales del níscalo (12–18 ºC, pH 4,5–8, pico 21 días, Sep–Dic) están validados por el autor de esta app.</p>
+    <p class="hint">La ciencia detrás: producción de micorrizas en pinares de Soria (Martínez-Peña 2012 y siguientes), micelio y suelo (Santolamazza-Carbone 2023) y óptimo de 13,2 ºC medido en campo (2025). Los umbrales del níscalo (12–18 ºC, pH 4,5–8, retardo 21 días, Sep–Dic con máximo en noviembre) están validados por el autor de esta app; la guía de identificación sigue a sporas.io.</p>
   </div>
 </section>
 
@@ -222,25 +211,27 @@
   <div class="section-head"><h2>🔍 Leyenda</h2></div>
   <div class="card"><h3>Niveles y factores</h3>
     <dl class="glossary">
-      <dt><span class="indice-badge nivel-alto">≥75 óptimo</span></dt><dd>Convergencia de agua, temperatura y hábitat. Ventana de salida con pico en +15 días.</dd>
+      <dt><span class="indice-badge nivel-alto">≥75 óptimo</span></dt><dd>Convergencia de agua, temperatura y hábitat. Ventana de salida; el pie del anillo dice los días restantes al pico.</dd>
       <dt><span class="indice-badge nivel-medio">50–75 caliente</span></dt><dd>Casi todo a favor; falta lluvia o el suelo aún está cálido.</dd>
       <dt><span class="indice-badge nivel-bajo">25–50 tibio</span></dt><dd>Algún factor flojo. Vigila la próxima lluvia.</dd>
       <dt><span class="indice-badge nivel-nulo">&lt;25 frío</span></dt><dd>Veto activo o hábitat incompatible. No salir por esta especie.</dd>
-      <dt><strong>Dos anillos</strong></dt><dd>Izquierda: potencial futuro (pico en +15/+21 días). Derecha, en verde: cosecha hoy según lo de hace 15/21 días.</dd>
-      <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>Ventana observada 30d+hoy. Veto por helada (Tmin ≤ 0), calor (Tmax ≥ 28) o viento &gt;45 km/h.</dd>
-      <dt><strong>Terreno</strong></dt><dd>Altitud 600–1800 m. Fuera decae; por debajo de 400 o sobre 2000 anula.</dd>
-      <dt><strong>Suelo</strong></dt><dd>pH 4,5–6,5 óptimo. SoilGrids 5-15cm interpolado a 250 m.</dd>
-      <dt><strong>Flora (8 categorías)</strong></dt><dd>Pinar 1,0 · Hayedo 0,95 · Robledal 0,9 · Castañeral 0,9 · Bosque mixto = mejor componente · Matorral 0,1 · Pradera y Pasto 0. Sin bosque MFE se usa <code>ff_uso</code> (Pradera = herbáceo/cultivo, Pasto = dehesa/arbustivo); en último caso, edificios OSM en 150 m (≥10 = urbano, 0). Si todo falla, hábitat sin determinar = 0,70. Sin pH, suelo = 1 con aviso. Nada se mete a mano.</dd>
-      <dt><strong>Temporada</strong></dt><dd>Octubre 1, sep/nov 0,85; ago/dic 0,4; resto 0,1.</dd>
+      <dt><strong>Anillo</strong></dt><dd>Potencial futuro (0–100) con los días restantes al pico debajo. La cosecha de hoy va en texto (banner y detalle «Cosecha hoy»).</dd>
+      <dt><strong>Doble lectura</strong></dt><dd>Futuro: con lo de hoy, pico en +15 d (boleto) / +21 d (níscalo) contados desde la lluvia que disparó el proceso. Cosecha: con lo de hace 15/21 d, ¿toca hoy? Veredicto ≥ 40.</dd>
+      <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>P14 óptima 60–100 (boleto) / 50–90 (níscalo); reserva P30; aire óptimo 13,2 ºC (boleto) / 12–18 ºC (níscalo); suelo 12–16 ºC a 18 cm; HR ≥ 75. Veto: helada (mín ≤ 0 / ≤ −3 ºC), calor (máx ≥ 28) o viento &gt; 45 km/h → clima 0.</dd>
+      <dt><strong>Terreno</strong></dt><dd>Boleto 600–1800 m (rampa 500–600 y 1800–2000; fuera de 400–2000 anula). Níscalo 100–1600 m (rampa 1600–1900; bajo 100 vale 0,6).</dd>
+      <dt><strong>Suelo</strong></dt><dd>Boleto pH 4,5–6,5 (hasta 7,2 tolerable). Níscalo pH 4,5–8. SoilGrids 5–15 cm interpolado a 250 m; sin dato no penaliza.</dd>
+      <dt><strong>Flora</strong></dt><dd>Boleto: Pinar 1 · Hayedo 0,95 · Robledal 0,9 · Castañeral 0,9 · Mixto = mejor componente · Matorral 0,1 · Pradera/Pasto/Urbano 0. Níscalo: solo Pinar (mixto con pino vale), resto 0. Sin bosque MFE se usa <code>ff_uso</code> (herbáceo/cultivo = Pradera, dehesa/arbustivo = Pasto); en último caso, edificios OSM en 150 m (≥10 = urbano). Si todo falla, 0,70. Nada se mete a mano.</dd>
+      <dt><strong>Temporada</strong></dt><dd>Boleto: octubre 1 · sep/nov 0,85 · ago/dic 0,4 · resto 0,1. Níscalo: noviembre 1 · octubre 0,9 · septiembre 0,85 · diciembre 0,6 · agosto 0,3 · resto 0,1.</dd>
+      <dt><strong>Fuentes</strong></dt><dd>Lluvia y extremos: pluviómetro AEMET ≤ 25 km (o modelo). Suelo 18 cm, previsión y altitud: Open-Meteo. Suelo: SoilGrids. Bosque: MFE. Ciudad y topónimos: OSM. Caché de punto: 10 min.</dd>
     </dl>
   </div>
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.25 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
-  <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
+  <p>Predicción Micológica v1.29 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.25"></script>
+<script src="app.js?v=1.29"></script>
 </body>
 </html>

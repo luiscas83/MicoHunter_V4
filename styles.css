@@ -89,10 +89,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .probability-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring-bg{fill:none;stroke:var(--border);stroke-width:8}
 .ring-fill{fill:none;stroke:var(--secondary);stroke-width:8;stroke-linecap:round;transition:stroke-dasharray 1s ease}
-.ring-fill2{stroke:var(--success);stroke-width:8}
-.rings-row{display:flex;gap:14px;justify-content:center;margin-bottom:16px}
-.rings-row .probability-ring{margin:0}
-.ring-cap{font-size:.72rem;color:var(--text-light);text-align:center;margin-top:4px;white-space:nowrap}
+.ring-cap{font-size:.78rem;color:var(--text-light);text-align:center;margin:-8px 0 10px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
 .ring-text .percentage{display:block;font-size:1.5rem;font-weight:700}
 .ring-text .label{display:block;font-size:.75rem;color:var(--text-light);white-space:nowrap;line-height:1.2}
