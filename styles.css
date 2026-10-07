@@ -71,7 +71,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .soil-summary strong{color:var(--text);font-weight:600}
 .last-update{margin-top:12px;font-size:.85rem;color:var(--text-light);text-align:right}
 .mushroom-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-#mushroomCards{grid-template-columns:repeat(2,1fr)}
+#mushroomCards{grid-template-columns:repeat(3,1fr)}
 #mushroomCards .mushroom-card{grid-column:auto}
 .mushroom-card{text-align:center}
 .mushroom-title-section{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;text-align:left}
@@ -172,7 +172,7 @@ html{scroll-behavior:smooth}
 body{-webkit-tap-highlight-color:transparent}
 .btn,.nav-btn,#favSelect,.search-row .btn,.map-actions .btn{min-height:44px}
 .btn:focus-visible,.nav-btn:focus-visible,.search-row input:focus-visible,.save-fav-row input:focus-visible,#favSelect:focus-visible{outline:2px solid var(--primary-light);outline-offset:2px}
-@media(max-width:1024px){.dashboard-grid{grid-template-columns:1.6fr 1fr}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){.dashboard-grid{grid-template-columns:1.6fr 1fr}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
 /* Header compacto + nav fija bajo él, como la barra superior del modo web */
 .header{position:sticky;top:0;z-index:1000;padding:14px 16px;margin-bottom:12px}

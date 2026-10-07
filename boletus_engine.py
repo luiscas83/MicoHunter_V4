@@ -28,6 +28,18 @@ FLORA_EDULIS = {
 }
 
 # Níscalo (Lactarius deliciosus): mismos pesos, otros umbrales (valores del usuario)
+# Oronja (Amanita caesarea): umbrales V2 (sin calibrar) + cestaysetas; lag 30 ESTIMADO
+CAESAREA_LAG = 30  # ciclo 18-21 hasta 40-50 d tras lluvias (pico ~30, estimado)
+CAESAREA = {
+    "t_aire_opt": (16, 24), "t_aire_util": (10, 28),
+    "p14": (30, 80),         # estimado
+    "p30_reserva": (25, 100),
+    "ph": (4.0, 6.0),        # acidófila (estimado)
+    "altitud": (200, 1200),  # hasta 1500 en los mejores casos
+    "temporada": {7: 0.5, 8: 0.9, 9: 1.0, 10: 0.85},  # Jul-Oct, pico Sep
+    "veto_tmin": 2,          # termófila, no aguanta heladas
+    "flora": "robledal, castañar y quercíneas (encina, carrasca, alcornoque)",
+}
 NISCALO_LAG = 21  # primeros 7-15 d, pico ~21 d (boleto: 15)
 NISCALO = {
     "t_aire_opt": (12, 18), "t_aire_util": (5, 20),  # banda óptima y rango útil ºC

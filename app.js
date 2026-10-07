@@ -21,6 +21,33 @@ const fPH2=p=>{if(p<4)return .2;if(p<4.5)return .2+.8*(p-4)/.5;if(p<=8)return 1;
 const fAlt2=h=>{if(h>=100&&h<=1600)return 1;if(h>=0&&h<100)return .6;
   if(h>1600&&h<=1900)return 1-(h-1600)/300;return 0;};
 const fMes2=m=>m===11?1:m===10?.9:m===9?.85:m===12?.6:m===8?.3:.1;
+// --- Oronja (Amanita caesarea): umbrales V2 (sin calibrar) + cestaysetas; lag 30 ESTIMADO (ciclo 18-21/40-50 d)
+const ORO_LAG=30;
+const fTA3=t=>{if(t<10||t>28)return 0;if(t>=16&&t<=24)return 1;
+  if(t>=12&&t<16)return .4+.6*(t-12)/4;if(t>24&&t<=28)return 1-.7*(t-24)/4;return .2;};
+const fP14_3=p=>{if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;if(p<=80)return 1;
+  if(p<=160)return 1-.4*(p-80)/80;return .3;};
+const fPH3=p=>{if(p>=4&&p<=6)return 1;if(p>6&&p<=7)return .6;if(p>=3.5&&p<4)return .6;return 0;};
+const fAlt3=h=>{if(h>=200&&h<=1200)return 1;if(h>1200&&h<=1500)return 1-.5*(h-1200)/300;
+  if(h>=100&&h<200)return .6;return 0;};
+const fMes3=m=>m===9?1:m===8?.9:m===10?.85:m===7?.5:.1;
+function floraOronja(cat,especies){ // robledal, castañar y quercíneas (encina, carrasca, alcornoque)
+  const esp=(especies||[]).join(" ").toLowerCase();
+  const host=/quercus|castanea/.test(esp);
+  if(cat==="Robledal"||cat==="Castañeral")return 1;
+  if(cat==="Bosque mixto"||host)return 0.9;
+  return 0;
+}
+function scoreOronja(o){
+  const veto=o.tmin<=2||o.tmax>=28||o.viento;
+  const d={P14:fP14_3(o.p14),res:fRes2(o.p30),TA:fTA3(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
+  const ter=fAlt3(o.alt),sue=fPH3(o.ph),flo=o.floraNota??0.70,tem=fMes3(o.mes);
+  const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
+  return{score:sc,clima:+clima.toFixed(3),d,terreno:ter,suelo:sue,flora:flo,temp:tem,
+    veto,vetoList:[...(o.tmin<=2?["Helada"]:[]),...(o.tmax>=28?["Calor"]:[]),...(o.viento?["Viento"]:[])],
+    nivel:sc<25?"nulo":sc<50?"regular":sc<75?"bueno":"excelente",pico:sc>=40?ORO_LAG:null};
+}
 function floraNiscalo(cat,componentes){ // solo pinar; mixto con pino vale
   if(cat==="Pinar")return 1;
   if(cat==="Bosque mixto"&&(componentes||[]).includes("Pinar"))return 1;
@@ -75,12 +102,12 @@ function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
 async function fetchClima(la,lo){
   const [d,h,hh]=await Promise.all([
-    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=55&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
-    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=30&forecast_days=1`,20000),
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=65&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=40&forecast_days=1`,20000),
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=auto&past_days=1&forecast_days=2`,20000).catch(()=>null)
   ]);
-  const FD=8, D=d.daily, n=D.time.length-FD; // hoy = len-8 (45 pasado + hoy + 7 futuro)
-  const past=k=>D[k].slice(0,n); // 45 días observados (sin hoy)
+  const FD=8, D=d.daily, n=D.time.length-FD; // hoy = len-8 (65 pasado + hoy + 7 futuro)
+  const past=k=>D[k].slice(0,n); // 65 días observados (sin hoy)
   const P=past("precipitation_sum").map(v=>v??0);
   const T=past("temperature_2m_mean"), Mx=past("temperature_2m_max"),
         Mn=past("temperature_2m_min"), H=past("relative_humidity_2m_mean").map(v=>v??70),
@@ -102,6 +129,11 @@ async function fetchClima(la,lo){
     ta:avg(t7n),ts:tsN,hr:avg(Hn),tmin:Math.min(...mn7n),tmax:Math.max(...mx7n),vientoMax:Math.max(...Wn)};
   const retro={p14:P.slice(-29,-15).reduce((a,v)=>a+v,0),p30:P.slice(-45,-15).reduce((a,v)=>a+v,0),
     ta:avg(t7r),ts:tsR,hr:avg(Hr),tmin:Math.min(...mn7r),tmax:Math.max(...mx7r),vientoMax:Math.max(...Wr)};
+  const t7o=T.slice(-37,-30), mn7o=Mn.slice(-37,-30), mx7o=Mx.slice(-37,-30);
+  const HrO=H.slice(-37,-30), WrO=W.slice(-37,-30);
+  const tsO=avg(HT.slice(-(30*24+168),-(30*24)));
+  const retro30={p14:P.slice(-44,-30).reduce((a,v)=>a+v,0),p30:P.slice(-60,-30).reduce((a,v)=>a+v,0),
+    ta:avg(t7o),ts:tsO,hr:avg(HrO),tmin:Math.min(...mn7o),tmax:Math.max(...mx7o),vientoMax:Math.max(...WrO)};
   const fc=[]; // previsión 7 días desde hoy
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
@@ -123,8 +155,8 @@ async function fetchClima(la,lo){
     }
   }catch(e){hoyTramos=[];}
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia,hoyTramos,
-    restB:restantes(hist45,15,60),restN:restantes(hist45,21,50)};
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,retro30,ahora,fc,obsDia,hoyTramos,
+    restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restO:restantes(hist45,30,50)};
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
@@ -347,13 +379,13 @@ async function aemetOverride(la,lo){
       if(v.racha!=null)vm=vm==null?v.racha:Math.max(vm,v.racha);}
     return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
-  const r15=retro(15), r21=retro(21);
+  const r15=retro(15), r21=retro(21), r30=retro(30);
   const semana=[];for(let i=6;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
     ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
-    r15,r21,serie45};
+    r15,r21,r30,serie45};
 }
 const aemetLiveCache=new Map(); // ind -> {t, live} (el directo cambia cada hora: TTL 30 min)
 async function aemetAhora(ind){ // parte horario en directo: temp/HR/viento ahora + lluvia de hoy
@@ -581,7 +613,7 @@ async function predecir(etiqueta){
       mfe=await mfeBosque(lat,lon,(h,n)=>{if(det)det.textContent=`MFE: ${h}/${n} formaciones…`;});
       mfeCache.set(key,mfe);
     }
-    let floraCat=null,floraNota=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null;
+    let floraCat=null,floraNota=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null;
     if(mfe&&mfe.categoria){
       floraCat=mfe.categoria;floraNota=mfe.nota;fuenteHab="MFE";
       habitatTxt=mfe.categoria+(mfe.categoria==="Bosque mixto"&&mfe.componentes?" ("+mfe.componentes.join(" + ")+")":"")+": "+mfe.especies.map(e=>`${e.n} (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`).join(" + ");
@@ -620,15 +652,18 @@ async function predecir(etiqueta){
       const gapD=Math.max(0,Math.round((Date.now()-new Date(prov.fecha+"T00:00:00Z"))/864e5));
       clima.restB=Math.max(0,restantes(arr45,15,60)-gapD);
       clima.restN=Math.max(0,restantes(arr45,21,50)-gapD);
+      clima.restO=Math.max(0,restantes(arr45,30,50)-gapD);
       clima.tmin=prov.tmin;clima.tmax=prov.tmax;
       if(prov.ta!=null)clima.ta=prov.ta;
       if(prov.hr!=null)clima.hr=prov.hr;
       if(prov.vmax!=null)clima.vientoMax=prov.vmax;
       Object.assign(clima.retro,{p14:prov.r15.p14,p30:prov.r15.p30});
       Object.assign(clima.retro21,{p14:prov.r21.p14,p30:prov.r21.p30});
+      Object.assign(clima.retro30,{p14:prov.r30.p14,p30:prov.r30.p30});
       if(prov.r15.ok)Object.assign(clima.retro,{tmin:prov.r15.tmin,tmax:prov.r15.tmax});
       if(prov.r21.ok)Object.assign(clima.retro21,{tmin:prov.r21.tmin,tmax:prov.r21.tmax});
-      for(const par of[[clima.retro,prov.r15],[clima.retro21,prov.r21]]){
+      if(prov.r30.ok)Object.assign(clima.retro30,{tmin:prov.r30.tmin,tmax:prov.r30.tmax});
+      for(const par of[[clima.retro,prov.r15],[clima.retro21,prov.r21],[clima.retro30,prov.r30]]){
         if(par[1].ta!=null)par[0].ta=par[1].ta;
         if(par[1].hr!=null)par[0].hr=par[1].hr;
         if(par[1].vmax!=null)par[0].vientoMax=par[1].vmax;
@@ -637,8 +672,11 @@ async function predecir(etiqueta){
     const mes=new Date().getMonth()+1;
     if(mfe&&mfe.categoria)floraNotaN=floraNiscalo(mfe.categoria,mfe.componentes);
     else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
+    const floraEsp=mfe&&mfe.especies?mfe.especies.map(e=>e.n):(uso&&uso.sp1?[uso.sp1]:[]);
+    if(mfe&&mfe.categoria)floraNotaO=floraOronja(mfe.categoria,floraEsp);
+    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral")?1:(/quercus|castanea/i.test(uso.sp1||"")?0.9:0);
     const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
-      floraCat,floraNota,floraNotaN,phVal:suelo.ph??null,prov,live,am};
+      floraCat,floraNota,floraNotaN,floraNotaO,phVal:suelo.ph??null,prov,live,am};
     calcCache.set(pkey,{t:Date.now(),calc});
     if(calcCache.size>50)calcCache.delete(calcCache.keys().next().value);
     pintar(calc,0);
@@ -727,6 +765,7 @@ function renderAll(){
       `Cosecha hoy: no, hace 15 días falló la temperatura.`}));
   renderAnalysis();
   renderNiscalo();
+  renderOronja();
 }
 function renderMeteo(){
   if(!document.getElementById("metTitle"))return;
@@ -804,6 +843,56 @@ function renderNiscalo(){
       `Cosecha hoy: no, hace 21 días falló la temperatura.`}));
   renderAnalysis();
 }
+function renderOronja(){
+  if(!lastCalc)return;
+  const{clima,alt,mes,fuenteHab,habitatTxt}=lastCalc;
+  const phV=lastCalc.phVal, fO=lastCalc.floraNotaO;
+  const floraTxt=lastCalc.floraCat||"sin hábitat conocido";
+  const base={alt:alt??1000,ph:phV??5.0,mes};
+  const rO=scoreOronja({p14:clima.p14,p30:clima.p30,ta:clima.ta,ts:clima.ts,hr:clima.hr,
+    ...base,tmin:clima.tmin,tmax:clima.tmax,viento:clima.vientoMax>45,floraNota:fO??0.70});
+  const cO=clima.retro30;
+  const rOR=scoreOronja({p14:cO.p14,p30:cO.p30,ta:cO.ta,ts:cO.ts,hr:cO.hr,
+    ...base,tmin:cO.tmin,tmax:cO.tmax,viento:cO.vientoMax>45,floraNota:fO??0.70});
+  const hoy=rO.score>=40, hubo=rOR.score>=40;
+  lastCalc.rO=rO;lastCalc.rOR=rOR;lastCalc.cRO=cO;
+  const rfO=document.getElementById("ringFillO");if(rfO)rfO.style.strokeDasharray=`${(rO.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
+  T2("ringPctO",rO.score);
+  T2("ringNivelO",rO.nivel);
+  const bO=document.getElementById("bannerO");if(bO)bO.className="prediction-banner "+nivelClase(rO.nivel);
+  const ro=clima.restO??ORO_LAG;
+  T2("bannerTxtO",
+    hoy&&hubo?`En pico: salir ya. ${ro} días estimados para fructificación.`:
+    !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
+    hoy&&!hubo?`Sin cosecha hoy. ${ro} días estimados para fructificación.`:
+    `Sin ventana de fructificación.`);
+  const vo=[];if(clima.tmin<=2)vo.push("Helada");if(clima.tmax>=28)vo.push("Calor");if(clima.vientoMax>45)vo.push("Viento");
+  const vtx=n=>n==="Helada"?"Helada con mínimas de +2 ºC o menos: es termófila y aborta.":VETO_TXT[n];
+  const ci=(k,v,n)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} ${badge(n)}</span></div>`;
+  setHTML("condListO",
+    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rO.d.P14)+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rO.d.res)+
+    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rO.d.TA)+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rO.d.TS)+
+    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rO.d.HR)+
+    `<div class="condition-item"><span>Veto</span><span class="condition-value" title="${vo.map(vtx).join(" ")}">${vo.length?vo.join(" + "):"Ninguno"} ${badge(rO.veto?0:1)}</span></div>`);
+  const di=(k,v)=>`<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v}</span></div>`;
+  const MESO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  setHTML("detailListO",
+    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rO.terreno)}`)+
+    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rO.suelo)}`)+
+    di("Estación",`${MESO[mes-1]} ${badge(rO.temp)}`)+
+    di("Cosecha hoy",hubo?`SI · hace 30 días llovió bien ${badge(1)}`:`NO · hace 30 días ${cO.p14<30?"no llovió suficiente":"hizo mal tiempo"} ${badge(0)}`)+
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(rO.flora)}</span></div>`);
+  const vetRO=[];if(cO.tmin<=2)vetRO.push("helada");if(cO.tmax>=28)vetRO.push("calor");if(cO.vientoMax>45)vetRO.push("viento fuerte");
+  setHTML("verdictOronja",resumenCond(rO,clima,{
+    altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
+    floraTxt:floraTxt,mesTxt:MESO[mes-1],
+    vetoTxt:vo.length?vo.join(" + "):null,
+    cosecha:hubo?`Cosecha hoy: sí, hace 30 días el agua acompañó.`:
+      cO.p14<30?`Cosecha hoy: no, hace 30 días apenas cayeron ${cO.p14.toFixed(0)} mm.`:
+      vetRO.length?`Cosecha hoy: no, hace 30 días hubo ${vetRO.join(" + ")}.`:
+      `Cosecha hoy: no, hace 30 días falló la temperatura.`}));
+  renderAnalysis();
+}
 function renderAnalysis(){
   try{renderSpeciesSelector();}catch(e){console.warn("speciesSelector:",e);}
   if(!document.getElementById("analysisBody"))return;
@@ -854,10 +943,11 @@ document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
 });
 const SPECIES=[
   {id:"edulis",name:"Boleto / Hongo",latin:"Boletus edulis",color:"#8b4513",card:"cardEdulis",an:"anEdulis"},
-  {id:"niscalo",name:"Níscalo / Rovelló",latin:"Lactarius deliciosus",color:"#e07b1a",card:"cardNiscalo",an:"anNiscalo"}
+  {id:"niscalo",name:"Níscalo / Rovelló",latin:"Lactarius deliciosus",color:"#e07b1a",card:"cardNiscalo",an:"anNiscalo"},
+  {id:"oronja",name:"Oronja / Huevo de rey",latin:"Amanita caesarea",color:"#d4a017",card:"cardOronja",an:"anOronja"}
 ];
 const VIS_KEY="especies_visibles_v1";
-const getVis=()=>{try{return JSON.parse(localStorage.getItem(VIS_KEY))||{edulis:true,niscalo:true};}catch{return{edulis:true,niscalo:true};}};
+const getVis=()=>{try{return JSON.parse(localStorage.getItem(VIS_KEY))||{edulis:true,niscalo:true,oronja:true};}catch{return{edulis:true,niscalo:true,oronja:true};}};
 function estadoEspecie(id){
   // líneas de estado para el punto actual; null si aún no hay cálculo
   if(!lastCalc||!lastCalc.r)return null;
@@ -866,11 +956,16 @@ function estadoEspecie(id){
     if((lastCalc.floraNota??0.70)===0)L.push("Fuera de su hábitat");
     if(lastCalc.r.temp<0.5)L.push("Fuera de temporada");
     if(!L.length&&lastCalc.r.score<25)L.push("No disponible aquí");
-  }else{
+  }else if(id==="niscalo"){
     if(!lastCalc.rN)return null;
     if((lastCalc.floraNotaN??0.70)===0)L.push("Fuera de su hábitat");
     if(lastCalc.rN.temp<0.5)L.push("Fuera de temporada");
     if(!L.length&&lastCalc.rN.score<25)L.push("No disponible aquí");
+  }else{
+    if(!lastCalc.rO)return null;
+    if((lastCalc.floraNotaO??0.70)===0)L.push("Fuera de su hábitat");
+    if(lastCalc.rO.temp<0.5)L.push("Fuera de temporada");
+    if(!L.length&&lastCalc.rO.score<25)L.push("No disponible aquí");
   }
   return L.length?L:["Disponible en este punto"];
 }
@@ -920,9 +1015,14 @@ function renderFavSelect(){
   const sel=document.getElementById("favSelect"), f=getFavs();
   if(!sel)return;
   const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const cs=typeof COTOS!=="undefined"?COTOS:[];
+  const CCAA=["Castilla y León","Aragón","Navarra","Comunidad de Madrid","Cataluña"];
+  const grupos=CCAA.map(cc=>{
+    const l=cs.map((c,i)=>({c,i})).filter(x=>x.c.ccaa===cc);
+    return l.length?`<optgroup label="🍄 ${cc} · de pago">${l.map(x=>`<option value="c${x.i}">🍄 ${esc(x.c.n)}</option>`).join("")}</optgroup>`:"";
+  }).join("");
   sel.innerHTML='<option value="">⭐ Setales y cotos…</option>'+
-    '<optgroup label="⭐ Mis setales">'+f.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")+'</optgroup>'+
-    '<optgroup label="🍄 Cotos (permiso de pago)">'+((typeof COTOS!=="undefined"?COTOS:[]).map((c,i)=>`<option value="c${i}">🍄 ${esc(c.n)}</option>`).join(""))+'</optgroup>';
+    '<optgroup label="⭐ Mis setales">'+f.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")+'</optgroup>'+grupos;
 }
 document.getElementById("favSelect").addEventListener("change",e=>{
   const v=e.target.value;
