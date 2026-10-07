@@ -615,12 +615,6 @@ renderFavs();
 applyVisibility();
 renderSpeciesSelector();
 
-// punto inicial: calcula ya con Soria y centra en tu ubicación cuando el GPS responde
+// punto inicial: Soria; la ubicación solo con el botón GPS
 predecir();
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(p=>{
-    lat=+p.coords.latitude.toFixed(4);lon=+p.coords.longitude.toFixed(4);
-    marker.setLatLng([lat,lon]);map.setView([lat,lon],11);predecir();
-  },()=>{},{timeout:8000});
-}
 
