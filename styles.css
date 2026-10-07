@@ -141,6 +141,16 @@ ul.method-list{list-style:disc}
 .param-table th{text-align:left;font-weight:600;padding:8px 10px;border-bottom:2px solid var(--primary);color:var(--text);white-space:nowrap;vertical-align:bottom}
 .param-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-light)}
 .param-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.met-chart{width:100%;height:auto;display:block}
+.met-grid{stroke:var(--border);stroke-width:1}
+.met-bar{fill:var(--primary)}
+.met-line{fill:none;stroke:var(--warning);stroke-width:2}
+.met-dot{fill:var(--warning)}
+.met-lineB{fill:none;stroke:var(--primary-light);stroke-width:2}
+.met-dotB{fill:var(--primary-light)}
+.met-tick{font-size:9px;fill:var(--text-light);font-family:inherit}
+.met-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem;color:var(--text-light);margin:2px 0 10px}
+.met-legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
 .glossary{margin:0}
 .glossary dt{margin-top:14px;font-size:.9rem;font-weight:600;color:var(--text)}
 .glossary dt:first-child{margin-top:8px}

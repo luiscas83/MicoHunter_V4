@@ -67,9 +67,10 @@ async function getJSON(url,ms,headers,reintento){
 const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
 async function fetchClima(la,lo){
-  const [d,h]=await Promise.all([
+  const [d,h,hh]=await Promise.all([
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=55&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
-    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=30&forecast_days=1`,20000)
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=30&forecast_days=1`,20000),
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=auto&past_days=1&forecast_days=2`,20000).catch(()=>null)
   ]);
   const FD=8, D=d.daily, n=D.time.length-FD; // hoy = len-8 (45 pasado + hoy + 7 futuro)
   const past=k=>D[k].slice(0,n); // 45 días observados (sin hoy)
@@ -100,8 +101,27 @@ async function fetchClima(la,lo){
   const oT=past("time").slice(-7), oP=past("precipitation_sum").slice(-7),
         oX=past("temperature_2m_max").slice(-7), oN=past("temperature_2m_min").slice(-7);
   const obsDia=oT.map((f,i)=>({f,p:oP[i]??0,tx:oX[i]??null,tn:oN[i]??null}));
+  // Hoy por tramos de 3 h (previsión horaria del día en curso)
+  let hoyTramos=[];
+  try{
+    const H2=hh&&hh.hourly, hoyStr=D.time[n];
+    if(H2&&H2.time){
+      const idx=[];for(let i=0;i<H2.time.length;i++)if(String(H2.time[i]).slice(0,10)===hoyStr)idx.push(i);
+      const avgN=a=>{const v=a.filter(x=>x!=null);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;};
+      for(let s=0;s<8;s++){
+        const ii=idx.filter(i=>{const h=+String(H2.time[i]).slice(11,13);return h>=s*3&&h<s*3+3;});
+        if(!ii.length)continue;
+        const g=k=>ii.map(i=>H2[k][i]);
+        const tA=avgN(g("temperature_2m")), hR=avgN(g("relative_humidity_2m"));
+        const vW=g("wind_speed_10m").filter(x=>x!=null), pB=g("precipitation_probability").filter(x=>x!=null);
+        hoyTramos.push({h:String(s*3).padStart(2,"0")+"–"+String(s*3+3).padStart(2,"0"),
+          ta:tA,pp:g("precipitation").reduce((sum,x)=>sum+(x??0),0),hr:hR,
+          w:vW.length?Math.max(...vW):null,prob:pB.length?Math.max(...pB):null});
+      }
+    }
+  }catch(e){hoyTramos=[];}
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia};
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia,hoyTramos};
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
@@ -654,6 +674,40 @@ function renderAll(){
   renderAnalysis();
   renderNiscalo();
 }
+function svgBars(vals,labels,fmt,line,lineFmt){
+  const W=360,H=176,padL=32,padB=20,padT=8;
+  const max=Math.max(1,...vals,...(line||[]));
+  const n=vals.length, iw=(W-padL-6)/n;
+  const X=i=>padL+iw*i, Y=v=>H-padB-(H-padB-padT)*Math.min(v,max)/max;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="met-chart" role="img">`;
+  for(const g of[0,.5,1]){const y=Y(max*g);
+    s+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-3}" y2="${y.toFixed(1)}" class="met-grid"/><text x="1" y="${(y+3).toFixed(1)}" class="met-tick">${+(max*g).toFixed(max<10?1:0)}</text>`;}
+  vals.forEach((v,i)=>{
+    s+=`<rect x="${(X(i)+1.5).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${Math.max(iw-3,1).toFixed(1)}" height="${Math.max(H-padB-Y(v),0).toFixed(1)}" class="met-bar"><title>${labels[i]}: ${fmt(v)}</title></rect>`;
+    s+=`<text x="${(X(i)+iw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" class="met-tick">${labels[i]}</text>`;});
+  if(line&&line.length===n){
+    const pts=line.map((v,i)=>`${(X(i)+iw/2).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+    s+=`<polyline points="${pts}" class="met-line"/>`;
+    line.forEach((v,i)=>{s+=`<circle cx="${(X(i)+iw/2).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" class="met-dot"><title>${labels[i]}: ${lineFmt?lineFmt(v):fmt(v)}</title></circle>`;});
+  }
+  return s+"</svg>";
+}
+function svgLines(sA,sB,labels,fmt,nA,nB){
+  const W=360,H=176,padL=32,padB=20,padT=8;
+  const all=[...sA,...sB].filter(v=>v!=null), lo=Math.min(...all), hi=Math.max(...all,lo+1);
+  const n=sA.length, iw=(W-padL-6)/n;
+  const X=i=>padL+iw*i+iw/2, Y=v=>H-padB-(H-padB-padT)*(v-lo)/(hi-lo);
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="met-chart" role="img">`;
+  for(const g of[0,.5,1]){const v=lo+(hi-lo)*g, y=Y(v);
+    s+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-3}" y2="${y.toFixed(1)}" class="met-grid"/><text x="1" y="${(y+3).toFixed(1)}" class="met-tick">${v.toFixed(0)}º</text>`;}
+  for(const pack of[[sA,nA||"máx","met-line","met-dot"],[sB,nB||"mín","met-lineB","met-dotB"]]){
+    const pts=pack[0].map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+    s+=`<polyline points="${pts}" class="${pack[2]}"/>`;
+    pack[0].forEach((v,i)=>{s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" class="${pack[3]}"><title>${labels[i]} ${pack[1]}: ${fmt(v)}</title></circle>`;});
+  }
+  sA.forEach((v,i)=>{s+=`<text x="${X(i).toFixed(1)}" y="${H-6}" text-anchor="middle" class="met-tick">${labels[i]}</text>`;});
+  return s+"</svg>";
+}
 function renderMeteo(){
   if(!document.getElementById("metTitle"))return;
   if(!lastCalc){T2("metTitle","Pulsa el mapa para ver la meteo del punto.");return;}
@@ -661,20 +715,29 @@ function renderMeteo(){
   const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
   const fD=s=>{const d=new Date(String(s).slice(0,10)+"T12:00");return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;};
   T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
-  const a=clima.ahora;
-  const ti=(l,v)=>`<div class="terrain-item"><span class="tl">${l}</span><span class="tv">${v}</span></div>`;
-  setHTML("metNow",
-    ti("Temp ahora",a.ta!=null?a.ta.toFixed(1)+" ºC":"—")+
-    ti("Humedad ahora",a.hr!=null?a.hr+" %":"—")+
-    ti("Viento ahora",a.viento!=null?a.viento.toFixed(0)+" km/h":"—")+
-    ti("Lluvia hoy",(a.prec!=null?a.prec.toFixed(1):clima.hoyP.toFixed(1))+" mm"));
-  setHTML("metFcBody",(clima.fc||[]).map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
+  const tramos=clima.hoyTramos||[];
+  setHTML("metNow",tramos.length?
+    `<div class="table-wrapper"><table class="param-table"><thead><tr><th>Tramo</th><th style="text-align:right">Temp</th><th style="text-align:right">Lluvia</th><th style="text-align:right">HR</th><th style="text-align:right">Viento</th></tr></thead><tbody>`+
+    tramos.map(s=>`<tr><td>${s.h}</td><td class="num">${s.ta!=null?s.ta.toFixed(0)+"º":"—"}</td><td class="num">${s.pp.toFixed(1)} mm${s.prob!=null?" ("+s.prob+"%)":""}</td><td class="num">${s.hr!=null?s.hr.toFixed(0)+" %":"—"}</td><td class="num">${s.w!=null?s.w.toFixed(0)+" km/h":"—"}</td></tr>`).join("")+
+    `</tbody></table></div>`
+    :`<p class="hint-text">Tramos horarios no disponibles.</p>`);
+  const fcD=(clima.fc||[]), fcLab=fcD.map(f=>fD(f.d)), fcPp=fcD.map(f=>f.pp),
+        fcTx=fcD.map(f=>f.tx??null), fcTn=fcD.map(f=>f.tn??null);
+  const hasT=fcTx.length>0&&fcTx.every(v=>v!=null)&&fcTn.every(v=>v!=null);
+  setHTML("metChartFc",fcD.length?
+    svgBars(fcPp,fcLab,v=>v.toFixed(1)+" mm")+(hasT?svgLines(fcTx,fcTn,fcLab,v=>v.toFixed(0)+"º"):""):"");
+  setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
   let ac=0;
-  setHTML("metObsBody",(clima.obsDia||[]).map(o=>{
+  const obsRows=(clima.obsDia||[]).map(o=>{
     const g=sem[o.f], p=g!=null?g:o.p;
     if(p!=null)ac+=p;
-    return `<tr><td>${fD(o.f)}</td><td class="num">${p!=null?p.toFixed(1)+" mm"+(g!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${ac.toFixed(1)} mm</td></tr>`;}).join(""));
+    return{f:o.f,p,tx:o.tx,tn:o.tn,ac};
+  });
+  setHTML("metChartObs",obsRows.length?
+    svgBars(obsRows.map(o=>o.p??0),obsRows.map(o=>fD(o.f)),v=>v.toFixed(1)+" mm",
+      obsRows.map(o=>o.ac),v=>v.toFixed(1)+" mm acumulada"):"");
+  setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
   T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado y previsión del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
