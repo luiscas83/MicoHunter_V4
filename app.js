@@ -52,9 +52,16 @@ function score(o){
     pico:prob*100>=40?15:null,nivel:prob*100<25?"frío":prob*100<50?"tibio":prob*100<75?"caliente":"óptimo"};
 }
 // --- helpers ---
-async function getJSON(url,ms,headers){
+async function getJSON(url,ms,headers,reintento){
   const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
   try{const r=await fetch(url,{signal:c.signal,headers});if(!r.ok)throw new Error("HTTP "+r.status);return await r.json();}
+  catch(e){
+    if(!reintento&&!/HTTP 4/.test(e.message)){ // un reintento ante fallos de red o 5xx
+      await new Promise(r=>setTimeout(r,800));
+      return getJSON(url,ms,headers,true);
+    }
+    throw e;
+  }
   finally{clearTimeout(t);}
 }
 const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
@@ -188,7 +195,7 @@ async function fetchLugar(la,lo){
 }
 // --- 6) AEMET OpenData (opcional): pluviómetro real más cercano. Clave gratuita
 // en opendata.aemet.es; se guarda SOLO en este navegador (localStorage), nunca en el repo.
-const AEMET_BASE="https://opendata.aemet.es/opendata/api";
+const AEMET_BASE="https://opendata.aemet.es/opendata";
 const AEMET_KEY="aemet_key_v1", AEMET_INV="aemet_inv_v1";
 // Clave ofuscada (invertida + base64) para no dejarla legible en el código.
 // Ojo: ofuscación, no cifrado real — el navegador la necesita en claro para llamar a AEMET.
@@ -208,13 +215,20 @@ async function aemetGet(path,ms){
   if(!meta||!meta.datos)throw new Error("AEMET estado "+((meta&&meta.estado)||"?"));
   return getJSONLatin(meta.datos,ms||25000); // URL temporal firmada, sin clave
 }
-async function getJSONLatin(url,ms){ // AEMET sirve ISO-8859-15: response.json() rompería
+async function getJSONLatin(url,ms,reintento){ // AEMET sirve ISO-8859-15: response.json() rompería
   const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
   try{
     const r=await fetch(url,{signal:c.signal});
     if(!r.ok)throw new Error("HTTP "+r.status);
     return JSON.parse(new TextDecoder("iso-8859-1").decode(await r.arrayBuffer()));
-  }finally{clearTimeout(t);}
+  }catch(e){
+    if(!reintento&&!/HTTP 4/.test(e.message)){
+      await new Promise(r=>setTimeout(r,800));
+      return getJSONLatin(url,ms,true);
+    }
+    throw e;
+  }
+  finally{clearTimeout(t);}
 }
 function havKm(a,b,c,d){const R=6371,r=x=>x*Math.PI/180;
   const h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;
@@ -514,7 +528,8 @@ async function predecir(etiqueta){
     if(r30t)r30t.title=rTitle;
     T2("rainSrc",prov?"pluviómetro":"modelo");
     T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
-    const msEl=document.getElementById("metStationValue");if(msEl)msEl.title=rTitle;
+    const msEl=document.getElementById("metStationValue");
+    if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
     renderAemetStatus(
       !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
       am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}).`:
