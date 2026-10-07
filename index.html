@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.15</p>
+        <p class="version" title="Versión de la aplicación">v1.16</p>
       </div>
     </div>
       </div>
@@ -23,7 +23,7 @@
 <main class="main">
 <nav class="nav">
   <button class="nav-btn active" data-section="dashboard">🗺️ Dashboard</button>
-  
+  <button class="nav-btn" data-section="meteorologia">🌤️ Meteorología</button>
   <button class="nav-btn" data-section="especie">🍄 Especie</button>
   <button class="nav-btn" data-section="setales">⭐ Mis setales</button>
   <button class="nav-btn" data-section="metodologia">📖 Metodología</button>
@@ -108,6 +108,25 @@
         <div class="mushroom-details" id="detailListN"></div>
       </div>
     </div>
+  </div>
+</section>
+
+<section id="meteorologia" class="section">
+  <div class="section-head"><h2>🌤️ Meteorología del punto</h2>
+  <p id="metTitle">Pulsa el mapa para ver la meteo del punto.</p></div>
+  <div class="card"><h3>Ahora</h3><div class="terrain-list" id="metNow"></div></div>
+  <div class="card" style="margin-top:20px"><h3>Previsión 7 días</h3>
+    <div class="table-wrapper"><table class="param-table">
+      <thead><tr><th>Día</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Prob.</th><th style="text-align:right">Viento</th></tr></thead>
+      <tbody id="metFcBody"></tbody>
+    </table></div>
+  </div>
+  <div class="card" style="margin-top:20px"><h3>Observado últimos 7 días</h3>
+    <div class="table-wrapper"><table class="param-table">
+      <thead><tr><th>Día</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Acumulada</th></tr></thead>
+      <tbody id="metObsBody"></tbody>
+    </table></div>
+    <p class="hint-text" id="metNote"></p>
   </div>
 </section>
 
@@ -199,10 +218,10 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.15 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.16 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.15"></script>
+<script src="app.js?v=1.16"></script>
 </body>
 </html>

@@ -97,8 +97,11 @@ async function fetchClima(la,lo){
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
   const ahora={ta:C.temperature_2m??null,hr:C.relative_humidity_2m??null,prec:C.precipitation??null,viento:C.wind_speed_10m??null};
+  const oT=past("time").slice(-7), oP=past("precipitation_sum").slice(-7),
+        oX=past("temperature_2m_max").slice(-7), oN=past("temperature_2m_min").slice(-7);
+  const obsDia=oT.map((f,i)=>({f,p:oP[i]??0,tx:oX[i]??null,tn:oN[i]??null}));
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc};
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia};
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
@@ -322,7 +325,8 @@ async function aemetOverride(la,lo){
     return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r21=retro(21);
-  return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,
+  const semana=[];for(let i=6;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
+  return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
     ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
     r15,r21};
@@ -596,6 +600,7 @@ async function predecir(etiqueta){
     if(det){det.textContent=floraCat||"sin determinar";det.title=habitatTxt||"";}
     T("lastUpdate","Actualizado "+new Date().toLocaleString("es-ES"));
     renderAll();
+    renderMeteo();
   }catch(e){
     console.error("predecir:",e);
     const cEl=document.getElementById("condList"), bEl=document.getElementById("bannerTxt");
@@ -648,6 +653,29 @@ function renderAll(){
     di("Estación",`${MESES[mes-1]} ${badge(r.temp)}`)+di("Cosecha hoy",hubo?`SI · hace 15 días llovió bien ${badge(1)}`:`NO · hace 15 días ${cR.p14<30?"no llovió suficiente":"hizo mal tiempo"} ${badge(0)}`)+`<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(r.flora)}</span></div>`);
   renderAnalysis();
   renderNiscalo();
+}
+function renderMeteo(){
+  if(!document.getElementById("metTitle"))return;
+  if(!lastCalc){T2("metTitle","Pulsa el mapa para ver la meteo del punto.");return;}
+  const{clima,alt}=lastCalc, prov=lastCalc.prov||null;
+  const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
+  const fD=s=>{const d=new Date(String(s).slice(0,10)+"T12:00");return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;};
+  T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
+  const a=clima.ahora;
+  const ti=(l,v)=>`<div class="terrain-item"><span class="tl">${l}</span><span class="tv">${v}</span></div>`;
+  setHTML("metNow",
+    ti("Temp ahora",a.ta!=null?a.ta.toFixed(1)+" ºC":"—")+
+    ti("Humedad ahora",a.hr!=null?a.hr+" %":"—")+
+    ti("Viento ahora",a.viento!=null?a.viento.toFixed(0)+" km/h":"—")+
+    ti("Lluvia hoy",(a.prec!=null?a.prec.toFixed(1):clima.hoyP.toFixed(1))+" mm"));
+  setHTML("metFcBody",(clima.fc||[]).map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
+  const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
+  let ac=0;
+  setHTML("metObsBody",(clima.obsDia||[]).map(o=>{
+    const g=sem[o.f], p=g!=null?g:o.p;
+    if(p!=null)ac+=p;
+    return `<tr><td>${fD(o.f)}</td><td class="num">${p!=null?p.toFixed(1)+" mm"+(g!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${ac.toFixed(1)} mm</td></tr>`;}).join(""));
+  T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado y previsión del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
 function renderNiscalo(){
