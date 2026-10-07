@@ -918,10 +918,20 @@ function renderFavs(){
 }
 function renderFavSelect(){
   const sel=document.getElementById("favSelect"), f=getFavs();
-  sel.innerHTML='<option value="">⭐ Setales guardados…</option>'+f.map((s,i)=>`<option value="${i}">${s.name}</option>`).join("");
+  if(!sel)return;
+  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  sel.innerHTML='<option value="">⭐ Setales y cotos…</option>'+
+    '<optgroup label="⭐ Mis setales">'+f.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")+'</optgroup>'+
+    '<optgroup label="🍄 Cotos (permiso de pago)">'+((typeof COTOS!=="undefined"?COTOS:[]).map((c,i)=>`<option value="c${i}">🍄 ${esc(c.n)}</option>`).join(""))+'</optgroup>';
 }
 document.getElementById("favSelect").addEventListener("change",e=>{
-  const s=getFavs()[+e.target.value];
+  const v=e.target.value;
+  if(v.startsWith("c")){
+    const c=(typeof COTOS!=="undefined"?COTOS:[])[+v.slice(1)];
+    if(c){goTo(c.la,c.lo,c.n);e.target.value="";}
+    return;
+  }
+  const s=getFavs()[+v];
   if(s){goTo(s.lat,s.lon,s.name);e.target.value="";}
 });
 document.getElementById("saveFavBtn").onclick=()=>{
