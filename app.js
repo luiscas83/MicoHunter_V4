@@ -498,13 +498,70 @@ const VETO_TXT={Helada:"Helada (mínima 7 días ≤ 0 ºC): quema los primordios
 Calor:"Calor (máxima 7 días ≥ 28 ºC): deshidrata el micelio y el primordio; a más de 21 ºC en suelo ya aborta, a 28 en aire se veta.",
 Viento:"Viento (racha máxima > 45 km/h): seca la seta en horas aunque el suelo esté húmedo. Es el que más cosechas arruina con buena lluvia."};
 function nivelIcon(n){return n==="óptimo"?"🟢":n==="caliente"?"🟡":n==="tibio"?"🟠":"🔴";}
+const calcCache=new Map(); // punto -> {t, calc}: sin recargar antes de 10 min
+function pintar(calc,ageMin){
+  lastCalc=calc;
+  const{clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo,floraCat,floraNota,phVal}=calc;
+  const prov=calc.prov||null, live=calc.live||null, am=calc.am||null;
+  const det=document.getElementById("habitatLine");
+  const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
+  const fcEl=document.getElementById("forecastBody");
+  if(fcEl)fcEl.innerHTML=clima.fc.map(f=>{
+    const dt=new Date(f.d+"T12:00");
+    return `<tr><td>${DIAS[dt.getDay()]} ${dt.getDate()}/${dt.getMonth()+1}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"?"}</td><td class="num">${f.pp.toFixed(1)} mm${f.prob!=null?" ("+f.prob+"%)":""}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"?"}</td></tr>`;}).join("");
+  const T=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  T("locationName",lugar||"Punto manual");
+  T("coordinatesValue",`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+  T("altitudeValue",alt!=null?Math.round(alt)+" m":"?");
+  T("airNowValue",clima.ahora.ta!=null?clima.ahora.ta.toFixed(1)+" ºC":"?");
+  T("humNowValue",clima.ahora.hr!=null?clima.ahora.hr+" %":"?");
+  T("windNowValue",(clima.ahora.viento!=null?clima.ahora.viento.toFixed(0)+" km/h":"?")+(clima.ahora.prec!=null?` · hoy ${clima.ahora.prec.toFixed(1)} mm`:""));
+  T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
+  T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
+  const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
+  const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
+  if(r14t)r14t.title=rTitle;
+  if(r30t)r30t.title=rTitle;
+  T2("rainSrc",prov?"pluviómetro":"modelo");
+  T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
+  const msEl=document.getElementById("metStationValue");
+  if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
+  if(prov&&live){
+    T("liveStationValue",
+      (live.ta!=null?live.ta.toFixed(1).replace(".",",")+" ºC":"?")+
+      (live.hr!=null?` · HR ${live.hr.toFixed(0)} %`:"")+
+      ` · hoy ${live.precHoy.toFixed(1).replace(".",",")} mm`);
+    const lsEl=document.getElementById("liveStationValue");
+    if(lsEl)lsEl.title=`Directo de ${prov.est} (${live.horas} h de hoy)${live.fint?" · último parte "+new Date(String(live.fint).replace(/([+-]\d{2})(\d{2})$/,"$1:$2")).toLocaleString("es-ES"):""}`;
+  }else if(prov){T("liveStationValue","directo no disponible");}
+  else T("liveStationValue","—");
+  renderAemetStatus(
+    !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
+    am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
+    am.estado==="lejos"?"Sin estación AEMET a menos de 25 km: lluvia según modelo.":
+    am.estado==="pocos-datos"?"La estación AEMET aún no tiene serie suficiente: lluvia según modelo.":
+    `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
+  T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
+  T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
+  if(det){det.textContent=floraCat||"sin determinar";det.title=habitatTxt||"";}
+  T("lastUpdate",ageMin>0?`Datos de hace ${ageMin} min`:"Actualizado "+new Date().toLocaleString("es-ES"));
+  renderAll();
+  renderMeteo();
+}
 async function predecir(etiqueta){
   const det=document.getElementById("habitatLine");
   const ringPctEl=document.getElementById("ringPct"), bannerTxtEl=document.getElementById("bannerTxt");
-  const ld=document.getElementById("loader");if(ld)ld.hidden=false;
+  const ld=document.getElementById("loader");
+  const pkey=lat.toFixed(4)+","+lon.toFixed(4);
+  const hit=calcCache.get(pkey); // punto ya visitado: sin red si tiene menos de 10 min
   if(ringPctEl)ringPctEl.textContent="…";
   if(bannerTxtEl)bannerTxtEl.textContent="Detectando parámetros del punto…";
   try{
+    if(hit&&Date.now()-hit.t<10*60e3){
+      pintar(hit.calc,Math.max(1,Math.round((Date.now()-hit.t)/60e3)));
+      return;
+    }
+    if(ld)ld.hidden=false;
     const [clima,suelo,lugar,dem]=await Promise.all([
       fetchClima(lat,lon),
       fetchSuelo(lat,lon).catch(()=>({})),
@@ -571,51 +628,11 @@ async function predecir(etiqueta){
     const mes=new Date().getMonth()+1;
     if(mfe&&mfe.categoria)floraNotaN=floraNiscalo(mfe.categoria,mfe.componentes);
     else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
-    lastCalc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
-      floraCat,floraNota,floraNotaN,phVal:suelo.ph??null,prov};
-    const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
-    const fcEl=document.getElementById("forecastBody");
-    if(fcEl)fcEl.innerHTML=clima.fc.map(f=>{
-      const dt=new Date(f.d+"T12:00");
-      return `<tr><td>${DIAS[dt.getDay()]} ${dt.getDate()}/${dt.getMonth()+1}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"?"}</td><td class="num">${f.pp.toFixed(1)} mm${f.prob!=null?" ("+f.prob+"%)":""}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"?"}</td></tr>`;}).join("");
-    const T=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-    T("locationName",lugar?lugar.split(",").slice(0,2).join(","):(etiqueta||"Punto manual"));
-    T("coordinatesValue",`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-    T("altitudeValue",alt!=null?Math.round(alt)+" m":"?");
-    T("airNowValue",clima.ahora.ta!=null?clima.ahora.ta.toFixed(1)+" ºC":"?");
-    T("humNowValue",clima.ahora.hr!=null?clima.ahora.hr+" %":"?");
-    T("windNowValue",(clima.ahora.viento!=null?clima.ahora.viento.toFixed(0)+" km/h":"?")+(clima.ahora.prec!=null?` · hoy ${clima.ahora.prec.toFixed(1)} mm`:""));
-    T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
-    T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
-    const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
-    const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
-    if(r14t)r14t.title=rTitle;
-    if(r30t)r30t.title=rTitle;
-    T2("rainSrc",prov?"pluviómetro":"modelo");
-    T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
-    const msEl=document.getElementById("metStationValue");
-    if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
-    if(prov&&live){
-      T("liveStationValue",
-        (live.ta!=null?live.ta.toFixed(1).replace(".",",")+" ºC":"?")+
-        (live.hr!=null?` · HR ${live.hr.toFixed(0)} %`:"")+
-        ` · hoy ${live.precHoy.toFixed(1).replace(".",",")} mm`);
-      const lsEl=document.getElementById("liveStationValue");
-      if(lsEl)lsEl.title=`Directo de ${prov.est} (${live.horas} h de hoy)${live.fint?" · último parte "+new Date(String(live.fint).replace(/([+-]\d{2})(\d{2})$/,"$1:$2")).toLocaleString("es-ES"):""}`;
-    }else if(prov){T("liveStationValue","directo no disponible");}
-    else T("liveStationValue","—");
-    renderAemetStatus(
-      !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
-      am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
-      am.estado==="lejos"?"Sin estación AEMET a menos de 25 km: lluvia según modelo.":
-      am.estado==="pocos-datos"?"La estación AEMET aún no tiene serie suficiente: lluvia según modelo.":
-      `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
-    T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
-    T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
-    if(det){det.textContent=floraCat||"sin determinar";det.title=habitatTxt||"";}
-    T("lastUpdate","Actualizado "+new Date().toLocaleString("es-ES"));
-    renderAll();
-    renderMeteo();
+    const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
+      floraCat,floraNota,floraNotaN,phVal:suelo.ph??null,prov,live,am};
+    calcCache.set(pkey,{t:Date.now(),calc});
+    if(calcCache.size>50)calcCache.delete(calcCache.keys().next().value);
+    pintar(calc,0);
   }catch(e){
     console.error("predecir:",e);
     const cEl=document.getElementById("condList"), bEl=document.getElementById("bannerTxt");

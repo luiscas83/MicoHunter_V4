@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.04">
+<link rel="stylesheet" href="styles.css?v=1.23">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.22</p>
+        <p class="version" title="Versión de la aplicación">v1.23</p>
       </div>
     </div>
       </div>
@@ -85,7 +85,7 @@
           </div>
         </div>
         <div class="probability-ring">
-          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/><circle class="ring-bg2" cx="60" cy="60" r="44"/><circle class="ring-fill ring-fill2" id="ringFill2" cx="60" cy="60" r="44"/></svg>
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/><circle class="ring-bg2" cx="60" cy="60" r="44" fill="none"/><circle class="ring-fill ring-fill2" id="ringFill2" cx="60" cy="60" r="44" fill="none"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
         <div class="ring-sub" id="ringSub">Cosecha hoy: —</div>
@@ -102,7 +102,7 @@
           </div>
         </div>
         <div class="probability-ring">
-          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/><circle class="ring-bg2" cx="60" cy="60" r="44"/><circle class="ring-fill ring-fill2" id="ringFillN2" cx="60" cy="60" r="44"/></svg>
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/><circle class="ring-bg2" cx="60" cy="60" r="44" fill="none"/><circle class="ring-fill ring-fill2" id="ringFillN2" cx="60" cy="60" r="44" fill="none"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
         <div class="ring-sub" id="ringSubN">Cosecha hoy: —</div>
@@ -223,10 +223,10 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.22 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.23 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.22"></script>
+<script src="app.js?v=1.23"></script>
 </body>
 </html>
