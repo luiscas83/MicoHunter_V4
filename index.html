@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.12</p>
+        <p class="version" title="Versión de la aplicación">v1.15</p>
       </div>
     </div>
       </div>
@@ -67,6 +67,7 @@
         <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Lluvia 14 días</span><span class="tv" id="rain14Value" title="1 mm = 1 L/m²">—</span></div>
         <div class="terrain-item"><span class="ti">🌧️</span><span class="tl">Reserva 30 días</span><span class="tv" id="rain30Value" title="1 mm = 1 L/m²">—</span></div>
         <div class="terrain-item"><span class="ti">📡</span><span class="tl">Estación meteo</span><span class="tv" id="metStationValue">—</span></div>
+        <div class="terrain-item"><span class="ti">🔴</span><span class="tl">Ahora en estación</span><span class="tv" id="liveStationValue">—</span></div>
         <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Suelo</span><span class="tv" id="soilTypeValue">—</span></div>
         <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH 5-15cm</span><span class="tv" id="phValue">—</span></div>
         <div class="terrain-item"><span class="ti">🌲</span><span class="tl">Hábitat en el punto</span><span class="tv" id="habitatLine">consultando…</span></div>
@@ -162,7 +163,7 @@
     <h4>De dónde salen los datos</h4>
     <ul class="method-list">
       <li><strong>El tiempo</strong> — estaciones meteorológicas reales de los últimos 55 días más el día actual (Open-Meteo). Para el pasado se usa lo observado, no previsiones: lo que llovió, llovió. La temperatura del suelo se mide a 18 cm, la profundidad del micelio.</li>
-      <li><strong>La lluvia, con pluviómetro si se puede</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Por eso, si la app lleva clave de AEMET, la lluvia de 14/30 días y las mínimas/máximas salen solo del pluviómetro oficial más cercano (menos de 25 km), sin mezclas con el modelo: las ventanas terminan en el último dato del pluviómetro (suele llevar unos días de retraso). Su nombre y distancia se ven en la fila «Estación meteo». El resto (humedad, suelo, viento) sigue viniendo del modelo.</li>
+      <li><strong>La lluvia, con pluviómetro si se puede</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Por eso, si la app lleva clave de AEMET, casi todo el clima sale del pluviómetro oficial más cercano (menos de 25 km), sin mezclas con el modelo: lluvia de 14/30 días, mínimas/máximas, temperatura media, humedad media y racha de viento. Las ventanas usan el diario validado más lo que lleva hoy según el parte horario en directo (todo AEMET). Los días intermedios aún sin validar (p. ej. 5–6 oct) no existen en ninguna fuente oficial hasta que se publican; solo los tiene el archivo privado de x-y.es. Su nombre y distancia se ven en la fila «Estación meteo», y la fila «Ahora en estación» trae el parte horario en directo (temp, humedad y lo que lleva hoy). Del modelo solo quedan la temperatura del suelo a 18 cm (AEMET no guarda histórico) y la altitud del punto.</li>
       <li><strong>El suelo</strong> — mapa mundial de suelos SoilGrids: acidez, tipo de tierra y materia orgánica a 5–15 cm. Es una estimación por cuadrícula de 250 m, no un análisis de tu parcela.</li>
       <li><strong>El bosque</strong> — Mapa Forestal de España del Ministerio (MITECO): se preguntan una por una unas 36 formaciones (¿hay hayedo aquí? ¿pinar de albar?…) en 120 m a la redonda, y se lee el nombre científico del árbol dominante. Si no hay bosque, su capa de usos dice si es pradera, pasto o matorral con el código oficial.</li>
       <li><strong>La ciudad</strong> — mapa OpenStreetMap, solo como último recurso para distinguir una plaza de un descampado contando edificios en 150 m. Nunca se usa para el bosque.</li>
@@ -198,10 +199,10 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.12 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.15 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.12"></script>
+<script src="app.js?v=1.15"></script>
 </body>
 </html>

@@ -287,7 +287,8 @@ async function aemetOverride(la,lo){
   if(!serie||serie.dia!==f(hoy)){
     const rows=await aemetGet(`/api/valores/climatologicos/diarios/datos/fechaini/${f(ini)}T00:00:00UTC/fechafin/${f(hoy)}T00:00:00UTC/estacion/${best.ind}`);
     const by={};
-    for(const r of rows||[]){if(r&&r.fecha)by[r.fecha.slice(0,10)]={prec:numA(r.prec),tmin:numA(r.tmin),tmax:numA(r.tmax)};}
+    for(const r of rows||[]){if(r&&r.fecha)by[r.fecha.slice(0,10)]={prec:numA(r.prec),tmin:numA(r.tmin),tmax:numA(r.tmax),
+      tmed:numA(r.tmed),hrmed:numA(r.hrMedia),racha:numA(r.racha)};}
     serie={dia:f(hoy),by};
     aemetDayCache.set(best.ind,serie);
   }
@@ -305,16 +306,44 @@ async function aemetOverride(la,lo){
     if(v.tmax!=null){mx=mx==null?v.tmax:Math.max(mx,v.tmax);}
     if(v.tmin!=null||v.tmax!=null)c++;}return{mn,mx,c};};
   const s14=suma(14), s30=suma(30), e7=ext(7);
+  const media=(n,k)=>{let s=0,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v[k]!=null){s+=v[k];c++;}}return{s,c};};
+  const rmax=n=>{let m=null,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v.racha!=null){m=m==null?v.racha:Math.max(m,v.racha);c++;}}return{m,c};};
+  const ta7=media(7,"tmed"), hr7=media(7,"hrmed"), w7=rmax(7);
   if(s14.c<10||s30.c<20||e7.mn==null||e7.mx==null||e7.c<5)return{estado:"pocos-datos"};
-  const retro=lag=>{let p14=0,p30=0,c14=0,mn=null,mx=null;
+  const retro=lag=>{let p14=0,p30=0,c14=0,mn=null,mx=null,sta=0,shr=0,cta=0,chr=0,vm=null;
     for(let i=0;i<14;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null){p14+=v.prec;c14++;}}
     for(let i=0;i<30;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null)p30+=v.prec;}
     for(let i=0;i<7;i++){const v=rec(dia(lag+i));if(!v)continue;
       if(v.tmin!=null)mn=mn==null?v.tmin:Math.min(mn,v.tmin);
-      if(v.tmax!=null)mx=mx==null?v.tmax:Math.max(mx,v.tmax);}
-    return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null};};
-  return{estado:"ok",est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,
-    p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,r15:retro(15),r21:retro(21)};
+      if(v.tmax!=null)mx=mx==null?v.tmax:Math.max(mx,v.tmax);
+      if(v.tmed!=null){sta+=v.tmed;cta++;}
+      if(v.hrmed!=null){shr+=v.hrmed;chr++;}
+      if(v.racha!=null)vm=vm==null?v.racha:Math.max(vm,v.racha);}
+    return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null,
+      ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
+  const r15=retro(15), r21=retro(21);
+  return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,
+    p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
+    ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
+    r15,r21};
+}
+const aemetLiveCache=new Map(); // ind -> {t, live} (el directo cambia cada hora: TTL 30 min)
+async function aemetAhora(ind){ // parte horario en directo: temp/HR/viento ahora + lluvia de hoy
+  const c=aemetLiveCache.get(ind);
+  if(c&&Date.now()-c.t<30*60e3)return c.live;
+  const rows=await aemetGet(`/api/observacion/convencional/datos/estacion/${ind}`);
+  if(!rows||!rows.length)throw new Error("sin parte horario");
+  const mad=d=>new Date(String(d).replace(/([+-]\d{2})(\d{2})$/,"$1:$2")).toLocaleDateString("en-CA",{timeZone:"Europe/Madrid"});
+  const hoyM=mad(new Date());
+  let precHoy=0, horas=0;
+  for(const r of rows){
+    if(r&&r.fint&&mad(r.fint)===hoyM&&r.prec!=null){precHoy+=+r.prec;horas++;}
+  }
+  const u=rows[rows.length-1];
+  const live={ta:u.ta??null,hr:u.hr??null,vv:u.vv??null,vmax:u.vmax??null,
+    precHoy:+precHoy.toFixed(1),horas,fint:u.fint||null};
+  aemetLiveCache.set(ind,{t:Date.now(),live});
+  return live;
 }
 function renderAemetStatus(txt){const el=document.getElementById("aemetStatus");if(el)el.textContent=txt;}
 // --- buscador: lugares y coordenadas (decimal, DM, DMS, N/S/E/O, coma es, UTM) ---
@@ -495,13 +524,30 @@ async function predecir(etiqueta){
     try{am=await aemetOverride(lat,lon);}
     catch(e){console.warn("AEMET:",e);am={estado:"error",msg:aemetErrMsg(e)};}
     const prov=(am&&am.estado==="ok")?am:null;
+    let live=null;
     if(prov){
-      clima.p14=prov.p14;clima.p30=prov.p30;
+      try{live=await aemetAhora(prov.ind);}catch(e){live=null;}
+      // Hoy parcial del parte horario (mismo pluviómetro): la ventana termina hoy, no en el último diario
+      if(live&&live.horas>0&&live.precHoy!=null){
+        prov.hoyParcial={mm:live.precHoy,horas:live.horas};
+        clima.p14=+(prov.p14+live.precHoy).toFixed(1);
+        clima.p30=+(prov.p30+live.precHoy).toFixed(1);
+      }else{
+        clima.p14=prov.p14;clima.p30=prov.p30;
+      }
       clima.tmin=prov.tmin;clima.tmax=prov.tmax;
+      if(prov.ta!=null)clima.ta=prov.ta;
+      if(prov.hr!=null)clima.hr=prov.hr;
+      if(prov.vmax!=null)clima.vientoMax=prov.vmax;
       Object.assign(clima.retro,{p14:prov.r15.p14,p30:prov.r15.p30});
       Object.assign(clima.retro21,{p14:prov.r21.p14,p30:prov.r21.p30});
       if(prov.r15.ok)Object.assign(clima.retro,{tmin:prov.r15.tmin,tmax:prov.r15.tmax});
       if(prov.r21.ok)Object.assign(clima.retro21,{tmin:prov.r21.tmin,tmax:prov.r21.tmax});
+      for(const par of[[clima.retro,prov.r15],[clima.retro21,prov.r21]]){
+        if(par[1].ta!=null)par[0].ta=par[1].ta;
+        if(par[1].hr!=null)par[0].hr=par[1].hr;
+        if(par[1].vmax!=null)par[0].vientoMax=par[1].vmax;
+      }
     }
     const mes=new Date().getMonth()+1;
     if(mfe&&mfe.categoria)floraNotaN=floraNiscalo(mfe.categoria,mfe.componentes);
@@ -523,16 +569,25 @@ async function predecir(etiqueta){
     T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
     T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
     const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
-    const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
+    const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
     if(r14t)r14t.title=rTitle;
     if(r30t)r30t.title=rTitle;
     T2("rainSrc",prov?"pluviómetro":"modelo");
     T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
     const msEl=document.getElementById("metStationValue");
     if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
+    if(prov&&live){
+      T("liveStationValue",
+        (live.ta!=null?live.ta.toFixed(1).replace(".",",")+" ºC":"?")+
+        (live.hr!=null?` · HR ${live.hr.toFixed(0)} %`:"")+
+        ` · hoy ${live.precHoy.toFixed(1).replace(".",",")} mm`);
+      const lsEl=document.getElementById("liveStationValue");
+      if(lsEl)lsEl.title=`Directo de ${prov.est} (${live.horas} h de hoy)${live.fint?" · último parte "+new Date(String(live.fint).replace(/([+-]\d{2})(\d{2})$/,"$1:$2")).toLocaleString("es-ES"):""}`;
+    }else if(prov){T("liveStationValue","directo no disponible");}
+    else T("liveStationValue","—");
     renderAemetStatus(
       !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
-      am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}).`:
+      am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
       am.estado==="lejos"?"Sin estación AEMET a menos de 25 km: lluvia según modelo.":
       am.estado==="pocos-datos"?"La estación AEMET aún no tiene serie suficiente: lluvia según modelo.":
       `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
