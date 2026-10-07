@@ -35,7 +35,7 @@ NISCALO = {
     "p30_reserva": (25, 100),
     "ph": (4.5, 8.0),     # rango amplio
     "altitud": (100, 1600),
-    "temporada": {9: 0.85, 10: 1.0, 11: 0.9, 12: 0.6},  # Sep-Dic, pico Oct
+    "temporada": {9: 0.85, 10: 0.9, 11: 1.0, 12: 0.6},  # Sep-Dic, pico Nov
     "veto_tmin": -3,       # aguanta heladas flojas (boleto: 0)
     "flora": "solo pinar, cualquier edad; mixto con pino vale",
 }

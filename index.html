@@ -15,12 +15,13 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.17</p>
+        <p class="version" title="Versión de la aplicación">v1.21</p>
       </div>
     </div>
       </div>
 </header>
 <main class="main">
+<div id="loader" class="loader" hidden><div class="loading-spinner"></div><p>Actualizando meteo del punto…</p></div>
 <nav class="nav">
   <button class="nav-btn active" data-section="dashboard">🗺️ Dashboard</button>
   <button class="nav-btn" data-section="meteorologia">🌤️ Meteorología</button>
@@ -114,19 +115,15 @@
 <section id="meteorologia" class="section">
   <div class="section-head"><h2>🌤️ Meteorología del punto</h2>
   <p id="metTitle">Pulsa el mapa para ver la meteo del punto.</p></div>
-  <div class="card"><h3>Hoy por tramos</h3><div class="terrain-list" id="metNow"></div>
-    <p class="hint-text">Previsión por tramos de 3 horas para hoy.</p></div>
+  <div class="card"><h3>Hoy por horas</h3><div class="terrain-list" id="metNow"></div>
+    <p class="hint-text">Previsión hora a hora para hoy.</p></div>
   <div class="card" style="margin-top:20px"><h3>Previsión 7 días</h3>
-    <div id="metChartFc"></div>
-    <div class="met-legend"><span><i style="background:var(--primary)"></i>Lluvia diaria</span><span><i style="background:var(--warning)"></i>Máx</span><span><i style="background:var(--primary-light)"></i>Mín</span></div>
     <div class="table-wrapper"><table class="param-table">
       <thead><tr><th>Día</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Prob.</th><th style="text-align:right">Viento</th></tr></thead>
       <tbody id="metFcBody"></tbody>
     </table></div>
   </div>
   <div class="card" style="margin-top:20px"><h3>Observado últimos 7 días</h3>
-    <div id="metChartObs"></div>
-    <div class="met-legend"><span><i style="background:var(--primary)"></i>Lluvia diaria</span><span><i style="background:var(--warning)"></i>Acumulada</span></div>
     <div class="table-wrapper"><table class="param-table">
       <thead><tr><th>Día</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Acumulada</th></tr></thead>
       <tbody id="metObsBody"></tbody>
@@ -140,8 +137,8 @@
   <p>Marca cuáles se muestran en el dashboard. El estado de cada una corresponde al punto actual del mapa.</p></div>
   <div class="card"><h3>Selección</h3><div id="speciesSelector" class="mushroom-selector"></div></div>
   <div class="card" style="margin-top:20px"><h3>Ficha por especie</h3><div class="mushroom-cards-grid" id="fichaGrid">
-    <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/boletus.jpg" alt="Boleto / Hongo" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Boleto / Hongo</span><span class="mushroom-scientific">Boletus edulis</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a noviembre, pico en octubre, en pinares, hayedos, robledales y castañares de media montaña</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC, óptimo 12–16 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> 0 ºC</p><p class="ficha-p"><strong>Grados día necesarios:</strong> — (este motor usa ventana observada de 30 días)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 60–100 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 15 días</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar, Bosque mixto, Hayedo, Robledal, Castañeral</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 6,5 · prefiere ácidos</p><p class="ficha-p"><strong>Altitud:</strong> 600–1800 m</p></div><div class="card-evidencia"><span class="evidencia-badge">Parámetros publicados</span><p class="fuente">Fuente: Lamartiniere &amp; Hoffman 2025 (óptimo 13,2 ºC) · Martínez-Peña et al. 2012 · Santolamazza-Carbone et al. 2023</p></div></div>
-    <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/niscalo.webp" alt="Níscalo / Rovelló" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Níscalo / Rovelló</span><span class="mushroom-scientific">Lactarius deliciosus</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a diciembre, pico en octubre-noviembre, solo bajo pinos (el pinar joven y aclarado rinde más)</p><p class="ficha-p"><strong>Comestibilidad:</strong> Buena (nunca crudo)</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (igual que el boleto, sin dato propio)</p><p class="ficha-p"><strong>Mínima crítica:</strong> −3 ºC</p><p class="ficha-p"><strong>Grados día necesarios:</strong> — (este motor usa ventana observada de 30 días)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 50–90 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 21 días (primeros a los 7–15 días)</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 8,0 · le importa poco</p><p class="ficha-p"><strong>Altitud:</strong> 100–1600 m</p></div><div class="card-evidencia"><span class="evidencia-badge">Parámetros publicados</span><p class="fuente">Fuente: Martínez-Peña et al. 2012 (grupo <em>deliciosus</em>) · fichas de campo · umbrales validados por el usuario</p></div></div>
+    <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/boletus.jpg" alt="Boleto / Hongo" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Boleto / Hongo</span><span class="mushroom-scientific">Boletus edulis</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a noviembre, pico en octubre, en pinares, hayedos, robledales y castañares de media montaña</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC, óptimo 12–16 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> 0 ºC</p><p class="ficha-p"><strong>Grados día necesarios:</strong> — (este motor usa ventana observada de 30 días)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 60–100 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 15 días</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar, Bosque mixto, Hayedo, Robledal, Castañeral</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 6,5 · prefiere ácidos</p><p class="ficha-p"><strong>Altitud:</strong> 600–1800 m</p><p class="ficha-p"><strong>Identificación:</strong> sombrero pardo 8–25 cm con margen más claro; poros blancos→amarillos→oliva que no azulean; pie macizo con retículo blanquecino arriba; carne blanca inmutable, sabor dulce a avellana.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Rubroboletus satanas</em> (tóxica: poros rojo sangre + azuleo rápido + retículo rojo) · <em>Tylopilus felleus</em> (poros rosados + amargor extremo, arruina la cesta) · <em>Caloboletus calopus</em> (pie rojo + azulea + amargo). Regla: poros rojos o azuleo rápido → fuera.</div><p class="ficha-p"><strong>Cocina:</strong> excelente bien cocinada (nunca cruda por defecto); el secado concentra el aroma; no lavar a remojo.</p><p class="ficha-p"><strong>Seguridad:</strong> guía orientativa, no identificación. Ante la duda, asociación micológica o experto.</p></div></div>
+    <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/niscalo.webp" alt="Níscalo / Rovelló" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Níscalo / Rovelló</span><span class="mushroom-scientific">Lactarius deliciosus</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a diciembre, pico en noviembre (octubre casi igual), solo bajo pinos (el pinar joven y aclarado rinde más)</p><p class="ficha-p"><strong>Comestibilidad:</strong> Buena (nunca crudo)</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (igual que el boleto, sin dato propio)</p><p class="ficha-p"><strong>Mínima crítica:</strong> −3 ºC</p><p class="ficha-p"><strong>Grados día necesarios:</strong> — (este motor usa ventana observada de 30 días)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 50–90 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 21 días (primeros a los 7–15 días)</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 8,0 · le importa poco</p><p class="ficha-p"><strong>Altitud:</strong> 100–1600 m</p><p class="ficha-p"><strong>Identificación:</strong> sombrero naranja teja 4–15 cm con bandas concéntricas, embudado de adulto; látex naranja zanahoria que verdea lento; carne granulosa que se rompe como tiza; sabor dulce, nunca picante; siempre bajo pino. El verdeado es oxidación normal, no podredumbre.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Lactarius torminosus</em> (tóxico: látex blanco + margen lanoso + picante, bajo abedul) · <em>Lactarius chrysorrheus</em> (tóxico: látex blanco→amarillo azufre + picante, bajo robles). Buenos primos: <em>L. sanguifluus</em> y <em>L. vinosus</em> (látex vinoso, excelentes). Regla: látex blanco o amarillo → fuera.</div><p class="ficha-p"><strong>Cocina:</strong> buena a la brasa o plancha; nunca crudo (irritante); no lavar (absorbe agua); no secar: mejor escabeche o congelado tras saltear.</p><p class="ficha-p"><strong>Seguridad:</strong> guía orientativa, no identificación. Ante la duda, asociación micológica o experto.</p></div></div>
   </div></div>
 </section>
 
@@ -174,7 +171,7 @@
       <li><strong>¿Ha llovido bastante?</strong> Mira la lluvia de los últimos 14 y 30 días. El boleto necesita unos 40 mm para arrancar y rinde con 60–100; el níscalo, más agradecido, arranca con 25 y rinde con 50–90. Sin agua no hay nada, por mucho que lo demás acompañe.</li>
       <li><strong>¿Hace la temperatura justa?</strong> El boleto quiere fresquito otoñal (unos 13 ºC en el aire) y el níscalo algo más de margen (12–18 ºC). El suelo a 18 cm de profundidad, donde vive el micelio, debe estar templado. La helada, el calor fuerte o mucho viento lo estropean todo, y eso veta: pone el marcador a cero directamente.</li>
       <li><strong>¿Hay bosque del bueno?</strong> Pregunta al Mapa Forestal oficial qué árboles hay en ese punto. El boleto acepta pinar, hayedo, robledal y castañar; el níscalo, solo pinar. Pradera o ciudad valen cero para los dos. Si el bosque es mezcla, cuenta el mejor árbol.</li>
-      <li><strong>¿Es su época, su altura y su suelo?</strong> El boleto sale de septiembre a noviembre con pico en octubre (600–1800 m, suelo ácido); el níscalo de septiembre a diciembre con pico en octubre (100–1600 m, le vale casi cualquier pH).</li>
+      <li><strong>¿Es su época, su altura y su suelo?</strong> El boleto sale de septiembre a noviembre con pico en octubre (600–1800 m, suelo ácido); el níscalo de septiembre a diciembre con pico en noviembre (100–1600 m, le vale casi cualquier pH).</li>
     </ol>
     <p class="hint">El truco del cálculo: las cinco notas se <strong>multiplican</strong>, no se suman. Si una vale cero (sin lluvia, helada o sin bosque), el total es cero aunque las otras cuatro sean perfectas. Por eso a veces el día está precioso y la app dice que no vayas.</p>
     <h4>La doble comprobación: mirar atrás para acertar hoy</h4>
@@ -223,10 +220,10 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.17 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.21 — MFE: Ministerio para la Transición Ecológica y el Reto Demográfico (CC BY 4.0) · Clima: Open-Meteo · Suelo: SoilGrids/ISRIC · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Foto: Pixabay.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=1.17"></script>
+<script src="app.js?v=1.21"></script>
 </body>
 </html>

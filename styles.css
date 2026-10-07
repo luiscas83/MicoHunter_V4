@@ -76,7 +76,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .mushroom-card{text-align:center}
 .mushroom-title-section{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;text-align:left}
 .mushroom-icon-large{font-size:3rem;flex-shrink:0}
-.mushroom-photo{width:96px;height:96px;object-fit:cover;border-radius:10px}
+.mushroom-photo{width:96px;height:96px;object-fit:cover;border-radius:10px;box-shadow:0 6px 14px rgba(59,47,34,.35)}
+#fichaGrid .card{box-shadow:0 12px 26px rgba(59,47,34,.16)}
+.toxi-box{margin:10px 0;padding:10px 12px;background:#f9e8e2;border:1px solid #d98a76;border-left:4px solid var(--danger);border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6}
+.toxi-box strong{color:var(--danger)}
+.loader{position:fixed;inset:0;background:rgba(59,47,34,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:2000;color:#fff;font-weight:600}
+.loader[hidden]{display:none}
+.loader p{background:rgba(0,0,0,.4);padding:8px 18px;border-radius:999px;font-size:.9rem}
 .mushroom-name{display:block;margin:0;font-size:1.1rem;line-height:1.3}
 .mushroom-scientific{display:block;font-size:.8rem;color:var(--text-light);font-style:italic;margin:0;line-height:1.3}
 .probability-ring{position:relative;width:120px;height:120px;margin:0 auto 16px}
@@ -141,16 +147,6 @@ ul.method-list{list-style:disc}
 .param-table th{text-align:left;font-weight:600;padding:8px 10px;border-bottom:2px solid var(--primary);color:var(--text);white-space:nowrap;vertical-align:bottom}
 .param-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-light)}
 .param-table td.num{text-align:right;font-variant-numeric:tabular-nums}
-.met-chart{width:100%;height:auto;display:block}
-.met-grid{stroke:var(--border);stroke-width:1}
-.met-bar{fill:var(--primary)}
-.met-line{fill:none;stroke:var(--warning);stroke-width:2}
-.met-dot{fill:var(--warning)}
-.met-lineB{fill:none;stroke:var(--primary-light);stroke-width:2}
-.met-dotB{fill:var(--primary-light)}
-.met-tick{font-size:9px;fill:var(--text-light);font-family:inherit}
-.met-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem;color:var(--text-light);margin:2px 0 10px}
-.met-legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
 .glossary{margin:0}
 .glossary dt{margin-top:14px;font-size:.9rem;font-weight:600;color:var(--text)}
 .glossary dt:first-child{margin-top:8px}

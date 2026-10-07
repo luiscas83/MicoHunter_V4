@@ -20,7 +20,7 @@ const fPH2=p=>{if(p<4)return .2;if(p<4.5)return .2+.8*(p-4)/.5;if(p<=8)return 1;
   if(p<=8.5)return 1-.6*(p-8)/.5;return 0;};
 const fAlt2=h=>{if(h>=100&&h<=1600)return 1;if(h>=0&&h<100)return .6;
   if(h>1600&&h<=1900)return 1-(h-1600)/300;return 0;};
-const fMes2=m=>m===10?1:m===9?.85:m===11?.9:m===12?.6:m===8?.3:.1;
+const fMes2=m=>m===11?1:m===10?.9:m===9?.85:m===12?.6:m===8?.3:.1;
 function floraNiscalo(cat,componentes){ // solo pinar; mixto con pino vale
   if(cat==="Pinar")return 1;
   if(cat==="Bosque mixto"&&(componentes||[]).includes("Pinar"))return 1;
@@ -107,16 +107,10 @@ async function fetchClima(la,lo){
     const H2=hh&&hh.hourly, hoyStr=D.time[n];
     if(H2&&H2.time){
       const idx=[];for(let i=0;i<H2.time.length;i++)if(String(H2.time[i]).slice(0,10)===hoyStr)idx.push(i);
-      const avgN=a=>{const v=a.filter(x=>x!=null);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;};
-      for(let s=0;s<8;s++){
-        const ii=idx.filter(i=>{const h=+String(H2.time[i]).slice(11,13);return h>=s*3&&h<s*3+3;});
-        if(!ii.length)continue;
-        const g=k=>ii.map(i=>H2[k][i]);
-        const tA=avgN(g("temperature_2m")), hR=avgN(g("relative_humidity_2m"));
-        const vW=g("wind_speed_10m").filter(x=>x!=null), pB=g("precipitation_probability").filter(x=>x!=null);
-        hoyTramos.push({h:String(s*3).padStart(2,"0")+"–"+String(s*3+3).padStart(2,"0"),
-          ta:tA,pp:g("precipitation").reduce((sum,x)=>sum+(x??0),0),hr:hR,
-          w:vW.length?Math.max(...vW):null,prob:pB.length?Math.max(...pB):null});
+      for(const i of idx){
+        hoyTramos.push({h:String(H2.time[i]).slice(11,13)+":00",
+          ta:H2.temperature_2m[i]??null,pp:H2.precipitation[i]??0,hr:H2.relative_humidity_2m[i]??null,
+          w:H2.wind_speed_10m[i]??null,prob:H2.precipitation_probability[i]??null});
       }
     }
   }catch(e){hoyTramos=[];}
@@ -507,6 +501,7 @@ function nivelIcon(n){return n==="óptimo"?"🟢":n==="caliente"?"🟡":n==="tib
 async function predecir(etiqueta){
   const det=document.getElementById("habitatLine");
   const ringPctEl=document.getElementById("ringPct"), bannerTxtEl=document.getElementById("bannerTxt");
+  const ld=document.getElementById("loader");if(ld)ld.hidden=false;
   if(ringPctEl)ringPctEl.textContent="…";
   if(bannerTxtEl)bannerTxtEl.textContent="Detectando parámetros del punto…";
   try{
@@ -626,6 +621,8 @@ async function predecir(etiqueta){
     const cEl=document.getElementById("condList"), bEl=document.getElementById("bannerTxt");
     if(cEl)cEl.innerHTML=`<div class="alert-box">Error red/API: ${e.message}. Revisa conexión y reintenta (F12 → Console para detalle).</div>`;
     if(bEl)bEl.textContent="No se pudo calcular.";
+  }finally{
+    const ld2=document.getElementById("loader");if(ld2)ld2.hidden=true;
   }
 }
 function renderAll(){
@@ -674,40 +671,6 @@ function renderAll(){
   renderAnalysis();
   renderNiscalo();
 }
-function svgBars(vals,labels,fmt,line,lineFmt){
-  const W=360,H=176,padL=32,padB=20,padT=8;
-  const max=Math.max(1,...vals,...(line||[]));
-  const n=vals.length, iw=(W-padL-6)/n;
-  const X=i=>padL+iw*i, Y=v=>H-padB-(H-padB-padT)*Math.min(v,max)/max;
-  let s=`<svg viewBox="0 0 ${W} ${H}" class="met-chart" role="img">`;
-  for(const g of[0,.5,1]){const y=Y(max*g);
-    s+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-3}" y2="${y.toFixed(1)}" class="met-grid"/><text x="1" y="${(y+3).toFixed(1)}" class="met-tick">${+(max*g).toFixed(max<10?1:0)}</text>`;}
-  vals.forEach((v,i)=>{
-    s+=`<rect x="${(X(i)+1.5).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${Math.max(iw-3,1).toFixed(1)}" height="${Math.max(H-padB-Y(v),0).toFixed(1)}" class="met-bar"><title>${labels[i]}: ${fmt(v)}</title></rect>`;
-    s+=`<text x="${(X(i)+iw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" class="met-tick">${labels[i]}</text>`;});
-  if(line&&line.length===n){
-    const pts=line.map((v,i)=>`${(X(i)+iw/2).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
-    s+=`<polyline points="${pts}" class="met-line"/>`;
-    line.forEach((v,i)=>{s+=`<circle cx="${(X(i)+iw/2).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" class="met-dot"><title>${labels[i]}: ${lineFmt?lineFmt(v):fmt(v)}</title></circle>`;});
-  }
-  return s+"</svg>";
-}
-function svgLines(sA,sB,labels,fmt,nA,nB){
-  const W=360,H=176,padL=32,padB=20,padT=8;
-  const all=[...sA,...sB].filter(v=>v!=null), lo=Math.min(...all), hi=Math.max(...all,lo+1);
-  const n=sA.length, iw=(W-padL-6)/n;
-  const X=i=>padL+iw*i+iw/2, Y=v=>H-padB-(H-padB-padT)*(v-lo)/(hi-lo);
-  let s=`<svg viewBox="0 0 ${W} ${H}" class="met-chart" role="img">`;
-  for(const g of[0,.5,1]){const v=lo+(hi-lo)*g, y=Y(v);
-    s+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-3}" y2="${y.toFixed(1)}" class="met-grid"/><text x="1" y="${(y+3).toFixed(1)}" class="met-tick">${v.toFixed(0)}º</text>`;}
-  for(const pack of[[sA,nA||"máx","met-line","met-dot"],[sB,nB||"mín","met-lineB","met-dotB"]]){
-    const pts=pack[0].map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
-    s+=`<polyline points="${pts}" class="${pack[2]}"/>`;
-    pack[0].forEach((v,i)=>{s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" class="${pack[3]}"><title>${labels[i]} ${pack[1]}: ${fmt(v)}</title></circle>`;});
-  }
-  sA.forEach((v,i)=>{s+=`<text x="${X(i).toFixed(1)}" y="${H-6}" text-anchor="middle" class="met-tick">${labels[i]}</text>`;});
-  return s+"</svg>";
-}
 function renderMeteo(){
   if(!document.getElementById("metTitle"))return;
   if(!lastCalc){T2("metTitle","Pulsa el mapa para ver la meteo del punto.");return;}
@@ -717,15 +680,11 @@ function renderMeteo(){
   T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
   const tramos=clima.hoyTramos||[];
   setHTML("metNow",tramos.length?
-    `<div class="table-wrapper"><table class="param-table"><thead><tr><th>Tramo</th><th style="text-align:right">Temp</th><th style="text-align:right">Lluvia</th><th style="text-align:right">HR</th><th style="text-align:right">Viento</th></tr></thead><tbody>`+
+    `<div class="table-wrapper"><table class="param-table"><thead><tr><th>Hora</th><th style="text-align:right">Temp</th><th style="text-align:right">Lluvia</th><th style="text-align:right">HR</th><th style="text-align:right">Viento</th></tr></thead><tbody>`+
     tramos.map(s=>`<tr><td>${s.h}</td><td class="num">${s.ta!=null?s.ta.toFixed(0)+"º":"—"}</td><td class="num">${s.pp.toFixed(1)} mm${s.prob!=null?" ("+s.prob+"%)":""}</td><td class="num">${s.hr!=null?s.hr.toFixed(0)+" %":"—"}</td><td class="num">${s.w!=null?s.w.toFixed(0)+" km/h":"—"}</td></tr>`).join("")+
     `</tbody></table></div>`
     :`<p class="hint-text">Tramos horarios no disponibles.</p>`);
-  const fcD=(clima.fc||[]), fcLab=fcD.map(f=>fD(f.d)), fcPp=fcD.map(f=>f.pp),
-        fcTx=fcD.map(f=>f.tx??null), fcTn=fcD.map(f=>f.tn??null);
-  const hasT=fcTx.length>0&&fcTx.every(v=>v!=null)&&fcTn.every(v=>v!=null);
-  setHTML("metChartFc",fcD.length?
-    svgBars(fcPp,fcLab,v=>v.toFixed(1)+" mm")+(hasT?svgLines(fcTx,fcTn,fcLab,v=>v.toFixed(0)+"º"):""):"");
+  const fcD=(clima.fc||[]);
   setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
   let ac=0;
@@ -734,9 +693,6 @@ function renderMeteo(){
     if(p!=null)ac+=p;
     return{f:o.f,p,tx:o.tx,tn:o.tn,ac};
   });
-  setHTML("metChartObs",obsRows.length?
-    svgBars(obsRows.map(o=>o.p??0),obsRows.map(o=>fD(o.f)),v=>v.toFixed(1)+" mm",
-      obsRows.map(o=>o.ac),v=>v.toFixed(1)+" mm acumulada"):"");
   setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
   T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado y previsión del modelo (sin pluviómetro AEMET en 25 km).`);
 }
@@ -814,7 +770,7 @@ function renderAnalysis(){
     fr("Altitud",r.terreno,`${alt!=null?Math.round(alt)+" m":"?"}: ${(alt??1000)>=100&&(alt??1000)<=1600?"en cota del níscalo":"fuera de cota"}`)+
     fr("pH del suelo",r.suelo,`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato"}: ${phV!=null?(phV>=4.5&&phV<=8?"dentro de su amplio rango":"fuera de rango"):"sin dato, no penaliza"}`)+
     fr("Hábitat",r.flora,`${floraTxt}: ${r.flora>0?"hay pino hospedante":"sin pino, aquí no fructifica"}`)+
-    fr("Estación",r.temp,`${mm}: ${(mes>=9&&mes<=12)?"temporada (pico octubre)":"fuera de temporada"}`)+
+    fr("Estación",r.temp,`${mm}: ${(mes>=9&&mes<=12)?"temporada (pico noviembre)":"fuera de temporada"}`)+
     fr("Veto",r.veto?0:1,r.veto?"activo (frío desde −3 ºC): anula el clima":"ninguno");
   }
   document.getElementById("analysisBody").innerHTML=html;
