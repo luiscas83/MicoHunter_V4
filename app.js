@@ -538,15 +538,6 @@ function pintar(calc,ageMin){
   T("metStationValue",prov?`${prov.est} · a ${prov.dist} km`:"Modelo Open-Meteo (rejilla ~10 km)");
   const msEl=document.getElementById("metStationValue");
   if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
-  if(prov&&live){
-    T("liveStationValue",
-      (live.ta!=null?live.ta.toFixed(1).replace(".",",")+" ºC":"?")+
-      (live.hr!=null?` · HR ${live.hr.toFixed(0)} %`:"")+
-      ` · hoy ${live.precHoy.toFixed(1).replace(".",",")} mm`);
-    const lsEl=document.getElementById("liveStationValue");
-    if(lsEl)lsEl.title=`Directo de ${prov.est} (${live.horas} h de hoy)${live.fint?" · último parte "+new Date(String(live.fint).replace(/([+-]\d{2})(\d{2})$/,"$1:$2")).toLocaleString("es-ES"):""}`;
-  }else if(prov){T("liveStationValue","directo no disponible");}
-  else T("liveStationValue","—");
   renderAemetStatus(
     !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
     am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
@@ -687,11 +678,10 @@ function renderAll(){
   const hoy=r.score>=40, hubo=rR.score>=40;
   lastCalc.r=r;lastCalc.rR=rR;lastCalc.cR=cR;
   const rb=clima.restB??15;
-  T2("ringCap",rb>0?`Futuro +${rb} d`:"Pico ahora");
   T2("bannerTxt",
-    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +${rb} días.`:
+    hoy&&hubo?`En pico: salir ya. ${rb} días estimados para fructificación.`:
     !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
-    hoy&&!hubo?`Sin cosecha hoy; pico en +${rb} días si se mantiene.`:
+    hoy&&!hubo?`Sin cosecha hoy. ${rb} días estimados para fructificación.`:
     `Sin ventana de fructificación.`);
   const ci=(k,v,n)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} ${badge(n)}</span></div>`;
   setHTML("condList",
@@ -752,11 +742,10 @@ function renderNiscalo(){
   T2("ringNivelN",rN.nivel);
   const bN=document.getElementById("bannerN");if(bN)bN.className="prediction-banner "+nivelClase(rN.nivel);
   const rn=clima.restN??21;
-  T2("ringCapN",rn>0?`Futuro +${rn} d`:"Pico ahora");
   T2("bannerTxtN",
-    hoy&&hubo?`En pico: salir ya. Sigue bueno, más en +${rn} días.`:
+    hoy&&hubo?`En pico: salir ya. ${rn} días estimados para fructificación.`:
     !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
-    hoy&&!hubo?`Sin cosecha hoy; pico en +${rn} días si se mantiene.`:
+    hoy&&!hubo?`Sin cosecha hoy. ${rn} días estimados para fructificación.`:
     `Sin ventana de fructificación.`);
   const vn=[];if(clima.tmin<=-3)vn.push("Helada");if(clima.tmax>=28)vn.push("Calor");if(clima.vientoMax>45)vn.push("Viento");
   const vtxt=n=>n==="Helada"?"Helada con mínimas de −3 ºC o menos: quema los primordios. El aborto es total.":VETO_TXT[n];
