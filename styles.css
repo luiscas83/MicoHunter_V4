@@ -78,6 +78,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .mushroom-icon-large{font-size:3rem;flex-shrink:0}
 .mushroom-photo{width:96px;height:96px;object-fit:cover;border-radius:10px;box-shadow:0 6px 14px rgba(59,47,34,.35)}
 .mushroom-photo-placeholder{display:flex;align-items:center;justify-content:center;font-size:3rem;background:#efe6d4;}
+.calc-hint{margin:8px 2px 0;font-size:.75rem;line-height:1.5;color:#8a7a63;text-align:center}
 #fichaGrid .card{box-shadow:0 12px 26px rgba(59,47,34,.16)}
 .toxi-box{margin:10px 0;padding:10px 12px;background:#f9e8e2;border:1px solid #d98a76;border-left:4px solid var(--danger);border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6}
 .toxi-box strong{color:var(--danger)}

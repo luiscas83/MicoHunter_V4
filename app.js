@@ -122,10 +122,13 @@ async function getJSON(url,ms,headers,reintento){
 }
 const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
 function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando hoy: días que faltan al pico
-  for(let d=arr.length-1;d>=13;d--){ // día D más reciente cuya ventana de 14 d alcanzó el óptimo
-    let s=0;for(let i=d-13;i<=d;i++)s+=arr[i]??0;
-    if(s>=umb)return Math.max(0,lag-(arr.length-1-d));
-  }
+  // racha de días seguidos (hasta hoy) con ventana de 14 d por encima del umbral: un solo episodio,
+  // fijado el primer día que se cumplió; si hoy no califica, se busca el último día que sí hacia atrás
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  let racha=0;
+  for(let i=arr.length-1;i>=13&&cal(i);i--)racha++;
+  if(racha)return Math.max(0,lag-(racha-1));
+  for(let d=arr.length-2;d>=13;d--)if(cal(d))return Math.max(0,lag-(arr.length-1-d));
   return lag; // sin disparador claro: el plazo entero
 }
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
@@ -276,6 +279,40 @@ async function mfeUso(la,lo){
     lulucf:[p.nb_lulucf_nivel1,p.nb_lulucf_nivel2,p.nb_lulucf_nivel3].filter(Boolean).join(" · "),
     id_lulucf:p.id_lulucf,sp1:p.nom_sp1,fcc:p.nm_fccarb??null};
 }
+// --- MUP por CCAA (IDECyL, IDENA, ICEAragón): número, nombre y contorno. Solo CyL/Navarra/Aragón; resto, null ---
+async function mupRegion(la,lo){
+  const enCyL=lon=>lon>=-7.2&&lon<=-1.7, enCyL2=lat=>lat>=39.8&&lat<=43.3;
+  const enNav=lon=>lon>=-2.2&&lon<=-0.7, enNav2=lat=>lat>=41.9&&lat<=43.3;
+  const enAra=lon=>lon>=-2.2&&lon<=0.8, enAra2=lat=>lat>=39.8&&lat<=42.9;
+  const d=0.0006, bb=`${lo-d},${la-d},${lo+d},${la+d},EPSG:4326`;
+  let url=null, mapF=null;
+  if(enCyL(lo)&&enCyL2(la)){url=`https://idecyl.jcyl.es/geoserver/montes/wfs?SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=montes:montes_cyl_mup_vw&OUTPUTFORMAT=json&BBOX=${bb}`;
+    mapF=p=>({num:p.v_mup,nombre:p.n_monte,pert:p.n_pertenen,sup:p.m_sup_ha});}
+  else if(enNav(lo)&&enNav2(la)){url=`https://idena.navarra.es/ogc/wfs?SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=IDENA:FOREST_Pol_MUP1912&OUTPUTFORMAT=json&BBOX=${bb}`;
+    mapF=p=>({num:String(p.NUMMUP),nombre:p.NOMBRE,pert:p.TITULAR,sup:p.HECTAREAS});}
+  else if(enAra(lo)&&enAra2(la)){url=`https://icearagon.aragon.es/geoserver/VISOR2D/wfs?SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=VISOR2D:RMA_MUP&OUTPUTFORMAT=json&BBOX=${bb}`;
+    mapF=p=>({num:String(p.num_mup),nombre:p.denominacion,pert:null,sup:null});}
+  else return null;
+  const j=await getJSON(url,15000).catch(()=>null);
+  const fs=(j&&j.features)||[];
+  if(!fs.length)return null;
+  const diezmar=anillo=>{
+    if(anillo.length<800)return anillo;
+    const paso=Math.ceil(anillo.length/800);
+    return anillo.filter((_,i)=>i%paso===0||i===anillo.length-1);
+  };
+  const feats=fs.map(f=>{
+    const g=f.geometry;if(!g||!g.coordinates)return null;
+    const ps=g.type==="Polygon"?[g.coordinates]:g.coordinates;
+    return{type:"Feature",properties:{mup:mapF(f.properties).num,nombre:mapF(f.properties).nombre},
+      geometry:{type:"MultiPolygon",coordinates:ps.map(poly=>poly.map(diezmar))}};
+  }).filter(Boolean);
+  if(!feats.length)return null;
+  const l0=mapF(fs[0].properties);
+  return{mups:fs.map(f=>mapF(f.properties)),nombre:l0.nombre,num:l0.num,geo:{type:"FeatureCollection",features:feats}};
+}
+async function mupCyL(la,lo){return mupRegion(la,lo);}
+let mupLayer=null;
 // --- 4) Overpass: SOLO conteo edificios 150 m si MFE y ff_uso no sirven. Nunca bosque ni pradera ---
 async function esUrbano(la,lo){
   const q=`[out:json][timeout:10];(node(around:150,${la},${lo})[building];way(around:150,${la},${lo})[building];relation(around:150,${la},${lo})[building];);out count;`;
@@ -566,7 +603,8 @@ async function buscar(){
 const map=L.map("dashboardMap").setView([41.76,-2.46],6);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
 let marker=L.marker([41.76,-2.46]).addTo(map), lat=41.76, lon=-2.46;
-map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});
+map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);
+  if(cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}predecir();});
 const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
 const RING_C=2*Math.PI*54;
@@ -618,6 +656,11 @@ function pintar(calc,ageMin){
   T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
   T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
   if(det){det.textContent=floraEtiq||"sin determinar";det.title=habitatTxt||"";}
+  T("mupValue",calc.mup?`MUP ${calc.mup.num} · ${calc.mup.nombre}`:"—");
+  try{
+    if(mupLayer){map.removeLayer(mupLayer);mupLayer=null;}
+    if(calc.mup&&calc.mup.geo)mupLayer=L.geoJSON(calc.mup.geo,{style:{color:"#2471a3",weight:2,fillOpacity:0.10}}).addTo(map);
+  }catch(e){console.warn("mup:",e);}
   T("lastUpdate",ageMin>0?`Datos de hace ${ageMin} min`:"Actualizado "+new Date().toLocaleString("es-ES"));
   renderAll();
   renderMeteo();
@@ -637,11 +680,12 @@ async function predecir(etiqueta){
       return;
     }
     if(ld)ld.hidden=false;
-    const [clima,suelo,lugar,dem]=await Promise.all([
+    const [clima,suelo,lugar,dem,mup]=await Promise.all([
       fetchClima(lat,lon),
       fetchSuelo(lat,lon).catch(()=>({})),
       fetchLugar(lat,lon),
-      getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>({elevation:[null]}))
+      getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>({elevation:[null]})),
+      ((lon>=-7.2&&lon<=-1.7&&lat>=39.8&&lat<=43.3)||(lon>=-2.2&&lon<=-0.7&&lat>=41.9&&lat<=43.3)||(lon>=-2.2&&lon<=0.8&&lat>=39.8&&lat<=42.9))?mupCyL(lat,lon):Promise.resolve(null)
     ]);
     const alt=dem.elevation?.[0]??null;
     // MFE con caché y progreso (solo España; fuera, manual)
@@ -717,7 +761,7 @@ async function predecir(etiqueta){
     let floraNotaC=null;
     if(mfe&&mfe.categoria)floraNotaC=floraChantarella(mfe.categoria,floraEsp);
     else if(uso&&uso.categoria)floraNotaC=(["Pinar","Hayedo","Robledal","Castañeral"].includes(uso.categoria)||/quercus|fagus|castanea|pinus|picea|betula|corylus/i.test(uso.sp1||""))?1:0;
-    const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
+    const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,mup:mup||null,
       floraCat,floraEtiq:floraEtiq||floraCat,floraNota,floraNotaN,floraNotaO,floraNotaC,phVal:suelo.ph??null,prov,live,am};
     calcCache.set(pkey,{t:Date.now(),calc});
     if(calcCache.size>50)calcCache.delete(calcCache.keys().next().value);
@@ -1115,10 +1159,11 @@ function renderFavSelect(){
   if(!sel)return;
   const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
   const cs=typeof COTOS!=="undefined"?COTOS:[];
-  const CCAA=["Castilla y León","Aragón","Navarra","Comunidad de Madrid","Cataluña"];
+  const CCAA=["Castilla y León","Aragón","Navarra","Comunidad de Madrid","Cataluña","País Vasco","La Rioja","Asturias","Cantabria","Castilla-La Mancha","Extremadura","Andalucía","Canarias"].sort((a,b)=>a.localeCompare(b,"es"));
   const grupos=CCAA.map(cc=>{
-    const l=cs.map((c,i)=>({c,i})).filter(x=>x.c.ccaa===cc);
-    return l.length?`<optgroup label="🍄 ${cc} · de pago">${l.map(x=>`<option value="c${x.i}">🍄 ${esc(x.c.n)}</option>`).join("")}</optgroup>`:"";
+    const l=cs.map((c,i)=>({c,i})).filter(x=>x.c.ccaa===cc)
+      .sort((a,b)=>a.c.n.localeCompare(b.c.n,"es"));
+    return l.length?`<optgroup label="🍄 ${cc}">${l.map(x=>`<option value="c${x.i}">🍄 ${esc(x.c.n)}</option>`).join("")}</optgroup>`:"";
   }).join("");
   sel.innerHTML='<option value="">⭐ Setales y cotos…</option>'+
     '<optgroup label="⭐ Mis setales">'+f.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")+'</optgroup>'+grupos;
@@ -1127,12 +1172,60 @@ document.getElementById("favSelect").addEventListener("change",e=>{
   const v=e.target.value;
   if(v.startsWith("c")){
     const c=(typeof COTOS!=="undefined"?COTOS:[])[+v.slice(1)];
-    if(c){goTo(c.la,c.lo,c.n);e.target.value="";}
+    if(c){goTo(c.la,c.lo,c.n);mostrarPoligonoCoto(c.n);e.target.value="";}
     return;
   }
   const s=getFavs()[+v];
-  if(s){goTo(s.lat,s.lon,s.name);e.target.value="";}
+  if(s){if(typeof cotoLayer!=="undefined"&&cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}goTo(s.lat,s.lon,s.name);e.target.value="";}
 });
+// Polígonos reales de acotados CyL (WFS Cesefor, simplificados): carga perezosa,
+// solo al elegir un coto, para no penalizar la carga inicial.
+let cotoLayer=null, cotoPolyLoading=null;
+function mostrarPoligonoCoto(nombre){
+  const dibujar=()=>{
+    try{
+      if(cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}
+      const poly=(typeof COTOS_POLY!=="undefined"?COTOS_POLY:null);
+      const fs=(poly&&poly.features||[]).filter(f=>f.properties&&f.properties.n===nombre);
+      if(!fs.length)return;
+      cotoLayer=L.geoJSON(fs,{style:{color:"#c0392b",weight:2,fillOpacity:0.12}}).addTo(map);
+      try{
+        const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===nombre);
+        if(cu)cotoLayer.bindPopup("<strong>"+cu.n+"</strong><br>"+(cu.u?'<a href="'+cu.u+'" target="_blank" rel="noopener">🎫 Tramitar permiso</a>':"Permiso: verifica la normativa vigente"));
+      }catch{}
+      try{map.fitBounds(cotoLayer.getBounds(),{padding:[20,20]});}catch{}
+    }catch(e){console.warn("poligono coto:",e);}
+  };
+  if(typeof COTOS_POLY!=="undefined"){dibujar();return;}
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=1.50";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  cotoPolyLoading.then(dibujar);
+}
+// Capa global de cotos (botón 🗺️ Cotos): todos los polígonos, conmutada.
+let cotosLayer=null;
+function cargarPoligonosCotos(){
+  if(typeof COTOS_POLY!=="undefined")return Promise.resolve();
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=1.50";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  return cotoPolyLoading;
+}
+document.getElementById("toggleCotos").onclick=()=>{
+  const btn=document.getElementById("toggleCotos");
+  if(cotosLayer){map.removeLayer(cotosLayer);cotosLayer=null;btn.classList.add("btn-ghost");return;}
+  btn.textContent="⏳ Cotos…";
+  cargarPoligonosCotos().then(()=>{
+    btn.textContent="🗺️ Cotos";
+    try{
+      const poly=(typeof COTOS_POLY!=="undefined"?COTOS_POLY:null);
+      const fs=(poly&&poly.features)||[];
+      if(!fs.length)return;
+      cotosLayer=L.geoJSON(fs,{style:{color:"#c0392b",weight:1.5,fillOpacity:0.10},
+        onEachFeature:(f,l)=>{if(f.properties&&f.properties.n){
+          const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===f.properties.n);
+          l.bindPopup("<strong>"+f.properties.n+"</strong><br>"+(cu&&cu.u?'<a href="'+cu.u+'" target="_blank" rel="noopener">🎫 Tramitar permiso</a>':"Permiso: verifica la normativa vigente"));
+        }}}).addTo(map);
+      btn.classList.remove("btn-ghost");
+    }catch(e){console.warn("capa cotos:",e);}
+  });
+};
 document.getElementById("saveFavBtn").onclick=()=>{
   const p=document.getElementById("saveFavPanel");p.hidden=!p.hidden;
   document.getElementById("saveFavCoords").textContent=`${lat}, ${lon}`;

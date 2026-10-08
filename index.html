@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.44">
+<link rel="stylesheet" href="styles.css?v=1.56">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.44</p>
+        <p class="version" title="Versión de la aplicación">v1.56</p>
       </div>
     </div>
       </div>
@@ -40,11 +40,12 @@
         <button class="btn" id="find">Buscar</button>
       </div>
       <div id="results"></div>
-      <select id="favSelect" title="Tus setales y los principales cotos regulados (punto orientativo al municipio; verifica siempre la norma y el permiso)"><option value="">⭐ Setales y cotos…</option></select>
+      <select id="favSelect" title="Tus setales y los principales cotos regulados (punto en el monte, orientativo; verifica siempre la norma y el permiso)"><option value="">⭐ Setales y cotos…</option></select>
       <div id="dashboardMap" class="map"></div>
       <div class="map-actions">
         <button class="btn" id="gps">📍 Mi ubicación</button>
         <button class="btn" id="saveFavBtn">⭐ Guardar setal</button>
+        <button class="btn btn-ghost" id="toggleCotos" title="Mostrar los contornos reales de los acotados de CyL">🗺️ Cotos</button>
       </div>
       <div class="save-fav-panel" id="saveFavPanel" hidden>
         <label class="save-fav-label" for="saveFavName">Nombre del setal</label>
@@ -71,6 +72,7 @@
         <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Suelo</span><span class="tv" id="soilTypeValue">—</span></div>
         <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH 5-15cm</span><span class="tv" id="phValue">—</span></div>
         <div class="terrain-item"><span class="ti">🌲</span><span class="tl">Hábitat en el punto</span><span class="tv" id="habitatLine">consultando…</span></div>
+        <div class="terrain-item"><span class="ti">🗺️</span><span class="tl">Monte (MUP)</span><span class="tv" id="mupValue" title="Monte de Utilidad Pública (Castilla y León, Navarra, Aragón)">—</span></div>
       </div>
             <div class="last-update" id="lastUpdate"></div>
     </div>
@@ -88,6 +90,7 @@
           <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="banner"><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <p class="calc-hint">Cosecha de hoy: con lo de hace 15 días · Anillo: pico a +15 días con lo de hoy</p>
                 <div class="conditions-list" id="condList"></div>
         <div class="mushroom-details" id="detailList"></div>
         <div class="verdict-box" id="verdictEdulis">El resumen aparecerá al analizar un punto.</div>
@@ -105,6 +108,7 @@
           <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <p class="calc-hint">Cosecha de hoy: con lo de hace 21 días · Anillo: pico a +21 días con lo de hoy</p>
         <div class="conditions-list" id="condListN"></div>
         <div class="mushroom-details" id="detailListN"></div>
         <div class="verdict-box" id="verdictNiscalo">El resumen aparecerá al analizar un punto.</div>
@@ -122,6 +126,7 @@
           <div class="ring-text"><span class="percentage" id="ringPctO">—</span><span class="label" id="ringNivelO">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerO"><span class="prediction-text" id="bannerTxtO" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <p class="calc-hint">Cosecha de hoy: con lo de hace 21 días · Anillo: pico a +21 días con lo de hoy</p>
         <div class="conditions-list" id="condListO"></div>
         <div class="mushroom-details" id="detailListO"></div>
         <div class="verdict-box" id="verdictOronja">El resumen aparecerá al analizar un punto.</div>
@@ -139,6 +144,7 @@
           <div class="ring-text"><span class="percentage" id="ringPctC">—</span><span class="label" id="ringNivelC">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerC"><span class="prediction-text" id="bannerTxtC" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <p class="calc-hint">Cosecha de hoy: con lo de hace 10 días · Anillo: pico a +10 días con lo de hoy</p>
         <div class="conditions-list" id="condListC"></div>
         <div class="mushroom-details" id="detailListC"></div>
         <div class="verdict-box" id="verdictChantarella">El resumen aparecerá al analizar un punto.</div>
@@ -189,7 +195,7 @@
       <input type="number" id="favLng" step="0.0001" placeholder="Longitud" min="-180" max="180">
       <button class="btn" id="addFav">Añadir</button>
     </div>
-    <p class="hint-text">La forma rápida es pulsar «⭐ Guardar setal» en el dashboard: usa el punto actual del mapa. El desplegable del dashboard incluye además 32 cotos y parques regulados (permiso de pago, punto orientativo): al elegir uno el mapa va allí y calcula. Verifica siempre norma y permiso vigentes.</p>
+    <p class="hint-text">La forma rápida es pulsar «⭐ Guardar setal» en el dashboard: usa el punto actual del mapa. El desplegable del dashboard incluye además 32 cotos y parques regulados (permiso de pago, punto en el monte (orientativo)): al elegir uno el mapa va allí y calcula. Verifica siempre norma y permiso vigentes.</p>
   </div>
   <div class="card" style="margin-top:20px"><h3>Guardados <span class="count-badge" id="favCount"></span></h3>
     <div id="favList" class="favorites-list"></div>
@@ -218,7 +224,7 @@
       <li><strong>Lo de hoy</strong> → ¿habrá cosecha? Es la lectura de futuro (anillo grande).</li>
       <li><strong>Lo de hace 10/15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha (detalle «Cosecha hoy»).</li>
     </ul>
-    <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna). Los casos con futuro llevan los <strong>días estimados para fructificación</strong>: no son fijos, se cuentan desde la lluvia que disparó el proceso (el día más reciente en que 14 días sumaron 60 mm para el boleto y la chantarela, o 50 para el níscalo y la oronja), así que si llovió bien hace 10 días verás 5 y no 15. Si no hubo tal disparador, se muestra el plazo entero.</p>
+    <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna). Los casos con futuro llevan los <strong>días estimados para fructificación</strong>: no son fijos, se cuentan desde la lluvia que disparó el proceso (el primer día en que 14 días sumaron 60 mm para el boleto y la chantarela, o 50 para el níscalo y la oronja; una racha seguida por encima del umbral cuenta como un solo episodio), así que si llovió bien hace 10 días verás 5 y no 15. Si no hubo tal disparador, se muestra el plazo entero.</p>
     <h4>De dónde salen los datos</h4>
     <ul class="method-list">
       <li><strong>El tiempo base (Open-Meteo)</strong> — 55 días observados más el día actual y 8 de previsión (el día actual es el antepenúltimo bloque, no el último). Para el pasado se usa lo observado, no previsiones. De aquí salen la lluvia diaria, las temperaturas del aire, la humedad, el viento, la temperatura del suelo a 18 cm (media de 7 días, la profundidad del micelio), la previsión de 7 días y los tramos hora a hora de hoy. La altitud del punto viene de su servicio de elevación.</li>
@@ -266,11 +272,11 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.44 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.56 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.44"></script>
-<script src="app.js?v=1.44"></script>
+<script src="cotos.js?v=1.56"></script>
+<script src="app.js?v=1.56"></script>
 </body>
 </html>

@@ -58,6 +58,18 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Etiqueta con acompañantes (v1.42, solo visible): «Hayedo + abetal», «Matorral + fresneda»…; la puntuación no cambia (`categoria` intacta).
 - Sin cálculo inicial (v1.43): al abrir solo se pinta el mapa (vista Soria); el cálculo arranca al pulsar mapa/GPS/setal.
 - Chantarela v1.44 (valores iniciales, sin calibrar ni foto): `CHAN_LAG=10` con `retro10`/`r10`/`restC` (disparador 60 mm); solo veto helada; `floraChantarella` + hospedadores; tarjeta + ficha (placeholder 🍄) + selector + leyenda/metodología; paridad JS↔PY verificada en 10 casos.
+- Disparador por episodio (v1.45): `restantes()` fija el primer día de la racha (antes, el más reciente reiniciaba la cuenta a diario); sin racha todo igual.
+- Línea de cálculo en tarjetas (v1.46): cada tarjeta explica su lag (cosecha con lo de hace 10/15/21 d + anillo al pico).
+- Cotos al monte (v1.47): los 32 puntos pasan del pueblo al monte con arbolado verificado (MFE ff_uso); siguen orientativos.
+- Polígonos reales CyL (v1.48): WFS Cesefor (`montes_micocyl`, 636 polígonos) con centroides reales en 17 acotados + capa perezosa `cotos_poly.js` (613 polígonos simplificados) que se dibuja al elegir coto. Urbión, Montes de Soria, SO-50003, Triollo y Barbadillo van por otras asociaciones (sin polígono).
+- Botón Cotos (v1.49): conmuta la capa con todos los polígonos (carga perezosa, popup al tocar con enlace al permiso).
+- v1.50: cotos en rojo + fix `window.COTOS_POLY` + enlaces de permiso verificados (Poblet sin enlace: sin permiso desde 2018).
+- Peguerinos AV-50009 (v1.51): nuevo coto (Monte 80, pinar verificado) con enlace al ayuntamiento.
+- Todas las CCAA con coto (v1.52): 64 cotos en 13 CCAA (Álava 5, Rioja 12+4 pueblo, Boal, Miera, Alto Tajo, Serradilla, Madrid 6, Baza, Bayárcal, Tenerife, Gran Canaria). Galicia, Valencia, Murcia, Baleares: sin cotos de pago verificables.
+- MUP en azul (v1.53): contorno y nº del Monte de Utilidad Pública al pulsar (IDECyL, solo CyL) + fila en Suelo y clima.
+- MUP Navarra + Aragón (v1.54): IDENA (`FOREST_Pol_MUP1912`) e ICEAragón (`RMA_MUP`); La Rioja sin WFS usable.
+- Cotos ordenados A–Z por CCAA (v1.55).
+- CCAA A–Z sin "de pago" (v1.56). Regla: cada cambio versiona.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).
