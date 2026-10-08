@@ -17,6 +17,7 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Clima: 0.40·P14 + 0.20·reserva P30 + 0.20·T_aire + 0.10·T_suelo18cm + 0.10·HR. Veto: helada / calor ≥28 / viento >45.
 - Boleto: T aire ópt 13,2 ºC · P14 30-100 mm · pH 4,5-6,5 · alt 600-1800 · Sep–Nov pico Oct · lag 15 · veto frío 0 ºC.
 - Níscalo: T aire 12–18 ºC (útil 5–20) · P14 25-80 mm · pH 4,5–8,0 · alt 100–1600 · Sep–Dic pico Nov (oct .9) · lag 21 · veto frío −3 ºC · solo pinar (mixto con pino vale).
+- Chantarela: T aire 15–20 ºC (útil 8–26) · P14 30-100 mm (exceso progresivo) · pH 4–5,5 estricto · alt 50–1500 (pref 100–1400) · Jun–Nov pico Sep · lag 10 · solo veto helada 0 ºC (sin veto viento/calor) · pinar/hayedo/robledal/castañar/mixto + hospedadores.
 - Hábitat en 9 categorías: Pinar, Hayedo, Robledal, Castañeral, Quercíneas (encina/carrasca/alcornoque/quejigos meridionales: solo oronja), Pradera, Pasto, Bosque mixto, Matorral (+Urbano como veto, 0,70 si sin datos).
 
 ## Fuentes por punto (todo auto, el usuario no mete nada)
@@ -56,6 +57,7 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Etiqueta Quercíneas (v1.41) + revisión dehesa: encina/carrasca/alcornoque/quejigos meridionales ya no caen a Matorral; oronja 1, boleto/níscalo 0; la dehesa con `nom_sp1` *Quercus* ya puntuaba 1 por regex (verificado, sin cambio).
 - Etiqueta con acompañantes (v1.42, solo visible): «Hayedo + abetal», «Matorral + fresneda»…; la puntuación no cambia (`categoria` intacta).
 - Sin cálculo inicial (v1.43): al abrir solo se pinta el mapa (vista Soria); el cálculo arranca al pulsar mapa/GPS/setal.
+- Chantarela v1.44 (valores iniciales, sin calibrar ni foto): `CHAN_LAG=10` con `retro10`/`r10`/`restC` (disparador 60 mm); solo veto helada; `floraChantarella` + hospedadores; tarjeta + ficha (placeholder 🍄) + selector + leyenda/metodología; paridad JS↔PY verificada en 10 casos.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).

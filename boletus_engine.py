@@ -30,7 +30,7 @@ FLORA_EDULIS = {
 }
 
 # Níscalo (Lactarius deliciosus): mismos pesos, otros umbrales (valores del usuario)
-# Oronja (Amanita caesarea): umbrales V2 (sin calibrar) + cestaysetas; lag 30 ESTIMADO
+# Oronja (Amanita caesarea): calibrada v1.39 con bibliografía, sin validación de campo
 CAESAREA_LAG = 21  # primer flush 15-22 d tras tormentas (hasta 40-50 en terreno duro/seco, no modelado)
 CAESAREA = {
     "t_aire_opt": (16, 24), "t_aire_util": (10, 28),
@@ -41,6 +41,18 @@ CAESAREA = {
     "temporada": {7: 0.5, 8: 0.9, 9: 1.0, 10: 0.85},  # Jul-Oct, pico Sep
     "veto_tmin": 2,          # termófila, no aguanta heladas
     "flora": "robledal, castañar y quercíneas (encina, carrasca, alcornoque)",
+}
+# Chantarela (Cantharellus cibarius): valores iniciales v1.44, sin calibrar de campo
+CHANTARELLA_LAG = 10  # flush 7-14 d tras tormentas, posible hasta 15-21, se pierde >21 d
+CHANTARELLA = {
+    "t_aire_opt": (15, 20), "t_aire_util": (8, 26),
+    "p14": (30, 100),        # óptimo 60-100 mm, exceso progresivo sin corte brusco
+    "p30_reserva": (40, 120),
+    "ph": (4.0, 5.5),        # acidófila estricta
+    "altitud": (50, 1500),   # preferencia 100-1400
+    "temporada": {6: 0.6, 7: 0.8, 8: 0.9, 9: 1.0, 10: 0.9, 11: 0.4},  # Jun-Nov, pico Sep
+    "veto_tmin": 0,          # helada veta fructificación; sin veto de viento ni de máxima aislada
+    "flora": "pinar, hayedo, robledal, castañar y mixto + hospedadores (quercus, fagus, castanea, pinus, picea, betula, corylus)",
 }
 NISCALO_LAG = 21  # primeros 7-15 d, pico ~21 d (boleto: 15)
 NISCALO = {
@@ -375,6 +387,101 @@ def score_oronja(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
         "flora": round(flora_s, 3),
         "temporada": round(temp, 3),
         "ventana_pico_dias": CAESAREA_LAG if out >= 40 else None,
+        "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
+    }
+
+
+# --- Chantarela (Cantharellus cibarius): espejo de fTA4/fP14_4/fPH4/fAlt4/fMes4 en app.js ---
+def f_t_aire_chantarella(t):
+    if t < 8 or t > 26:
+        return 0.0
+    if 15 <= t <= 20:
+        return 1.0
+    if 12 <= t < 15:
+        return 0.5 + 0.5 * (t - 12) / 3
+    if 20 < t <= 23:
+        return 1.0 - 0.5 * (t - 20) / 3
+    if 8 <= t < 12:
+        return 0.2 + 0.3 * (t - 8) / 4
+    return 0.5 - 0.3 * (t - 23) / 3  # 23-26
+
+
+def f_p14_chantarella(p):
+    if p < 30:
+        return 0.0
+    if p < 60:
+        return (p - 30) / 30
+    if p <= 100:
+        return 1.0
+    if p <= 200:
+        return 1.0 - 0.6 * (p - 100) / 100
+    return 0.2
+
+
+def f_ph_chantarella(ph):
+    if 4 <= ph <= 5.5:
+        return 1.0
+    if 5.5 < ph <= 6:
+        return 0.5
+    if 3.5 <= ph < 4:
+        return 0.6
+    return 0.0
+
+
+def f_altitud_chantarella(h):
+    if 100 <= h <= 1400:
+        return 1.0
+    if 50 <= h < 100:
+        return (h - 50) / 50
+    if 1400 < h <= 1500:
+        return 1.0 - (h - 1400) / 100
+    return 0.0
+
+
+def f_temporada_chantarella(mes):
+    return {9: 1.0, 8: 0.9, 10: 0.9, 7: 0.8, 6: 0.6, 11: 0.4}.get(mes, 0.1)
+
+
+def flora_chantarella(cat, especies=None):
+    """Pinar/hayedo/robledal/castañar/mixto 1 + hospedadores 1; resto 0. Espejo de floraChantarella."""
+    if cat in ("Pinar", "Hayedo", "Robledal", "Castañeral", "Bosque mixto"):
+        return 1.0
+    import re
+    esp = " ".join(especies or []).lower()
+    if re.search(r"quercus|fagus|castanea|pinus|picea|betula|corylus", esp):
+        return 1.0
+    return 0.0
+
+
+def score_chantarella(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
+                      especies=None, tmin_7d=10, tmax_7d=24, mes=9):
+    """Espejo de scoreChantarella en app.js. Solo veto helada <= 0; sin veto de viento ni de máxima."""
+    veto = tmin_7d <= 0
+    s_p = f_p14_chantarella(p14d)
+    s_r = f_reserva(p30d)
+    s_ta = f_t_aire_chantarella(t_aire_7d)
+    s_ts = f_t_suelo(t_suelo)
+    s_hr = f_hr(hr_7d)
+    clima = 0.40 * s_p + 0.20 * s_r + 0.20 * s_ta + 0.10 * s_ts + 0.10 * s_hr
+    if veto:
+        clima = 0.0
+    terreno = f_altitud_chantarella(altitud)
+    suelo = f_ph_chantarella(ph)
+    flora_s = flora_chantarella(flora, especies) if isinstance(flora, str) else 0.0
+    temp = f_temporada_chantarella(mes)
+    prob = clima * terreno * suelo * flora_s * temp
+    out = round(prob * 100, 1)
+    return {
+        "score": out,
+        "clima": round(clima, 3),
+        "detalle_clima": {"P14d": round(s_p, 3), "reserva": round(s_r, 3),
+                          "T_aire": round(s_ta, 3), "T_suelo": round(s_ts, 3),
+                          "HR": round(s_hr, 3), "veto": veto},
+        "terreno_altitud": round(terreno, 3),
+        "suelo_ph": round(suelo, 3),
+        "flora": round(flora_s, 3),
+        "temporada": round(temp, 3),
+        "ventana_pico_dias": CHANTARELLA_LAG if out >= 40 else None,
         "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
     }
 
