@@ -21,21 +21,23 @@ const fPH2=p=>{if(p<4)return .2;if(p<4.5)return .2+.8*(p-4)/.5;if(p<=8)return 1;
 const fAlt2=h=>{if(h>=100&&h<=1600)return 1;if(h>=0&&h<100)return .6;
   if(h>1600&&h<=1900)return 1-(h-1600)/300;return 0;};
 const fMes2=m=>m===11?1:m===10?.9:m===9?.85:m===12?.6:m===8?.3:.1;
-// --- Oronja (Amanita caesarea): umbrales V2 (sin calibrar) + cestaysetas; lag 30 ESTIMADO (ciclo 18-21/40-50 d)
-const ORO_LAG=30;
+// --- Oronja (Amanita caesarea): calibrada v1.39 (MicoAragón, sporas.io, Charito, guía de campo).
+// Lag 21: primer flush 15-22 d tras tormentas (hasta 40-50 en terreno duro/seco, no modelado)
+const ORO_LAG=21;
 const fTA3=t=>{if(t<10||t>28)return 0;if(t>=16&&t<=24)return 1;
   if(t>=12&&t<16)return .4+.6*(t-12)/4;if(t>24&&t<=28)return 1-.7*(t-24)/4;return .2;};
 const fP14_3=p=>{if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;if(p<=80)return 1;
   if(p<=160)return 1-.4*(p-80)/80;return .3;};
-const fPH3=p=>{if(p>=4&&p<=6)return 1;if(p>6&&p<=7)return .6;if(p>=3.5&&p<4)return .6;return 0;};
+const fPH3=p=>{if(p>=4&&p<=6)return 1;if(p>6&&p<=7)return .4;if(p>=3.5&&p<4)return .6;return 0;};
 const fAlt3=h=>{if(h>=200&&h<=1200)return 1;if(h>1200&&h<=1500)return 1-.5*(h-1200)/300;
   if(h>=100&&h<200)return .6;return 0;};
-const fMes3=m=>m===9?1:m===8?.9:m===10?.85:m===7?.5:.1;
-function floraOronja(cat,especies){ // robledal, castañar y quercíneas (encina, carrasca, alcornoque)
+const fMes3=m=>m===9?1:m===8?.9:m===10?.85:m===7?.5:m===6?.2:.1;
+function floraOronja(cat,especies){ // robledal, castañar y quercíneas (encina, carrasca, alcornoque); haya rara (0.2)
   const esp=(especies||[]).join(" ").toLowerCase();
   const host=/quercus|castanea/.test(esp);
   if(cat==="Robledal"||cat==="Castañeral")return 1;
   if(cat==="Bosque mixto"||host)return 0.9;
+  if(cat==="Hayedo")return 0.2;
   return 0;
 }
 function scoreOronja(o){
@@ -129,11 +131,6 @@ async function fetchClima(la,lo){
     ta:avg(t7n),ts:tsN,hr:avg(Hn),tmin:Math.min(...mn7n),tmax:Math.max(...mx7n),vientoMax:Math.max(...Wn)};
   const retro={p14:P.slice(-29,-15).reduce((a,v)=>a+v,0),p30:P.slice(-45,-15).reduce((a,v)=>a+v,0),
     ta:avg(t7r),ts:tsR,hr:avg(Hr),tmin:Math.min(...mn7r),tmax:Math.max(...mx7r),vientoMax:Math.max(...Wr)};
-  const t7o=T.slice(-37,-30), mn7o=Mn.slice(-37,-30), mx7o=Mx.slice(-37,-30);
-  const HrO=H.slice(-37,-30), WrO=W.slice(-37,-30);
-  const tsO=avg(HT.slice(-(30*24+168),-(30*24)));
-  const retro30={p14:P.slice(-44,-30).reduce((a,v)=>a+v,0),p30:P.slice(-60,-30).reduce((a,v)=>a+v,0),
-    ta:avg(t7o),ts:tsO,hr:avg(HrO),tmin:Math.min(...mn7o),tmax:Math.max(...mx7o),vientoMax:Math.max(...WrO)};
   const fc=[]; // previsión 7 días desde hoy
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
@@ -155,8 +152,8 @@ async function fetchClima(la,lo){
     }
   }catch(e){hoyTramos=[];}
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,retro30,ahora,fc,obsDia,hoyTramos,
-    restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restO:restantes(hist45,30,50)};
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro21,ahora,fc,obsDia,hoyTramos,
+    restB:restantes(hist45,15,60),restN:restantes(hist45,21,50)};
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
@@ -379,13 +376,13 @@ async function aemetOverride(la,lo){
       if(v.racha!=null)vm=vm==null?v.racha:Math.max(vm,v.racha);}
     return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
-  const r15=retro(15), r21=retro(21), r30=retro(30);
+  const r15=retro(15), r21=retro(21);
   const semana=[];for(let i=6;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
     ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
-    r15,r21,r30,serie45};
+    r15,r21,serie45};
 }
 const aemetLiveCache=new Map(); // ind -> {t, live} (el directo cambia cada hora: TTL 30 min)
 async function aemetAhora(ind){ // parte horario en directo: temp/HR/viento ahora + lluvia de hoy
@@ -652,18 +649,15 @@ async function predecir(etiqueta){
       const gapD=Math.max(0,Math.round((Date.now()-new Date(prov.fecha+"T00:00:00Z"))/864e5));
       clima.restB=Math.max(0,restantes(arr45,15,60)-gapD);
       clima.restN=Math.max(0,restantes(arr45,21,50)-gapD);
-      clima.restO=Math.max(0,restantes(arr45,30,50)-gapD);
       clima.tmin=prov.tmin;clima.tmax=prov.tmax;
       if(prov.ta!=null)clima.ta=prov.ta;
       if(prov.hr!=null)clima.hr=prov.hr;
       if(prov.vmax!=null)clima.vientoMax=prov.vmax;
       Object.assign(clima.retro,{p14:prov.r15.p14,p30:prov.r15.p30});
       Object.assign(clima.retro21,{p14:prov.r21.p14,p30:prov.r21.p30});
-      Object.assign(clima.retro30,{p14:prov.r30.p14,p30:prov.r30.p30});
       if(prov.r15.ok)Object.assign(clima.retro,{tmin:prov.r15.tmin,tmax:prov.r15.tmax});
       if(prov.r21.ok)Object.assign(clima.retro21,{tmin:prov.r21.tmin,tmax:prov.r21.tmax});
-      if(prov.r30.ok)Object.assign(clima.retro30,{tmin:prov.r30.tmin,tmax:prov.r30.tmax});
-      for(const par of[[clima.retro,prov.r15],[clima.retro21,prov.r21],[clima.retro30,prov.r30]]){
+      for(const par of[[clima.retro,prov.r15],[clima.retro21,prov.r21]]){
         if(par[1].ta!=null)par[0].ta=par[1].ta;
         if(par[1].hr!=null)par[0].hr=par[1].hr;
         if(par[1].vmax!=null)par[0].vientoMax=par[1].vmax;
@@ -674,7 +668,7 @@ async function predecir(etiqueta){
     else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
     const floraEsp=mfe&&mfe.especies?mfe.especies.map(e=>e.n):(uso&&uso.sp1?[uso.sp1]:[]);
     if(mfe&&mfe.categoria)floraNotaO=floraOronja(mfe.categoria,floraEsp);
-    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral")?1:(/quercus|castanea/i.test(uso.sp1||"")?0.9:0);
+    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral")?1:uso.categoria==="Hayedo"?0.2:(/quercus|castanea/i.test(uso.sp1||"")?0.9:0);
     const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
       floraCat,floraNota,floraNotaN,floraNotaO,phVal:suelo.ph??null,prov,live,am};
     calcCache.set(pkey,{t:Date.now(),calc});
@@ -851,7 +845,7 @@ function renderOronja(){
   const base={alt:alt??1000,ph:phV??5.0,mes};
   const rO=scoreOronja({p14:clima.p14,p30:clima.p30,ta:clima.ta,ts:clima.ts,hr:clima.hr,
     ...base,tmin:clima.tmin,tmax:clima.tmax,viento:clima.vientoMax>45,floraNota:fO??0.70});
-  const cO=clima.retro30;
+  const cO=clima.retro21;
   const rOR=scoreOronja({p14:cO.p14,p30:cO.p30,ta:cO.ta,ts:cO.ts,hr:cO.hr,
     ...base,tmin:cO.tmin,tmax:cO.tmax,viento:cO.vientoMax>45,floraNota:fO??0.70});
   const hoy=rO.score>=40, hubo=rOR.score>=40;
@@ -860,7 +854,7 @@ function renderOronja(){
   T2("ringPctO",rO.score);
   T2("ringNivelO",rO.nivel);
   const bO=document.getElementById("bannerO");if(bO)bO.className="prediction-banner "+nivelClase(rO.nivel);
-  const ro=clima.restO??ORO_LAG;
+  const ro=clima.restN??ORO_LAG;
   T2("bannerTxtO",
     hoy&&hubo?`En pico: salir ya. ${ro} días estimados para fructificación.`:
     !hoy&&hubo?`El pico es ahora; la ventana se cierra.`:
@@ -880,17 +874,17 @@ function renderOronja(){
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rO.terreno)}`)+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rO.suelo)}`)+
     di("Estación",`${MESO[mes-1]} ${badge(rO.temp)}`)+
-    di("Cosecha hoy",hubo?`SI · hace 30 días llovió bien ${badge(1)}`:`NO · hace 30 días ${cO.p14<30?"no llovió suficiente":"hizo mal tiempo"} ${badge(0)}`)+
+    di("Cosecha hoy",hubo?`SI · hace 21 días llovió bien ${badge(1)}`:`NO · hace 21 días ${cO.p14<30?"no llovió suficiente":"hizo mal tiempo"} ${badge(0)}`)+
     `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(rO.flora)}</span></div>`);
   const vetRO=[];if(cO.tmin<=2)vetRO.push("helada");if(cO.tmax>=28)vetRO.push("calor");if(cO.vientoMax>45)vetRO.push("viento fuerte");
   setHTML("verdictOronja",resumenCond(rO,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
     floraTxt:floraTxt,mesTxt:MESO[mes-1],
     vetoTxt:vo.length?vo.join(" + "):null,
-    cosecha:hubo?`Cosecha hoy: sí, hace 30 días el agua acompañó.`:
-      cO.p14<30?`Cosecha hoy: no, hace 30 días apenas cayeron ${cO.p14.toFixed(0)} mm.`:
-      vetRO.length?`Cosecha hoy: no, hace 30 días hubo ${vetRO.join(" + ")}.`:
-      `Cosecha hoy: no, hace 30 días falló la temperatura.`}));
+    cosecha:hubo?`Cosecha hoy: sí, hace 21 días el agua acompañó.`:
+      cO.p14<30?`Cosecha hoy: no, hace 21 días apenas cayeron ${cO.p14.toFixed(0)} mm.`:
+      vetRO.length?`Cosecha hoy: no, hace 21 días hubo ${vetRO.join(" + ")}.`:
+      `Cosecha hoy: no, hace 21 días falló la temperatura.`}));
   renderAnalysis();
 }
 function renderAnalysis(){

@@ -1,5 +1,6 @@
 """
-Motor predicción Boletus edulis - v1
+Motor predicción setas (boleto + níscalo + oronja) - referencia Python.
+Espejo de app.js: mismos pesos y umbrales. No tocar pesos sin avisar.
 Capas: clima vivo + terreno + suelo + flora x perfil especie = 0-100
 Fuentes por punto:
  - Open-Meteo: lluvia diaria, T aire 2m/min/max, HR y suelo a 18 cm (micorriza).
@@ -29,7 +30,7 @@ FLORA_EDULIS = {
 
 # Níscalo (Lactarius deliciosus): mismos pesos, otros umbrales (valores del usuario)
 # Oronja (Amanita caesarea): umbrales V2 (sin calibrar) + cestaysetas; lag 30 ESTIMADO
-CAESAREA_LAG = 30  # ciclo 18-21 hasta 40-50 d tras lluvias (pico ~30, estimado)
+CAESAREA_LAG = 21  # primer flush 15-22 d tras tormentas (hasta 40-50 en terreno duro/seco, no modelado)
 CAESAREA = {
     "t_aire_opt": (16, 24), "t_aire_util": (10, 28),
     "p14": (30, 80),         # estimado
@@ -148,6 +149,131 @@ def f_temporada(mes):
     return 0.1  # primavera anecdótica, no campaña
 
 
+# --- Níscalo (Lactarius deliciosus): espejo de fTA2/fP14_2/fPH2/fAlt2/fMes2 en app.js ---
+def f_t_aire_niscalo(t):
+    if t < 5 or t > 24:
+        return 0.0
+    if 12 <= t <= 18:
+        return 1.0
+    if 8 <= t < 12:
+        return 0.5 + 0.5 * (t - 8) / 4
+    if 5 <= t < 8:
+        return 0.2 + 0.3 * (t - 5) / 3
+    if 18 < t <= 20:
+        return 1.0 - 0.5 * (t - 18) / 2
+    return 0.5 - 0.4 * (t - 20) / 4  # 20-24
+
+
+def f_p14_niscalo(p):
+    if p < 25:
+        return 0.0
+    if p < 50:
+        return 0.3 + 0.4 * (p - 25) / 25
+    if p <= 90:
+        return 1.0
+    if p <= 180:
+        return 1.0 - 0.4 * (p - 90) / 90
+    return 0.3
+
+
+def f_ph_niscalo(ph):
+    if ph < 4:
+        return 0.2
+    if ph < 4.5:
+        return 0.2 + 0.8 * (ph - 4) / 0.5
+    if ph <= 8:
+        return 1.0
+    if ph <= 8.5:
+        return 1.0 - 0.6 * (ph - 8) / 0.5
+    return 0.0
+
+
+def f_altitud_niscalo(h):
+    if 100 <= h <= 1600:
+        return 1.0
+    if 0 <= h < 100:
+        return 0.6
+    if 1600 < h <= 1900:
+        return 1.0 - (h - 1600) / 300
+    return 0.0
+
+
+def f_temporada_niscalo(mes):
+    return {11: 1.0, 10: 0.9, 9: 0.85, 12: 0.6, 8: 0.3}.get(mes, 0.1)
+
+
+def flora_niscalo(cat, componentes=None):
+    """Solo pinar; mixto con pino vale. Espejo de floraNiscalo en app.js."""
+    if cat == "Pinar":
+        return 1.0
+    if cat == "Bosque mixto" and componentes and "Pinar" in componentes:
+        return 1.0
+    return 0.0
+
+
+# --- Oronja (Amanita caesarea): espejo de fTA3/fP14_3/fPH3/fAlt3/fMes3 en app.js ---
+def f_t_aire_oronja(t):
+    if t < 10 or t > 28:
+        return 0.0
+    if 16 <= t <= 24:
+        return 1.0
+    if 12 <= t < 16:
+        return 0.4 + 0.6 * (t - 12) / 4
+    if 24 < t <= 28:
+        return 1.0 - 0.7 * (t - 24) / 4
+    return 0.2  # 10-12
+
+
+def f_p14_oronja(p):
+    if p < 30:
+        return 0.0
+    if p < 50:
+        return 0.3 + 0.4 * (p - 30) / 20
+    if p <= 80:
+        return 1.0
+    if p <= 160:
+        return 1.0 - 0.4 * (p - 80) / 80
+    return 0.3
+
+
+def f_ph_oronja(ph):
+    if 4 <= ph <= 6:
+        return 1.0
+    if 6 < ph <= 7:
+        return 0.4  # rara en neutros (MicoAragón)
+    if 3.5 <= ph < 4:
+        return 0.6
+    return 0.0
+
+
+def f_altitud_oronja(h):
+    if 200 <= h <= 1200:
+        return 1.0
+    if 1200 < h <= 1500:
+        return 1.0 - 0.5 * (h - 1200) / 300
+    if 100 <= h < 200:
+        return 0.6
+    return 0.0
+
+
+def f_temporada_oronja(mes):
+    return {9: 1.0, 8: 0.9, 10: 0.85, 7: 0.5, 6: 0.2}.get(mes, 0.1)
+
+
+def flora_oronja(cat, especies=None):
+    """Robledal/castañar 1; mixto o quercíneas 0.9; resto 0. Espejo de floraOronja."""
+    import re
+    esp = " ".join(especies or []).lower()
+    host = bool(re.search(r"quercus|castanea", esp))
+    if cat in ("Robledal", "Castañeral"):
+        return 1.0
+    if cat == "Bosque mixto" or host:
+        return 0.9
+    if cat == "Hayedo":
+        return 0.2  # rara en haya (MicoAragón); MyBoletus la excluye
+    return 0.0
+
+
 def score(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
           tmin_7d=10, tmax_7d=18, viento_fuerte=False, mes=10):
     """
@@ -184,6 +310,72 @@ def score(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
         "flora": round(flora_s, 3),
         "temporada": round(temp, 3),
         "ventana_pico_dias": 15 if out >= 40 else None,
+        "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
+    }
+
+
+def score_niscalo(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
+                  componentes=None, tmin_7d=10, tmax_7d=18, viento_fuerte=False, mes=11):
+    """Espejo de scoreNiscalo en app.js. Veto helada <= -3, calor >= 28, viento."""
+    veto = (tmin_7d <= -3) or (tmax_7d >= 28) or bool(viento_fuerte)
+    s_p = f_p14_niscalo(p14d)
+    s_r = f_reserva(p30d)
+    s_ta = f_t_aire_niscalo(t_aire_7d)
+    s_ts = f_t_suelo(t_suelo)
+    s_hr = f_hr(hr_7d)
+    clima = 0.40 * s_p + 0.20 * s_r + 0.20 * s_ta + 0.10 * s_ts + 0.10 * s_hr
+    if veto:
+        clima = 0.0
+    terreno = f_altitud_niscalo(altitud)
+    suelo = f_ph_niscalo(ph)
+    flora_s = flora_niscalo(flora, componentes) if isinstance(flora, str) else 0.0
+    temp = f_temporada_niscalo(mes)
+    prob = clima * terreno * suelo * flora_s * temp
+    out = round(prob * 100, 1)
+    return {
+        "score": out,
+        "clima": round(clima, 3),
+        "detalle_clima": {"P14d": round(s_p, 3), "reserva": round(s_r, 3),
+                          "T_aire": round(s_ta, 3), "T_suelo": round(s_ts, 3),
+                          "HR": round(s_hr, 3), "veto": veto},
+        "terreno_altitud": round(terreno, 3),
+        "suelo_ph": round(suelo, 3),
+        "flora": round(flora_s, 3),
+        "temporada": round(temp, 3),
+        "ventana_pico_dias": NISCALO_LAG if out >= 40 else None,
+        "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
+    }
+
+
+def score_oronja(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
+                 especies=None, tmin_7d=10, tmax_7d=24, viento_fuerte=False, mes=9):
+    """Espejo de scoreOronja en app.js. Veto helada <= +2, calor >= 28, viento."""
+    veto = (tmin_7d <= 2) or (tmax_7d >= 28) or bool(viento_fuerte)
+    s_p = f_p14_oronja(p14d)
+    s_r = f_reserva(p30d)
+    s_ta = f_t_aire_oronja(t_aire_7d)
+    s_ts = f_t_suelo(t_suelo)
+    s_hr = f_hr(hr_7d)
+    clima = 0.40 * s_p + 0.20 * s_r + 0.20 * s_ta + 0.10 * s_ts + 0.10 * s_hr
+    if veto:
+        clima = 0.0
+    terreno = f_altitud_oronja(altitud)
+    suelo = f_ph_oronja(ph)
+    flora_s = flora_oronja(flora, especies) if isinstance(flora, str) else 0.0
+    temp = f_temporada_oronja(mes)
+    prob = clima * terreno * suelo * flora_s * temp
+    out = round(prob * 100, 1)
+    return {
+        "score": out,
+        "clima": round(clima, 3),
+        "detalle_clima": {"P14d": round(s_p, 3), "reserva": round(s_r, 3),
+                          "T_aire": round(s_ta, 3), "T_suelo": round(s_ts, 3),
+                          "HR": round(s_hr, 3), "veto": veto},
+        "terreno_altitud": round(terreno, 3),
+        "suelo_ph": round(suelo, 3),
+        "flora": round(flora_s, 3),
+        "temporada": round(temp, 3),
+        "ventana_pico_dias": CAESAREA_LAG if out >= 40 else None,
         "nivel": "nulo" if out < 25 else ("regular" if out < 50 else ("bueno" if out < 75 else "excelente")),
     }
 
