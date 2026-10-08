@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.85">
+<link rel="stylesheet" href="styles.css?v=1.87">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.85</p>
+        <p class="version" title="Versión de la aplicación">v1.87</p>
       </div>
     </div>
       </div>
@@ -90,7 +90,7 @@
           <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
-        <div class="prediction-banner nivel-nulo" id="banner"><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <div class="prediction-banner nivel-nulo" id="banner"><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div><p class="porque" id="porqueTxt"></p>
                 <div class="conditions-list" id="condList"></div>
         <div class="mushroom-details" id="detailList"></div>
       </div>
@@ -106,7 +106,7 @@
           <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillN" cx="60" cy="60" r="54" style="stroke:#c96a1b"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
-        <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div><p class="porque" id="porqueTxtN"></p>
         <div class="conditions-list" id="condListN"></div>
         <div class="mushroom-details" id="detailListN"></div>
       </div>
@@ -122,7 +122,7 @@
           <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillO" cx="60" cy="60" r="54" style="stroke:#d4a017"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPctO">—</span><span class="label" id="ringNivelO">Potencial</span></div>
         </div>
-        <div class="prediction-banner nivel-nulo" id="bannerO"><span class="prediction-text" id="bannerTxtO" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <div class="prediction-banner nivel-nulo" id="bannerO"><span class="prediction-text" id="bannerTxtO" style="flex:1">Pulsa el mapa para analizar un punto.</span></div><p class="porque" id="porqueTxtO"></p>
         <div class="conditions-list" id="condListO"></div>
         <div class="mushroom-details" id="detailListO"></div>
       </div>
@@ -138,7 +138,7 @@
           <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fill" id="ringFillC" cx="60" cy="60" r="54" style="stroke:#eab308"/></svg>
           <div class="ring-text"><span class="percentage" id="ringPctC">—</span><span class="label" id="ringNivelC">Potencial</span></div>
         </div>
-        <div class="prediction-banner nivel-nulo" id="bannerC"><span class="prediction-text" id="bannerTxtC" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
+        <div class="prediction-banner nivel-nulo" id="bannerC"><span class="prediction-text" id="bannerTxtC" style="flex:1">Pulsa el mapa para analizar un punto.</span></div><p class="porque" id="porqueTxtC"></p>
         <div class="conditions-list" id="condListC"></div>
         <div class="mushroom-details" id="detailListC"></div>
       </div>
@@ -266,11 +266,11 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.85 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.87 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.85"></script>
-<script src="app.js?v=1.85"></script>
+<script src="cotos.js?v=1.87"></script>
+<script src="app.js?v=1.87"></script>
 </body>
 </html>

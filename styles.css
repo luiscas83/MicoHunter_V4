@@ -99,6 +99,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .verdict-box .mid{color:var(--warning);font-weight:700}
 .verdict-box .bad{color:var(--danger);font-weight:700}
 .prediction-banner{display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:12px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:500;text-align:left}
+.porque{font-size:.8rem;color:var(--text-light);margin:-4px 0 12px;line-height:1.45}
 .prediction-banner.nivel-alto{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
 .prediction-banner.nivel-medio{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
 .prediction-banner.nivel-bajo{background:#fff8e1;color:#8a6a00;border:1px solid #ffe082}

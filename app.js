@@ -937,6 +937,9 @@ function renderAll(){
   rR.nivel=rR.score<25?"nulo":rR.score<50?"regular":rR.score<75?"bueno":"excelente";
   rR.pico=rR.score>=40?15:null;
   const hoy=r.score>=40, hubo=rR.score>=40;
+  const causaB=cR.p14<30?`faltaron lluvias (solo ${cR.p14.toFixed(0)} mm)`:cR.tmin<=0?`hubo helada`:cR.tmax>=28?`hubo calor`:cR.vientoMax>45?`hubo viento fuerte`:`falló la temperatura`;
+  const bien=[];if(r.d.P14>=0.8)bien.push("agua");if(r.d.res>=0.8)bien.push("reserva");if(r.d.TA>=0.8)bien.push("temperatura suave");if(r.d.TS>=0.8)bien.push("suelo templado");if(r.d.HR>=0.8)bien.push("humedad");
+  T2("porqueTxt",!hubo?`No hay cosecha hoy porque hace 15 días ${causaB}.`:hoy?`Hay setas hoy y viene pico porque hay ${bien.slice(0,3).join(" + ")||"buenas condiciones"}.`:`Hay setas hoy, pero el futuro flojea.`);
   lastCalc.r=r;lastCalc.rR=rR;lastCalc.cR=cR;
   const rb=clima.restB??15;
   const rf=document.getElementById("ringFill");if(rf)rf.style.strokeDasharray=`${(r.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
@@ -960,7 +963,7 @@ function renderAll(){
   const v2=m?v.replace(m[1],t+" "+m[1]):v+t;
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
   setHTML("detailList",
-    di("Disparador de fructificación",clima.trigB?`${clima.trigB} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SI · hace 15 días llovió bien ${badge(1)}`:(cR.p14<30?`NO · faltó lluvia (${cR.p14.toFixed(0)} mm) ${badge(0)}`:cR.tmin<=0?`NO · helada hace 15 días ${badge(0)}`:cR.tmax>=28?`NO · calor hace 15 días ${badge(0)}`:cR.vientoMax>45?`NO · viento fuerte hace 15 días ${badge(0)}`:`NO · falló la temperatura hace 15 días ${badge(0)}`)))+
+    di("Disparador de fructificación",clima.trigB?`${clima.trigB} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rR.score.toFixed(0)}/100 · hace 15 días llovió bien ${badge(rR.score/100)}`:(cR.p14<30?`NO · faltó lluvia (${cR.p14.toFixed(0)} mm) ${badge(rR.score/100)}`:cR.tmin<=0?`NO · helada hace 15 días ${badge(rR.score/100)}`:cR.tmax>=28?`NO · calor hace 15 días ${badge(rR.score/100)}`:cR.vientoMax>45?`NO · viento fuerte hace 15 días ${badge(rR.score/100)}`:`NO · falló la temperatura hace 15 días ${badge(rR.score/100)}`)))+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(r.terreno)}`,"600–1800 m")+
     di("pH del suelo",`${sueloTxt} ${badge(r.suelo)}`,"4,5–6,5")+
     di("Estación",`${MESES[mes-1]} ${badge(r.temp)}`,"pico octubre")+
@@ -1020,6 +1023,9 @@ function renderNiscalo(){
     ...base,tmin:cN.tmin,tmax:cN.tmax,vientoMax:cN.vientoMax,floraNota:fN??0.70});
   rNR.nivel=rNR.score<25?"nulo":rNR.score<50?"regular":rNR.score<75?"bueno":"excelente";
   const hoy=rN.score>=40, hubo=rNR.score>=40;
+  const causaN=cN.p14<25?`faltaron lluvias (solo ${cN.p14.toFixed(0)} mm)`:cN.tmin<=-3?`hubo helada`:cN.tmax>=28?`hubo calor`:cN.vientoMax>45?`hubo viento fuerte`:`falló la temperatura`;
+  const bienN=[];if(rN.d.P14>=0.8)bienN.push("agua");if(rN.d.res>=0.8)bienN.push("reserva");if(rN.d.TA>=0.8)bienN.push("temperatura suave");if(rN.d.TS>=0.8)bienN.push("suelo templado");if(rN.d.HR>=0.8)bienN.push("humedad");
+  T2("porqueTxtN",!hubo?`No hay cosecha hoy porque hace 21 días ${causaN}.`:hoy?`Hay setas hoy y viene pico porque hay ${bienN.slice(0,3).join(" + ")||"buenas condiciones"}.`:`Hay setas hoy, pero el futuro flojea.`);
   lastCalc.rN=rN;lastCalc.rNR=rNR;lastCalc.cRN=cN;
   const rfN=document.getElementById("ringFillN");if(rfN)rfN.style.strokeDasharray=`${(rN.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPctN",rN.score);
@@ -1045,7 +1051,7 @@ function renderNiscalo(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
   const MESESN=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListN",
-    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SI · hace 21 días llovió bien ${badge(1)}`:(cN.p14<25?`NO · faltó lluvia (${cN.p14.toFixed(0)} mm) ${badge(0)}`:cN.tmin<=-3?`NO · helada hace 21 días ${badge(0)}`:cN.tmax>=28?`NO · calor hace 21 días ${badge(0)}`:cN.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(0)}`:`NO · falló la temperatura hace 21 días ${badge(0)}`)))+
+    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rNR.score.toFixed(0)}/100 · hace 21 días llovió bien ${badge(rNR.score/100)}`:(cN.p14<25?`NO · faltó lluvia (${cN.p14.toFixed(0)} mm) ${badge(rNR.score/100)}`:cN.tmin<=-3?`NO · helada hace 21 días ${badge(rNR.score/100)}`:cN.tmax>=28?`NO · calor hace 21 días ${badge(rNR.score/100)}`:cN.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(rNR.score/100)}`:`NO · falló la temperatura hace 21 días ${badge(rNR.score/100)}`)))+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rN.terreno)}`,"100–1600 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rN.suelo)}`,"4,5–8")+
     di("Estación",`${MESESN[mes-1]} ${badge(rN.temp)}`,"pico noviembre")+
@@ -1074,6 +1080,9 @@ function renderOronja(){
   const rOR=scoreOronja({p14:cO.p14,p30:cO.p30,ta:cO.ta,ts:cO.ts,hr:cO.hr,
     ...base,tmin:cO.tmin,tmax:cO.tmax,viento:cO.vientoMax>45,floraNota:fO??0.70});
   const hoy=rO.score>=40, hubo=rOR.score>=40;
+  const causaO=cO.p14<30?`faltaron lluvias (solo ${cO.p14.toFixed(0)} mm)`:cO.tmin<=2?`hizo frío`:cO.tmax>=28?`hubo calor`:cO.vientoMax>45?`hubo viento fuerte`:`falló la temperatura`;
+  const bienO=[];if(rO.d.P14>=0.8)bienO.push("agua");if(rO.d.res>=0.8)bienO.push("reserva");if(rO.d.TA>=0.8)bienO.push("temperatura suave");if(rO.d.TS>=0.8)bienO.push("suelo templado");if(rO.d.HR>=0.8)bienO.push("humedad");
+  T2("porqueTxtO",!hubo?`No hay cosecha hoy porque hace 21 días ${causaO}.`:hoy?`Hay setas hoy y viene pico porque hay ${bienO.slice(0,3).join(" + ")||"buenas condiciones"}.`:`Hay setas hoy, pero el futuro flojea.`);
   lastCalc.rO=rO;lastCalc.rOR=rOR;lastCalc.cRO=cO;
   const rfO=document.getElementById("ringFillO");if(rfO)rfO.style.strokeDasharray=`${(rO.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPctO",rO.score);
@@ -1099,7 +1108,7 @@ function renderOronja(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
   const MESO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListO",
-    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SI · hace 21 días llovió bien ${badge(1)}`:(cO.p14<30?`NO · faltó lluvia (${cO.p14.toFixed(0)} mm) ${badge(0)}`:cO.tmin<=2?`NO · frío hace 21 días ${badge(0)}`:cO.tmax>=28?`NO · calor hace 21 días ${badge(0)}`:cO.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(0)}`:`NO · falló la temperatura hace 21 días ${badge(0)}`)))+
+    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rOR.score.toFixed(0)}/100 · hace 21 días llovió bien ${badge(rOR.score/100)}`:(cO.p14<30?`NO · faltó lluvia (${cO.p14.toFixed(0)} mm) ${badge(rOR.score/100)}`:cO.tmin<=2?`NO · frío hace 21 días ${badge(rOR.score/100)}`:cO.tmax>=28?`NO · calor hace 21 días ${badge(rOR.score/100)}`:cO.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(rOR.score/100)}`:`NO · falló la temperatura hace 21 días ${badge(rOR.score/100)}`)))+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rO.terreno)}`,"200–1200 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rO.suelo)}`,"4–6")+
     di("Estación",`${MESO[mes-1]} ${badge(rO.temp)}`,"pico septiembre")+
@@ -1128,6 +1137,9 @@ function renderChantarella(){
   const rCR=scoreChantarella({p14:cC.p14,p30:cC.p30,ta:cC.ta,ts:cC.ts,hr:cC.hr,
     ...base,tmin:cC.tmin,tmax:cC.tmax,floraNota:fC??0.70});
   const hoy=rC.score>=40, hubo=rCR.score>=40;
+  const causaC=cC.p14<30?`faltaron lluvias (solo ${cC.p14.toFixed(0)} mm)`:cC.tmin<=0?`hubo helada`:`falló la temperatura`;
+  const bienC=[];if(rC.d.P14>=0.8)bienC.push("agua");if(rC.d.res>=0.8)bienC.push("reserva");if(rC.d.TA>=0.8)bienC.push("temperatura suave");if(rC.d.TS>=0.8)bienC.push("suelo templado");if(rC.d.HR>=0.8)bienC.push("humedad");
+  T2("porqueTxtC",!hubo?`No hay cosecha hoy porque hace 10 días ${causaC}.`:hoy?`Hay setas hoy y viene pico porque hay ${bienC.slice(0,3).join(" + ")||"buenas condiciones"}.`:`Hay setas hoy, pero el futuro flojea.`);
   lastCalc.rC=rC;lastCalc.rCR=rCR;lastCalc.cRC=cC;
   const rfC=document.getElementById("ringFillC");if(rfC)rfC.style.strokeDasharray=`${(rC.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPctC",rC.score);
@@ -1153,7 +1165,7 @@ function renderChantarella(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
   const MESC=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListC",
-    di("Disparador de fructificación",clima.trigC?`${clima.trigC} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SI · hace 10 días llovió bien ${badge(1)}`:(cC.p14<30?`NO · faltó lluvia (${cC.p14.toFixed(0)} mm) ${badge(0)}`:cC.tmin<=0?`NO · helada hace 10 días ${badge(0)}`:`NO · falló la temperatura hace 10 días ${badge(0)}`)))+
+    di("Disparador de fructificación",clima.trigC?`${clima.trigC} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rCR.score.toFixed(0)}/100 · hace 10 días llovió bien ${badge(rCR.score/100)}`:(cC.p14<30?`NO · faltó lluvia (${cC.p14.toFixed(0)} mm) ${badge(rCR.score/100)}`:cC.tmin<=0?`NO · helada hace 10 días ${badge(rCR.score/100)}`:`NO · falló la temperatura hace 10 días ${badge(rCR.score/100)}`)))+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rC.terreno)}`,"50–1500 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rC.suelo)}`,"4–5,5")+
     di("Estación",`${MESC[mes-1]} ${badge(rC.temp)}`,"pico septiembre")+
