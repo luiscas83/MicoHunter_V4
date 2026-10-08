@@ -101,6 +101,7 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Leyenda y Metodología al día (v1.85): anillo a futuro, 4 mensajes del banner con colores, sin veredicto ni "sin foto".
 - Doble score explícito (v1.86): "Cosecha hoy" muestra su número (SÍ · 65/100 · ...) con su insignia.
 - Porqué automático (v1.87): línea bajo el banner ("No hay cosecha hoy porque..." / "Hay setas hoy y viene pico porque hay agua + ...").
+- Híbrido lluvia (v1.88): AEMET + modelo en el hueco sin validar + hoy en directo; fuera el margen de 2 días.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).

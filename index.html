@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.87">
+<link rel="stylesheet" href="styles.css?v=1.88">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.87</p>
+        <p class="version" title="Versión de la aplicación">v1.88</p>
       </div>
     </div>
       </div>
@@ -221,7 +221,7 @@
     <h4>De dónde salen los datos</h4>
     <ul class="method-list">
       <li><strong>El tiempo base (Open-Meteo)</strong> — 55 días observados más el día actual y 8 de previsión (el día actual es el antepenúltimo bloque, no el último). Para el pasado se usa lo observado, no previsiones. De aquí salen la lluvia diaria, las temperaturas del aire, la humedad, el viento, la temperatura del suelo a 18 cm (media de 7 días, la profundidad del micelio), la previsión de 7 días y los tramos hora a hora de hoy. La altitud del punto viene de su servicio de elevación.</li>
-      <li><strong>La lluvia y los extremos, con pluviómetro (AEMET OpenData)</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Con la clave integrada, del pluviómetro oficial más cercano (menos de 25 km) salen la lluvia de 14/30 días, las mínimas/máximas, la temperatura media, la humedad media y la racha de viento, con sus lecturas de hace 10/15/21 días. Las ventanas usan el diario validado (el «día» AEMET va de 07 a 07) más lo que lleva hoy según el parte horario en directo; todo AEMET, sin mezclas. Los días intermedios aún sin validar no existen en ninguna fuente oficial hasta que se publican. Su nombre y distancia se ven en la fila «Estación meteo», y su parte en directo alimenta las filas del «ahora» y lo que lleva hoy. Del modelo solo quedan la temperatura del suelo a 18 cm (AEMET no guarda histórico) y la altitud.</li>
+      <li><strong>La lluvia y los extremos, con pluviómetro (AEMET OpenData)</strong> — el modelo a veces se queda corto en la sierra (en Rascafría midió 10 mm cuando el pluviómetro marcó 56). Con la clave integrada, del pluviómetro oficial más cercano (menos de 25 km) salen la lluvia de 14/30 días, las mínimas/máximas, la temperatura media, la humedad media y la racha de viento, con sus lecturas de hace 10/15/21 días. Las ventanas terminan hoy: diario validado (el «día» AEMET va de 07 a 07), modelo Open-Meteo solo para los días aún sin validar y lo que lleva hoy según el parte horario en directo. Los días intermedios aún sin validar no existen en ninguna fuente oficial hasta que se publican. Su nombre y distancia se ven en la fila «Estación meteo», y su parte en directo alimenta las filas del «ahora» y lo que lleva hoy. Del modelo solo quedan la temperatura del suelo a 18 cm (AEMET no guarda histórico) y la altitud.</li>
       <li><strong>El suelo (SoilGrids)</strong> — mapa mundial de suelos: acidez, tipo de tierra (arena/limo/arcilla) y materia orgánica a 5–15 cm, en cuadrícula de 250 m. Es una estimación interpolada, no un análisis de tu parcela.</li>
       <li><strong>El bosque (Mapa Forestal de España, MITECO)</strong> — se preguntan una por una 36 formaciones (¿hay hayedo aquí? ¿pinar de albar?…) en 120 m a la redonda, leyendo el nombre científico del árbol dominante. Si no hay bosque, su capa de usos dice si es pradera, pasto, matorral o dehesa con el código oficial LULUCF.</li>
       <li><strong>La ciudad (OpenStreetMap)</strong> — solo como último recurso: si no hay bosque ni uso claro, se cuentan edificios en 150 m (10 o más = urbano, veto). Nunca se usa para el bosque; si falla, no pasa nada.</li>
@@ -260,17 +260,17 @@
       <dt><strong>Temporada</strong></dt><dd>Boleto: octubre 1 · sep/nov 0,85 · ago/dic 0,4 · resto 0,1. Níscalo: noviembre 1 · octubre 0,9 · septiembre 0,85 · diciembre 0,6 · agosto 0,3 · resto 0,1. Oronja: septiembre 1 · agosto 0,9 · octubre 0,85 · julio 0,5 · junio 0,2 · resto 0,1. Chantarela: septiembre 1 · agosto/octubre 0,9 · julio 0,8 · junio 0,6 · noviembre 0,4 · resto 0,1.</dd>
       <dt><strong>Oronja</strong></dt><dd>Termófila de verano (jun–oct): retardo ~21 días (primer flush 15–22 tras tormentas; hasta 40–50 en seco), veto desde +2 ºC, quercíneas y castaño (haya y pinar: 0). Calibrada v1.39 con bibliografía (MicoAragón, sporas.io); sin validación de campo.</dd>
       <dt><strong>Chantarela</strong></dt><dd>De junio a noviembre, pico en septiembre: retardo 10 días (flush 7–14 tras tormentas), veto solo por helada (≤ 0 ºC), sin veto de viento ni de máxima; pH 4–5,5 estricto, 50–1500 m. Valores iniciales v1.44 sin calibrar de campo; foto: sporas.io.</dd>
-      <dt><strong>Fuentes</strong></dt><dd>Lluvia y extremos: pluviómetro AEMET ≤ 25 km (o modelo). Suelo 18 cm, previsión y altitud: Open-Meteo. Suelo: SoilGrids. Bosque: MFE. Ciudad y topónimos: OSM. Caché de punto: 10 min.</dd>
+      <dt><strong>Fuentes</strong></dt><dd>Lluvia: pluviómetro AEMET ≤ 25 km + modelo en el hueco sin validar (o todo modelo). Suelo 18 cm, previsión y altitud: Open-Meteo. Suelo: SoilGrids. Bosque: MFE. Ciudad y topónimos: OSM. Caché de punto: 10 min.</dd>
     </dl>
   </div>
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.87 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.88 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.87"></script>
-<script src="app.js?v=1.87"></script>
+<script src="cotos.js?v=1.88"></script>
+<script src="app.js?v=1.88"></script>
 </body>
 </html>

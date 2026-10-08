@@ -201,8 +201,9 @@ async function fetchClima(la,lo){
       }
     }
   }catch(e){hoyTramos=[];}
+  const modDia={};for(let i=Math.max(0,n-14);i<n;i++)modDia[D.time[i]]=D.precipitation_sum[i]??0; // modelo reciente, solo para el hueco AEMET
   return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmax:Math.max(...mx7),
-    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro10,retro21,ahora,fc,obsDia,hoyTramos,
+    vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro10,retro21,ahora,fc,obsDia,hoyTramos,modDia,
     restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restC:restantes(hist45,10,60),
     trigB:fechaTrig(hist45,60,new Date()),trigN:fechaTrig(hist45,50,new Date()),trigC:fechaTrig(hist45,60,new Date())};
 }
@@ -722,7 +723,8 @@ function pintar(calc,ageMin){
   T("rain14Value",`${clima.p14.toFixed(0)} mm = ${clima.p14.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
   T("rain30Value",`${clima.p30.toFixed(0)} mm = ${clima.p30.toFixed(0)} L/m²${prov?` · ${prov.est} (${prov.dist} km)`:""}`);
   const r14t=document.getElementById("rain14Value"), r30t=document.getElementById("rain30Value");
-  const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
+  const huecoT=prov&&prov.hueco&&prov.hueco.n?` + ${prov.hueco.n} d modelo (${prov.hueco.mm} mm)`:"";
+  const rTitle=prov?`Pluviómetro AEMET ${prov.est}, a ${prov.dist} km (datos hasta ${prov.fecha}${huecoT}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""})`:"Modelo Open-Meteo (1 mm = 1 L/m²)";
   if(r14t)r14t.title=rTitle;
   if(r30t)r30t.title=rTitle;
   T2("rainSrc",prov?"pluviómetro":"modelo");
@@ -731,7 +733,7 @@ function pintar(calc,ageMin){
   if(msEl)msEl.title=(am&&am.estado==="error")?`Modelo Open-Meteo · AEMET falló: ${am.msg||"error de red"}`:rTitle;
   renderAemetStatus(
     !am||am.estado==="sin-clave"?"Sin clave: lluvia según modelo.":
-    am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
+    am.estado==="ok"?`Pluviómetro ${prov.est}, a ${prov.dist} km (hasta ${prov.fecha}${huecoT}${prov.hoyParcial?` + hoy ${prov.hoyParcial.mm} parcial`:""}).`:
     am.estado==="lejos"?"Sin estación AEMET a menos de 25 km: lluvia según modelo.":
     am.estado==="pocos-datos"?"La estación AEMET aún no tiene serie suficiente: lluvia según modelo.":
     `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
@@ -813,22 +815,25 @@ async function predecir(etiqueta){
     let live=null;
     if(prov){
       try{live=await aemetAhora(prov.ind);}catch(e){live=null;}
-      // Hoy parcial del parte horario (mismo pluviómetro): la ventana termina hoy, no en el último diario
-      if(live&&live.horas>0&&live.precHoy!=null){
-        prov.hoyParcial={mm:live.precHoy,horas:live.horas};
-        clima.p14=+(prov.p14+live.precHoy).toFixed(1);
-        clima.p30=+(prov.p30+live.precHoy).toFixed(1);
-      }else{
-        clima.p14=prov.p14;clima.p30=prov.p30;
-      }
-      const arr45=[...prov.serie45];
-      if(prov.hoyParcial)arr45.push(prov.hoyParcial.mm);
+      // Híbrido v1.88: AEMET validado + modelo solo en el hueco sin validar + hoy del parte en directo
+      if(live&&live.horas>0&&live.precHoy!=null)prov.hoyParcial={mm:live.precHoy,horas:live.horas};
       const gapD=Math.max(0,Math.round((Date.now()-new Date(prov.fecha+"T00:00:00Z"))/864e5));
-      clima.restB=Math.max(0,restantes(arr45,15,60)-gapD-2);
-      clima.restN=Math.max(0,restantes(arr45,21,50)-gapD-2);
-      clima.restC=Math.max(0,restantes(arr45,10,60)-gapD-2);
-      const ancla=prov.hoyParcial?new Date():new Date(prov.fecha+"T00:00:00Z");
-      ancla.setDate(ancla.getDate()-2); // margen por el lag del pluviómetro
+      const f0=new Date(prov.fecha+"T00:00:00Z"), hueco=[];
+      for(let d=1;d<gapD;d++){const t=new Date(f0);t.setUTCDate(t.getUTCDate()+d);hueco.push(t.toISOString().slice(0,10));}
+      const modHueco=hueco.map(f=>+(((clima.modDia&&clima.modDia[f])??0)));
+      const sumHueco=+modHueco.reduce((a,v)=>a+v,0).toFixed(1);
+      prov.hueco={n:hueco.length,mm:sumHueco};
+      const base14=prov.serie45.slice(-14).slice(Math.min(gapD,14)).reduce((a,v)=>a+v,0);
+      const base30=prov.serie45.slice(-30).slice(Math.min(gapD,30)).reduce((a,v)=>a+v,0);
+      const hoyMm=prov.hoyParcial?prov.hoyParcial.mm:0;
+      clima.p14=+(base14+sumHueco+hoyMm).toFixed(1);
+      clima.p30=+(base30+sumHueco+hoyMm).toFixed(1);
+      const arr45=[...prov.serie45,...modHueco];
+      if(prov.hoyParcial)arr45.push(prov.hoyParcial.mm);
+      clima.restB=restantes(arr45,15,60);
+      clima.restN=restantes(arr45,21,50);
+      clima.restC=restantes(arr45,10,60);
+      const ancla=new Date();
       clima.trigB=fechaTrig(arr45,60,ancla);clima.trigN=fechaTrig(arr45,50,ancla);clima.trigC=fechaTrig(arr45,60,ancla);
       clima.tmin=prov.tmin;clima.tmax=prov.tmax;
       if(prov.ta!=null)clima.ta=prov.ta;
