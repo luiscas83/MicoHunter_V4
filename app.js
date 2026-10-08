@@ -817,7 +817,8 @@ async function predecir(etiqueta){
       try{live=await aemetAhora(prov.ind);}catch(e){live=null;}
       // Híbrido v1.88: AEMET validado + modelo solo en el hueco sin validar + hoy del parte en directo
       if(live&&live.horas>0&&live.precHoy!=null)prov.hoyParcial={mm:live.precHoy,horas:live.horas};
-      const gapD=Math.max(0,Math.round((Date.now()-new Date(prov.fecha+"T00:00:00Z"))/864e5));
+      const hoyStr=new Date().toLocaleDateString("en-CA",{timeZone:"Europe/Madrid"}); // días de calendario: hoy nunca entra en el hueco
+      const gapD=Math.max(0,Math.round((new Date(hoyStr+"T00:00:00Z")-new Date(prov.fecha+"T00:00:00Z"))/864e5));
       const f0=new Date(prov.fecha+"T00:00:00Z"), hueco=[];
       for(let d=1;d<gapD;d++){const t=new Date(f0);t.setUTCDate(t.getUTCDate()+d);hueco.push(t.toISOString().slice(0,10));}
       const modHueco=hueco.map(f=>+(((clima.modDia&&clima.modDia[f])??0)));
