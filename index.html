@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.56">
+<link rel="stylesheet" href="styles.css?v=1.80">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.56</p>
+        <p class="version" title="Versión de la aplicación">v1.80</p>
       </div>
     </div>
       </div>
@@ -72,7 +72,8 @@
         <div class="terrain-item"><span class="ti">🪨</span><span class="tl">Suelo</span><span class="tv" id="soilTypeValue">—</span></div>
         <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH 5-15cm</span><span class="tv" id="phValue">—</span></div>
         <div class="terrain-item"><span class="ti">🌲</span><span class="tl">Hábitat en el punto</span><span class="tv" id="habitatLine">consultando…</span></div>
-        <div class="terrain-item"><span class="ti">🗺️</span><span class="tl">Monte (MUP)</span><span class="tv" id="mupValue" title="Monte de Utilidad Pública (Castilla y León, Navarra, Aragón)">—</span></div>
+        <div class="terrain-item"><span class="ti">🗺️</span><span class="tl">Monte (MUP)</span><span class="tv" id="mupValue" title="Monte de Utilidad Pública">—</span></div>
+        <div class="terrain-item"><span class="ti">🎫</span><span class="tl">Coto</span><span class="tv" id="cotoValue" title="Acotado micológico (permiso de pago)">—</span></div>
       </div>
             <div class="last-update" id="lastUpdate"></div>
     </div>
@@ -90,10 +91,8 @@
           <div class="ring-text"><span class="percentage" id="ringPct">—</span><span class="label" id="ringNivel">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="banner"><span class="prediction-text" id="bannerTxt" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
-        <p class="calc-hint">Cosecha de hoy: con lo de hace 15 días · Anillo: pico a +15 días con lo de hoy</p>
                 <div class="conditions-list" id="condList"></div>
         <div class="mushroom-details" id="detailList"></div>
-        <div class="verdict-box" id="verdictEdulis">El resumen aparecerá al analizar un punto.</div>
       </div>
       <div class="card mushroom-card" id="cardNiscalo">
         <div class="mushroom-title-section">
@@ -108,10 +107,8 @@
           <div class="ring-text"><span class="percentage" id="ringPctN">—</span><span class="label" id="ringNivelN">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerN"><span class="prediction-text" id="bannerTxtN" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
-        <p class="calc-hint">Cosecha de hoy: con lo de hace 21 días · Anillo: pico a +21 días con lo de hoy</p>
         <div class="conditions-list" id="condListN"></div>
         <div class="mushroom-details" id="detailListN"></div>
-        <div class="verdict-box" id="verdictNiscalo">El resumen aparecerá al analizar un punto.</div>
       </div>
       <div class="card mushroom-card" id="cardOronja">
         <div class="mushroom-title-section">
@@ -126,14 +123,12 @@
           <div class="ring-text"><span class="percentage" id="ringPctO">—</span><span class="label" id="ringNivelO">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerO"><span class="prediction-text" id="bannerTxtO" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
-        <p class="calc-hint">Cosecha de hoy: con lo de hace 21 días · Anillo: pico a +21 días con lo de hoy</p>
         <div class="conditions-list" id="condListO"></div>
         <div class="mushroom-details" id="detailListO"></div>
-        <div class="verdict-box" id="verdictOronja">El resumen aparecerá al analizar un punto.</div>
       </div>
       <div class="card mushroom-card" id="cardChantarella">
         <div class="mushroom-title-section">
-          <div class="mushroom-icon-large mushroom-photo mushroom-photo-placeholder" title="Foto pendiente">🍄</div>
+          <img class="mushroom-icon-large mushroom-photo" src="img/chantarela.webp" alt="Chantarela / Rebozuelo" width="96" height="96">
           <div class="mushroom-titles">
             <span class="mushroom-name">Chantarela / Rebozuelo</span>
             <span class="mushroom-scientific">Cantharellus cibarius</span>
@@ -144,10 +139,8 @@
           <div class="ring-text"><span class="percentage" id="ringPctC">—</span><span class="label" id="ringNivelC">Potencial</span></div>
         </div>
         <div class="prediction-banner nivel-nulo" id="bannerC"><span class="prediction-text" id="bannerTxtC" style="flex:1">Pulsa el mapa para analizar un punto.</span></div>
-        <p class="calc-hint">Cosecha de hoy: con lo de hace 10 días · Anillo: pico a +10 días con lo de hoy</p>
         <div class="conditions-list" id="condListC"></div>
         <div class="mushroom-details" id="detailListC"></div>
-        <div class="verdict-box" id="verdictChantarella">El resumen aparecerá al analizar un punto.</div>
       </div>
     </div>
   </div>
@@ -181,7 +174,7 @@
     <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/boletus.jpg" alt="Boleto / Hongo" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Boleto / Hongo</span><span class="mushroom-scientific">Boletus edulis</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a noviembre, pico en octubre, en pinares, hayedos, robledales y castañares de media montaña</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC, óptimo 12–16 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> 0 ºC</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 60–100 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 15 días</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar, Bosque mixto, Hayedo, Robledal, Castañeral</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 6,5 · prefiere ácidos</p><p class="ficha-p"><strong>Altitud:</strong> 600–1800 m</p><p class="ficha-p"><strong>Identificación:</strong> sombrero pardo 8–25 cm con margen más claro; poros blancos→amarillos→oliva que no azulean; pie macizo con retículo blanquecino arriba; carne blanca inmutable, sabor dulce a avellana.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Rubroboletus satanas</em> (tóxica: poros rojo sangre + azuleo rápido + retículo rojo) · <em>Tylopilus felleus</em> (poros rosados + amargor extremo, arruina la cesta) · <em>Caloboletus calopus</em> (pie rojo + azulea + amargo). Regla: poros rojos o azuleo rápido → fuera.</div><p class="ficha-p"><strong>Cocina:</strong> excelente bien cocinada (nunca cruda por defecto); el secado concentra el aroma; no lavar a remojo.</p><p class="ficha-p"><strong>Seguridad:</strong> guía orientativa, no identificación. Ante la duda, asociación micológica o experto.</p></div></div>
     <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/niscalo.webp" alt="Níscalo / Rovelló" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Níscalo / Rovelló</span><span class="mushroom-scientific">Lactarius deliciosus</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico</p><p class="ficha-p"><strong>Temporada documentada:</strong> De septiembre a diciembre, pico en noviembre (octubre casi igual), solo bajo pinos (el pinar joven y aclarado rinde más)</p><p class="ficha-p"><strong>Comestibilidad:</strong> Buena (nunca crudo)</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (igual que el boleto, sin dato propio)</p><p class="ficha-p"><strong>Mínima crítica:</strong> −3 ºC</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 50–90 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 21 días (primeros a los 7–15 días)</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,5 a 8,0 · le importa poco</p><p class="ficha-p"><strong>Altitud:</strong> 100–1600 m</p><p class="ficha-p"><strong>Identificación:</strong> sombrero naranja teja 4–15 cm con bandas concéntricas, embudado de adulto; látex naranja zanahoria que verdea lento; carne granulosa que se rompe como tiza; sabor dulce, nunca picante; siempre bajo pino. El verdeado es oxidación normal, no podredumbre.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Lactarius torminosus</em> (tóxico: látex blanco + margen lanoso + picante, bajo abedul) · <em>Lactarius chrysorrheus</em> (tóxico: látex blanco→amarillo azufre + picante, bajo robles). Buenos primos: <em>L. sanguifluus</em> y <em>L. vinosus</em> (látex vinoso, excelentes). Regla: látex blanco o amarillo → fuera.</div><p class="ficha-p"><strong>Cocina:</strong> buena a la brasa o plancha; nunca crudo (irritante); no lavar (absorbe agua); no secar: mejor escabeche o congelado tras saltear.</p><p class="ficha-p"><strong>Seguridad:</strong> guía orientativa, no identificación. Ante la duda, asociación micológica o experto.</p></div></div>
     <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/oronja.webp" alt="Oronja / Huevo de rey" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Oronja / Huevo de rey</span><span class="mushroom-scientific">Amanita caesarea</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico (robles, castaños, encinas)</p><p class="ficha-p"><strong>Temporada documentada:</strong> De junio a octubre, pico en septiembre; termófila de verano y principio de otoño</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente (se puede comer cruda en carpaccio)</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (igual que el boleto, sin dato propio)</p><p class="ficha-p"><strong>Aire:</strong> útil 10–28 ºC, óptimo ~20 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> +2 ºC (no aguanta heladas)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 30–80 mm</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 21 días (primer flush 15–22 tras tormentas; hasta 40–50 en terreno seco)</p><p class="ficha-p"><strong>Hábitat:</strong> Robledal, Castañeral y quercíneas (encina, carrasca, alcornoque)</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,0 a 6,0 · acidófila (en neutros, rara)</p><p class="ficha-p"><strong>Altitud:</strong> 200–1200 m (hasta 1500 en los mejores casos)</p></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Identificación:</strong> sombrero 5–20 cm naranja intenso con margen estriado; láminas y pie amarillos con anillo; volva en saco blanca; nace de un «huevo» blanco. Solo recolectar abiertos que muestren el naranja.</p><div class="toxi-box"><strong>⚠️ Confusiones mortales:</strong> <em>Amanita phalloides</em> (mortal: huevo más ancho en la base, carne blanca, sombrero verde sin margen estriado) · <em>A. verna/vidua</em> (mortales, blancas) · <em>A. muscaria</em> (tóxica: verrugas blancas, láminas y pie blancos, volva en escamas, no en saco). Regla: huevo blanco, albino o sin naranja visible → fuera. Ojo: acumula cadmio, evita bordes de carretera.</div><p class="ficha-p"><strong>Cocina:</strong> excelente incluso cruda en carpaccio; frigo 3–5 días; deshidratada o congelada tras escaldado.</p><p class="ficha-p"><strong>Seguridad:</strong> guía orientativa, no identificación. Ante la duda, asociación micológica o experto.</p></div></div>
-    <div class="card mushroom-card"><div class="mushroom-title-section"><div class="mushroom-icon-large mushroom-photo mushroom-photo-placeholder" title="Foto pendiente">🍄</div><div class="mushroom-titles"><span class="mushroom-name">Chantarela / Rebozuelo</span><span class="mushroom-scientific">Cantharellus cibarius</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico (robles, hayas, castaños, pinos, abedules)</p><p class="ficha-p"><strong>Temporada documentada:</strong> De junio a noviembre, pico en septiembre</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (función común, sin dato propio)</p><p class="ficha-p"><strong>Aire:</strong> útil 8–26 ºC, óptimo 15–20 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> 0 ºC (la helada veta la fructificación; sin veto de viento ni de máxima aislada)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 60–100 mm (exceso progresivo, sin corte brusco)</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 10 días (flush 7–14 tras tormentas; posible hasta 15–21)</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar, Hayedo, Robledal, Castañeral, Bosque mixto (+ abedul, avellano y pícea por especie)</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,0 a 5,5 · acidófila estricta (fuera de rango anula)</p><p class="ficha-p"><strong>Altitud:</strong> 50–1500 m (preferencia 100–1400 m)</p></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Identificación:</strong> sombrero 3–10 cm amarillo yema, embudado de adulto con margen enrollado; pliegues romos y decurrentes (no láminas); carne amarillenta con olor a albaricoque; crece en grupos, a veces en corros.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Hygrophoropsis aurantiaca</em> (falsa chantarela: láminas verdaderas finas y apretadas, sin olor a albaricoque, sobre madera de coníferas) · <em>Omphalotus olearius</em> (tóxica: crece en grupos densos sobre tocones y raíces, láminas apretadas). Regla: pliegues romos + olor a albaricoque → chantarela.</div><p class="ficha-p"><strong>Cocina:</strong> excelente; aguanta bien el salteado y el secado; limpiar en seco sin remojo.</p><p class="ficha-p"><strong>Aviso:</strong> valores iniciales v1.44 sin calibrar de campo; falta foto propia.</p></div></div>
+    <div class="card mushroom-card"><div class="mushroom-title-section"><img class="mushroom-icon-large mushroom-photo" src="img/chantarela.webp" alt="Chantarela / Rebozuelo" width="96" height="96"><div class="mushroom-titles"><span class="mushroom-name">Chantarela / Rebozuelo</span><span class="mushroom-scientific">Cantharellus cibarius</span></div></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Grupo:</strong> Ectomicorrícico (robles, hayas, castaños, pinos, abedules)</p><p class="ficha-p"><strong>Temporada documentada:</strong> De junio a noviembre, pico en septiembre</p><p class="ficha-p"><strong>Comestibilidad:</strong> Excelente</p><p class="ficha-p"><strong>Rango de temperatura de suelo para fructificar:</strong> 10 a 18 ºC (función común, sin dato propio)</p><p class="ficha-p"><strong>Aire:</strong> útil 8–26 ºC, óptimo 15–20 ºC</p><p class="ficha-p"><strong>Mínima crítica:</strong> 0 ºC (la helada veta la fructificación; sin veto de viento ni de máxima aislada)</p><p class="ficha-p"><strong>Ventana hídrica:</strong> 14 días · óptima 60–100 mm (exceso progresivo, sin corte brusco)</p><p class="ficha-p"><strong>Retardo lluvia→pico:</strong> 10 días (flush 7–14 tras tormentas; posible hasta 15–21)</p><p class="ficha-p"><strong>Hábitat:</strong> Pinar, Hayedo, Robledal, Castañeral, Bosque mixto (+ abedul, avellano y pícea por especie)</p><p class="ficha-p"><strong>Rango de pH:</strong> 4,0 a 5,5 · acidófila estricta (fuera de rango anula)</p><p class="ficha-p"><strong>Altitud:</strong> 50–1500 m (preferencia 100–1400 m)</p></div><div class="mushroom-details" style="border-top:none;padding-top:0;margin-top:0"><p class="ficha-p"><strong>Identificación:</strong> sombrero 3–10 cm amarillo yema, embudado de adulto con margen enrollado; pliegues romos y decurrentes (no láminas); carne amarillenta con olor a albaricoque; crece en grupos, a veces en corros.</p><div class="toxi-box"><strong>⚠️ Confusiones peligrosas:</strong> <em>Hygrophoropsis aurantiaca</em> (falsa chantarela: láminas verdaderas finas y apretadas, sin olor a albaricoque, sobre madera de coníferas) · <em>Omphalotus olearius</em> (tóxica: crece en grupos densos sobre tocones y raíces, láminas apretadas). Regla: pliegues romos + olor a albaricoque → chantarela.</div><p class="ficha-p"><strong>Cocina:</strong> excelente; aguanta bien el salteado y el secado; limpiar en seco sin remojo.</p><p class="ficha-p"><strong>Aviso:</strong> valores iniciales v1.44 sin calibrar de campo; falta foto propia.</p></div></div>
   </div></div>
 </section>
 
@@ -221,7 +214,7 @@
     <h4>La doble comprobación: mirar atrás para acertar hoy</h4>
     <p>Una seta tarda en salir: unos <strong>15 días</strong> el boleto, unos <strong>21 días</strong> el níscalo y la oronja y unos <strong>10 días</strong> la chantarela desde que llueve bien. Por eso la app mira dos veces:</p>
     <ul class="method-list">
-      <li><strong>Lo de hoy</strong> → ¿habrá cosecha? Es la lectura de futuro (anillo grande).</li>
+      <li><strong>Lo de hoy</strong> → ¿habrá cosecha? Es la lectura de futuro (texto del banner).</li>
       <li><strong>Lo de hace 10/15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha (detalle «Cosecha hoy»).</li>
     </ul>
     <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna). Los casos con futuro llevan los <strong>días estimados para fructificación</strong>: no son fijos, se cuentan desde la lluvia que disparó el proceso (el primer día en que 14 días sumaron 60 mm para el boleto y la chantarela, o 50 para el níscalo y la oronja; una racha seguida por encima del umbral cuenta como un solo episodio), así que si llovió bien hace 10 días verás 5 y no 15. Si no hubo tal disparador, se muestra el plazo entero.</p>
@@ -257,8 +250,8 @@
       <dt><span class="indice-badge nivel-medio">50–75 bueno</span></dt><dd>Casi todo a favor; falta lluvia o el suelo aún está cálido.</dd>
       <dt><span class="indice-badge nivel-bajo">25–50 regular</span></dt><dd>Algún factor flojo. Vigila la próxima lluvia.</dd>
       <dt><span class="indice-badge nivel-nulo">&lt;25 nulo</span></dt><dd>Veto activo o hábitat incompatible. No salir por esta especie.</dd>
-      <dt><strong>Anillo</strong></dt><dd>Potencial futuro (0–100). El veredicto dice los días estimados para fructificación; la cosecha de hoy va en texto (banner y detalle «Cosecha hoy»).</dd>
-      <dt><strong>Doble lectura</strong></dt><dd>Futuro: con lo de hoy, pico en +15 d (boleto) / +21 d (níscalo y oronja) / +10 d (chantarela) contados desde la lluvia que disparó el proceso. Cosecha: con lo de hace 15/21/10 d, ¿toca hoy? Veredicto ≥ 40.</dd>
+      <dt><strong>Anillo</strong></dt><dd>Cosecha de hoy (0–100): con lo de hace 10/15/21 días. El futuro va en texto (banner con pico estimado + detalle «Cosecha hoy»).</dd>
+      <dt><strong>Doble lectura</strong></dt><dd>Anillo = cosecha hoy (con lo de hace 15 d boleto / 21 d níscalo y oronja / 10 d chantarela). Texto = futuro: pico en +15/+21/+10 d contados desde la lluvia que disparó el proceso. Veredicto ≥ 40.</dd>
       <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>P14 óptima 60–100 (boleto y chantarela) / 50–90 (níscalo) / 30–80 (oronja); reserva P30; aire óptimo 13,2 ºC (boleto) / 12–18 ºC (níscalo) / ~20 ºC (oronja) / 15–20 ºC (chantarela); suelo 12–16 ºC a 18 cm; HR ≥ 75. Veto: helada (mín ≤ 0 en boleto y chantarela, ≤ −3 níscalo, ≤ +2 oronja), calor (máx ≥ 28, salvo chantarela) o viento &gt; 45 km/h (salvo chantarela) → clima 0.</dd>
       <dt><strong>Terreno</strong></dt><dd>Boleto 600–1800 m (rampa 500–600 y 1800–2000; fuera de 400–2000 anula). Níscalo 100–1600 m (rampa 1600–1900; bajo 100 vale 0,6). Oronja 200–1200 m (rampa 1200–1500; 100–200 vale 0,6). Chantarela 50–1500 m (pleno 100–1400; rampas 50–100 y 1400–1500).</dd>
       <dt><strong>Suelo</strong></dt><dd>Boleto pH 4,5–6,5 (hasta 7,2 tolerable). Níscalo pH 4,5–8. Oronja pH 4–6. Chantarela pH 4–5,5 (estricta: fuera anula). SoilGrids 5–15 cm interpolado a 250 m; sin dato no penaliza.</dd>
@@ -272,11 +265,11 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.56 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.80 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.56"></script>
-<script src="app.js?v=1.56"></script>
+<script src="cotos.js?v=1.80"></script>
+<script src="app.js?v=1.80"></script>
 </body>
 </html>

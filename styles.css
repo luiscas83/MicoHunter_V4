@@ -71,7 +71,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .soil-summary strong{color:var(--text);font-weight:600}
 .last-update{margin-top:12px;font-size:.85rem;color:var(--text-light);text-align:right}
 .mushroom-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-#mushroomCards{grid-template-columns:repeat(3,1fr)}
+#mushroomCards{grid-template-columns:repeat(2,1fr)}
 #mushroomCards .mushroom-card{grid-column:auto}
 .mushroom-card{text-align:center}
 .mushroom-title-section{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;text-align:left}
@@ -93,7 +93,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .ring-fill{fill:none;stroke:var(--secondary);stroke-width:8;stroke-linecap:round;transition:stroke-dasharray 1s ease}
 .ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
 .ring-text .percentage{display:block;font-size:1.5rem;font-weight:700}
-.ring-text .label{display:block;font-size:.75rem;color:var(--text-light);white-space:nowrap;line-height:1.2}
+.ring-text .label{display:block;font-size:.68rem;color:var(--text-light);line-height:1.25;max-width:88px;margin:0 auto}
 .verdict-box{margin-top:12px;padding:10px 12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.82rem;line-height:1.7}
 .verdict-box .ok{color:var(--success);font-weight:700}
 .verdict-box .mid{color:var(--warning);font-weight:700}
@@ -117,7 +117,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .condition-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem}
 .condition-item:last-child{border-bottom:none}
 .condition-item>*{min-width:0}
-.condition-value{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:break-word}
+.condition-value{font-weight:600;font-variant-numeric:tabular-nums;text-align:left;overflow-wrap:break-word}
+.target{font-weight:400;color:var(--text-light);font-size:.75rem;white-space:nowrap}
 .condition-status{padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;white-space:nowrap}
 .condition-status.ok{background:#f6ecd7;color:var(--success)}
 .condition-status.warning{background:#fff3e0;color:var(--warning)}
@@ -216,7 +217,7 @@ body{-webkit-tap-highlight-color:transparent}
 .factors-grid-compact{grid-template-columns:1fr 1fr}
 /* Las filas condición se mantienen en fila: en columna la tarjeta se hace eterna */
 .mushroom-cards-grid .condition-item{flex-direction:row;align-items:center;gap:8px}
-.condition-value{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.condition-value{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-start}
 .map-actions{grid-template-columns:1fr 1fr;gap:8px}
 .save-fav-row{flex-wrap:nowrap}
 .save-fav-row input{flex:1 1 auto;font-size:16px}

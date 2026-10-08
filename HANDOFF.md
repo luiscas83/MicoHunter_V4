@@ -70,6 +70,30 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - MUP Navarra + Aragón (v1.54): IDENA (`FOREST_Pol_MUP1912`) e ICEAragón (`RMA_MUP`); La Rioja sin WFS usable.
 - Cotos ordenados A–Z por CCAA (v1.55).
 - CCAA A–Z sin "de pago" (v1.56). Regla: cada cambio versiona.
+- Botón MUP (v1.57): capa bajo demanda con los MUP visibles (CyL/Navarra/Aragón) + popup con nº, nombre y titular.
+- Fix MUP (v1.58): `srsName=EPSG:4326` (venían en UTM y no se veían) + JSONP para Aragón (sin CORS) + exigir zoom ≥ 9.
+- MUP auto (v1.59): con la capa activa se recarga al mover el mapa; apagada no pide nada.
+- Respaldo MITECO-IEPF (v1.60): `mup_extra.js` (2.483 MUP de 12 provincias, 1,9 MB perezoso) para CCAA sin WFS; en Nájera no hay MUP (verificado).
+- Fuera botón MUP (v1.61): el MUP sale al pulsar; eliminada la capa global (+ un `return` colado que mataba el WFS).
+- Fila Coto (v1.62): si el punto cae en un acotado (polígonos), sale con enlace al permiso.
+- Anillo con texto (v1.63): "Condiciones … de fructificación" + dashboard a 2 columnas.
+- Anillo en presente (v1.64, a prueba): el anillo muestra la cosecha de hoy; el futuro pasa al banner.
+- Fecha del disparador (v1.65): cada tarjeta muestra día/mes en que se dieron las condiciones ("Disparador: 7 oct").
+- Margen AEMET (v1.66): disparador y cuenta 2 días atrás por el lag del pluviómetro (solo rama AEMET).
+- Tarjetas a la izquierda + objetivo (v1.67): valores alineados a la izquierda con su "obj." al lado.
+- Fuera la línea de cálculo de las tarjetas (v1.68).
+- Veredicto con objetivos (v1.69): en Cumple/A medias/Falla cada parámetro muestra actual + obj.
+- Detalle con obj. (v1.70): Altitud, pH, Estación y Hábitat como "valor / obj." + insignia.
+- Ajuste detalle (v1.71): valores del detalle a la derecha, sin obj. en Hábitat y obj. sin negrita.
+- Fuera veredicto (v1.72): eliminado el bloque Cumple/A medias/Falla de las tarjetas.
+- Anillo claro (v1.73): etiqueta fija "Hoy" y banner como "Próximo pico: ...".
+- Anillos como GitHub (v1.74): anillo a futuro + nivel, banner 4 estados (revertido v1.73).
+- Banner cercano (v1.75): "¡Hoy tenemos setas para recoger!" / "Hoy no tenemos cosecha en el campo".
+- Banner v1.76: textos ajustados ("Previsión en ~X días" / "Condiciones inadecuadas").
+- Ventana en condiciones (v1.77): fila "Ventana de fructificación" bajo Humedad.
+- Ventana con obj. (v1.78): "valor / obj. Abierta" + insignia.
+- Foto chantarela (v1.79): `img/chantarela.jpg` (Wikimedia Commons).
+- Foto chantarela sporas (v1.80): `img/chantarela.webp` (sporas.io).
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).
