@@ -55,6 +55,7 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Hábitat binario estricto (v1.40): la especie vale 1 en su hábitat y 0 fuera, sin ranking (boleto: hayedo 0,95→1, robledal/castañar 0,9→1, matorral 0,1→0; oronja: mixto/quercíneas 0,9→1, haya 0,2→0); sin-hábitat sigue neutro 0,70.
 - Etiqueta Quercíneas (v1.41) + revisión dehesa: encina/carrasca/alcornoque/quejigos meridionales ya no caen a Matorral; oronja 1, boleto/níscalo 0; la dehesa con `nom_sp1` *Quercus* ya puntuaba 1 por regex (verificado, sin cambio).
 - Etiqueta con acompañantes (v1.42, solo visible): «Hayedo + abetal», «Matorral + fresneda»…; la puntuación no cambia (`categoria` intacta).
+- Sin cálculo inicial (v1.43): al abrir solo se pinta el mapa (vista Soria); el cálculo arranca al pulsar mapa/GPS/setal.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).

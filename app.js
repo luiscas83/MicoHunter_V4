@@ -1063,6 +1063,5 @@ renderFavs();
 applyVisibility();
 renderSpeciesSelector();
 
-// punto inicial: Soria; la ubicación solo con el botón GPS
-predecir();
+// punto inicial: vista de Soria con marcador; el cálculo solo arranca al pulsar el mapa, GPS o un setal (v1.43: sin cálculo inicial)
 
