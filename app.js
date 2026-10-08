@@ -1,5 +1,5 @@
 // Motor Boletus edulis — port exacto de boletus_engine.py (NO TOCAR pesos)
-const FLORA = {"Pinar":1,"Hayedo":.95,"Robledal":.9,"Castañeral":.9,"Pradera":0,"Pasto":0,"Bosque mixto":1,"Matorral":.1}; // Bosque mixto: máx. de sus componentes (lo calcula el llamante)
+const FLORA = {"Pinar":1,"Hayedo":1,"Robledal":1,"Castañeral":1,"Quercíneas":0,"Pradera":0,"Pasto":0,"Bosque mixto":1,"Matorral":0}; // binario v1.40: hábitat de la especie = 1, resto = 0
 const fP14=p=>p<30?0:p<60?.3+.4*(p-30)/30:p<=100?1:p<=200?1-.4*(p-100)/100:.3;
 const fRes=p=>p<30?.2:p<70?.2+.6*(p-30)/40:p<110?.8+.2*(p-70)/40:1; // reserva P30d
 const fTA=t=>(t<6||t>28)?0:Math.exp(-((t-13.2)**2)/(2*25));
@@ -32,12 +32,11 @@ const fPH3=p=>{if(p>=4&&p<=6)return 1;if(p>6&&p<=7)return .4;if(p>=3.5&&p<4)retu
 const fAlt3=h=>{if(h>=200&&h<=1200)return 1;if(h>1200&&h<=1500)return 1-.5*(h-1200)/300;
   if(h>=100&&h<200)return .6;return 0;};
 const fMes3=m=>m===9?1:m===8?.9:m===10?.85:m===7?.5:m===6?.2:.1;
-function floraOronja(cat,especies){ // robledal, castañar y quercíneas (encina, carrasca, alcornoque); haya rara (0.2)
+function floraOronja(cat,especies){ // binario v1.40: robledal/castañar/mixto/quercíneas = 1, resto = 0
   const esp=(especies||[]).join(" ").toLowerCase();
   const host=/quercus|castanea/.test(esp);
-  if(cat==="Robledal"||cat==="Castañeral")return 1;
-  if(cat==="Bosque mixto"||host)return 0.9;
-  if(cat==="Hayedo")return 0.2;
+  if(cat==="Robledal"||cat==="Castañeral"||cat==="Quercíneas")return 1;
+  if(cat==="Bosque mixto"||host)return 1;
   return 0;
 }
 function scoreOronja(o){
@@ -186,15 +185,15 @@ async function mfeGFI(capa,la,lo){
 }
 function categoriaDeEspecie(n){
   const t=(n||"").toLowerCase();
-  if(/pinus (sylvestris|nigra|uncinata|pinaster)/.test(t))return{categoria:"Pinar",nota:1.0};
-  if(/pinus|larix|pseudotsuga|cedrus|cupressus/.test(t))return{categoria:"Pinar",nota:0.9};
-  if(/fagus/.test(t))return{categoria:"Hayedo",nota:0.95};
-  if(/quercus (robur|petraea|pyrenaica|pubescens|humilis|faginea|rubra)/.test(t))return{categoria:"Robledal",nota:0.9};
-  if(/castanea/.test(t))return{categoria:"Castañeral",nota:0.9};
-  // abetal, encinar, sabinar, eucaliptal, ribera y resto: Matorral (casi siempre van mezclados y salta Bosque mixto)
-  return{categoria:"Matorral",nota:0.1};
+  if(/pinus|larix|pseudotsuga|cedrus|cupressus/.test(t))return{categoria:"Pinar",nota:1};
+  if(/fagus/.test(t))return{categoria:"Hayedo",nota:1};
+  if(/quercus (robur|petraea|pyrenaica|pubescens|humilis|faginea|rubra)/.test(t))return{categoria:"Robledal",nota:1};
+  if(/quercus/.test(t))return{categoria:"Quercíneas",nota:0}; // encina, carrasca, alcornoque y quejigos meridionales: solo oronja
+  if(/castanea/.test(t))return{categoria:"Castañeral",nota:1};
+  // binario v1.40: lo que no es hábitat (abetal, encinar, sabinar, resto) = 0
+  return{categoria:"Matorral",nota:0};
 }
-const CAT_NOBLE=["Pinar","Hayedo","Robledal","Castañeral"];
+const CAT_NOBLE=["Pinar","Hayedo","Robledal","Castañeral","Quercíneas"];
 async function mfeBosque(la,lo,progreso){
   let hechas=0;
   const ps=FORMACIONES.map(c=>mfeGFI(c,la,lo).then(p=>{hechas++;progreso&&progreso(hechas,FORMACIONES.length);return p?{capa:c,p}:null;}).catch(()=>{hechas++;progreso&&progreso(hechas,FORMACIONES.length);return null;}));
@@ -211,8 +210,17 @@ async function mfeBosque(la,lo,progreso){
   let categoria,nota;
   if(nobles.length>=2){categoria="Bosque mixto";nota=Math.max(...nobles.map(c=>notas[c]));}
   else if(nobles.length===1){categoria=nobles[0];nota=notas[categoria];}
-  else{categoria="Matorral";nota=0.1;}
-  return{hits,especies:[...esp.entries()].map(([n,v])=>({n,...v})),categoria,nota,componentes:nobles};
+  else{categoria="Matorral";nota=0;}
+  // acompañantes no nobles para la etiqueta visible (puntuación intacta): abetal, fresneda, etc.
+  const COMP_TXT=[[/abies/i,"abetal"],[/fraxinus/i,"fresneda"],[/betula/i,"abedular"],[/corylus/i,"avellaneda"],[/alnus/i,"aliseda"],[/populus/i,"chopera"],[/salix/i,"sauceda"],[/ulmus/i,"olmeda"],[/acer/i,"arceda"],[/tilia/i,"tilar"],[/juniperus/i,"sabinar"],[/eucalyptus/i,"eucaliptal"]];
+  const comp=[];
+  for(const n of esp.keys()){
+    if(categoriaDeEspecie(n).categoria!=="Matorral")continue;
+    const f=COMP_TXT.find(([re])=>re.test(n));
+    if(f&&!comp.includes(f[1]))comp.push(f[1]);
+  }
+  const etiqueta=comp.length?`${categoria} + ${comp.slice(0,2).join(" + ")}`:categoria;
+  return{hits,especies:[...esp.entries()].map(([n,v])=>({n,...v})),categoria,nota,componentes:nobles,etiqueta};
 }
 async function mfeUso(la,lo){
   const p=await mfeGFI("ff_uso",la,lo);
@@ -221,7 +229,7 @@ async function mfeUso(la,lo){
   let clase=null,categoria=null,nota=null;
   if(/artificial|asentamiento|urbano/.test(txt))clase="artificial";
   else if(/dehesa/.test(txt)){clase="dehesa";categoria="Pasto";nota=0;}
-  else if(/matorral/.test(txt)){clase="matorral";categoria="Matorral";nota=0.1;}
+  else if(/matorral/.test(txt)){clase="matorral";categoria="Matorral";nota=0;}
   else if(/arbustiva/.test(txt)){clase="pastizal arbustivo";categoria="Pasto";nota=0;}
   else if(/herbácea|herbacea|prado|pradera/.test(txt)){clase="pradera";categoria="Pradera";nota=0;}
   else if(/past|puerto/.test(txt)){clase="pasto";categoria="Pasto";nota=0;}
@@ -541,6 +549,7 @@ const calcCache=new Map(); // punto -> {t, calc}: sin recargar antes de 10 min
 function pintar(calc,ageMin){
   lastCalc=calc;
   const{clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo,floraCat,floraNota,phVal}=calc;
+  const floraEtiq=calc.floraEtiq||floraCat;
   const prov=calc.prov||null, live=calc.live||null, am=calc.am||null;
   const det=document.getElementById("habitatLine");
   const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
@@ -575,7 +584,7 @@ function pintar(calc,ageMin){
     `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
   T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
   T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
-  if(det){det.textContent=floraCat||"sin determinar";det.title=habitatTxt||"";}
+  if(det){det.textContent=floraEtiq||"sin determinar";det.title=habitatTxt||"";}
   T("lastUpdate",ageMin>0?`Datos de hace ${ageMin} min`:"Actualizado "+new Date().toLocaleString("es-ES"));
   renderAll();
   renderMeteo();
@@ -610,9 +619,9 @@ async function predecir(etiqueta){
       mfe=await mfeBosque(lat,lon,(h,n)=>{if(det)det.textContent=`MFE: ${h}/${n} formaciones…`;});
       mfeCache.set(key,mfe);
     }
-    let floraCat=null,floraNota=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null;
+    let floraCat=null,floraNota=null,floraEtiq=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null;
     if(mfe&&mfe.categoria){
-      floraCat=mfe.categoria;floraNota=mfe.nota;fuenteHab="MFE";
+      floraCat=mfe.categoria;floraNota=mfe.nota;floraEtiq=mfe.etiqueta||mfe.categoria;fuenteHab="MFE";
       habitatTxt=mfe.categoria+(mfe.categoria==="Bosque mixto"&&mfe.componentes?" ("+mfe.componentes.join(" + ")+")":"")+": "+mfe.especies.map(e=>`${e.n} (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`).join(" + ");
     }else{
       uso=await mfeUso(lat,lon).catch(()=>null);
@@ -668,9 +677,9 @@ async function predecir(etiqueta){
     else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
     const floraEsp=mfe&&mfe.especies?mfe.especies.map(e=>e.n):(uso&&uso.sp1?[uso.sp1]:[]);
     if(mfe&&mfe.categoria)floraNotaO=floraOronja(mfe.categoria,floraEsp);
-    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral")?1:uso.categoria==="Hayedo"?0.2:(/quercus|castanea/i.test(uso.sp1||"")?0.9:0);
+    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral"||uso.categoria==="Quercíneas"||/quercus|castanea/i.test(uso.sp1||""))?1:0;
     const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,
-      floraCat,floraNota,floraNotaN,floraNotaO,phVal:suelo.ph??null,prov,live,am};
+      floraCat,floraEtiq:floraEtiq||floraCat,floraNota,floraNotaN,floraNotaO,phVal:suelo.ph??null,prov,live,am};
     calcCache.set(pkey,{t:Date.now(),calc});
     if(calcCache.size>50)calcCache.delete(calcCache.keys().next().value);
     pintar(calc,0);
@@ -715,7 +724,7 @@ function renderAll(){
   r.score=+(r.clima*r.terreno*r.suelo*r.flora*r.temp*100).toFixed(1);
   r.nivel=r.score<25?"nulo":r.score<50?"regular":r.score<75?"bueno":"excelente";
   r.pico=r.score>=40?15:null;
-  const floraTxt=floraCat||"sin hábitat conocido", sueloTxt=phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH";
+  const floraTxt=lastCalc.floraEtiq||floraCat||"sin hábitat conocido", sueloTxt=phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH";
   const rf=document.getElementById("ringFill");if(rf)rf.style.strokeDasharray=`${(r.score/100*RING_C).toFixed(1)} ${RING_C.toFixed(1)}`;
   T2("ringPct",r.score);T2("ringNivel",r.nivel);
   const banner=document.getElementById("banner");
@@ -751,7 +760,7 @@ function renderAll(){
   const vetRE=[];if(cR.tmin<=0)vetRE.push("helada");if(cR.tmax>=28)vetRE.push("calor");if(cR.vientoMax>45)vetRE.push("viento fuerte");
   setHTML("verdictEdulis",resumenCond(r,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
-    floraTxt:floraCat||"sin hábitat conocido",mesTxt:MESES[mes-1],
+    floraTxt:floraTxt,mesTxt:MESES[mes-1],
     vetoTxt:vetE.length?vetE.join(" + "):null,
     cosecha:hubo?`Cosecha hoy: sí, hace 15 días el agua acompañó.`:
       cR.p14<30?`Cosecha hoy: no, hace 15 días apenas cayeron ${cR.p14.toFixed(0)} mm.`:
@@ -791,7 +800,7 @@ function renderNiscalo(){
   if(!lastCalc)return;
   const{clima,alt,mes,fuenteHab,habitatTxt}=lastCalc;
   const phV=lastCalc.phVal, fN=lastCalc.floraNotaN;
-  const floraTxt=lastCalc.floraCat||"sin hábitat conocido";
+  const floraTxt=lastCalc.floraEtiq||lastCalc.floraCat||"sin hábitat conocido";
   const base={alt:alt??1000,ph:phV??6.0,mes};
   const rN=scoreNiscalo({p14:clima.p14,p30:clima.p30,ta:clima.ta,ts:clima.ts,hr:clima.hr,
     ...base,tmin:clima.tmin,tmax:clima.tmax,vientoMax:clima.vientoMax,floraNota:fN??0.70});
@@ -841,7 +850,7 @@ function renderOronja(){
   if(!lastCalc)return;
   const{clima,alt,mes,fuenteHab,habitatTxt}=lastCalc;
   const phV=lastCalc.phVal, fO=lastCalc.floraNotaO;
-  const floraTxt=lastCalc.floraCat||"sin hábitat conocido";
+  const floraTxt=lastCalc.floraEtiq||lastCalc.floraCat||"sin hábitat conocido";
   const base={alt:alt??1000,ph:phV??5.0,mes};
   const rO=scoreOronja({p14:clima.p14,p30:clima.p30,ta:clima.ta,ts:clima.ts,hr:clima.hr,
     ...base,tmin:clima.tmin,tmax:clima.tmax,viento:clima.vientoMax>45,floraNota:fO??0.70});
@@ -897,7 +906,7 @@ function renderAnalysis(){
   const fr=(f,nota,txt)=>`<tr><td>${f}</td><td>${badge(nota)}</td><td style="text-align:left">${txt}</td></tr>`;
   let html="";
   if(specAn==="edulis"){
-    const r=lastCalc.r, phV=lastCalc.phVal, floraTxt=lastCalc.floraCat||"sin hábitat conocido";
+    const r=lastCalc.r, phV=lastCalc.phVal, floraTxt=lastCalc.floraEtiq||lastCalc.floraCat||"sin hábitat conocido";
     html=
     fr("Lluvia 14 días",r.d.P14,`${clima.p14.toFixed(0)} mm caídos: ${clima.p14>=60?"suficiente para disparar":clima.p14>=30?"justa, necesita más agua":"insuficiente"}`)+
     fr("Reserva 30 días",r.d.res,`${clima.p30.toFixed(0)} mm acumulados: ${clima.p30>=70?"el suelo guarda reserva":clima.p30>=30?"reserva a medias":"suelo seco, la primera lluvia solo recarga"}`)+
@@ -910,7 +919,7 @@ function renderAnalysis(){
     fr("Estación",r.temp,`${mm}: ${(mes>=9&&mes<=11)?"plena temporada":"fuera de temporada"}`)+
     fr("Veto",r.veto?0:1,r.veto?"activo: anula el clima aunque lo demás acompañe":"ninguno");
   }else{
-    const r=lastCalc.rN, phV=lastCalc.phVal, floraTxt=lastCalc.floraCat||"sin hábitat conocido";
+    const r=lastCalc.rN, phV=lastCalc.phVal, floraTxt=lastCalc.floraEtiq||lastCalc.floraCat||"sin hábitat conocido";
     html=
     fr("Lluvia 14 días",r.d.P14,`${clima.p14.toFixed(0)} mm caídos: ${clima.p14>=50?"suficiente para disparar":clima.p14>=25?"justa, necesita más agua":"insuficiente"}`)+
     fr("Reserva 30 días",r.d.res,`${clima.p30.toFixed(0)} mm acumulados: ${clima.p30>=60?"el suelo guarda reserva":clima.p30>=25?"reserva a medias":"suelo seco, la primera lluvia solo recarga"}`)+

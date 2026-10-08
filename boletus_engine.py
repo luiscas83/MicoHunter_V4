@@ -16,16 +16,17 @@ Sin dependencias. Uso: import boletus_engine; boletus_engine.score(punto)
 """
 
 FLORA_EDULIS = {
-    # Categorías de hábitat simplificadas -> idoneidad 0-1 para edulis.
-    # Bosque mixto = máx. de sus componentes (lo calcula el llamante).
-    "Pinar": 1.0,       # Pinus sylvestris/nigra/uncinata/pinaster (otros pinos 0.9)
-    "Hayedo": 0.95,     # Fagus sylvatica
-    "Robledal": 0.9,    # Quercus robur/petraea/pyrenaica/pubescens/faginea/rubra
-    "Castañeral": 0.9,  # Castanea sativa (castañeral)
-    "Pradera": 0.0,     # prados herbáceos, cultivos, agua (ff_uso)
-    "Pasto": 0.0,       # dehesa, pastizal arbustivo, pastos de puerto (ff_uso)
+    # Binario v1.40: hábitat de la especie -> 1, resto -> 0 (sin ranking).
+    # Bosque mixto = 1 si trae componente válido (lo calcula el llamante).
+    "Pinar": 1.0,
+    "Hayedo": 1.0,
+    "Robledal": 1.0,
+    "Castañeral": 1.0,
+    "Quercíneas": 0.0,   # encina, alcornoque y quejigos meridionales: solo oronja
+    "Pradera": 0.0,
+    "Pasto": 0.0,
     "Bosque mixto": 1.0,
-    "Matorral": 0.1,    # matorral, sabinar, abetal/encinar puros y resto
+    "Matorral": 0.0,
 }
 
 # Níscalo (Lactarius deliciosus): mismos pesos, otros umbrales (valores del usuario)
@@ -261,16 +262,14 @@ def f_temporada_oronja(mes):
 
 
 def flora_oronja(cat, especies=None):
-    """Robledal/castañar 1; mixto o quercíneas 0.9; resto 0. Espejo de floraOronja."""
+    """Binario v1.40: robledal/castañar/mixto/quercíneas 1; resto 0. Espejo de floraOronja."""
     import re
     esp = " ".join(especies or []).lower()
     host = bool(re.search(r"quercus|castanea", esp))
-    if cat in ("Robledal", "Castañeral"):
+    if cat in ("Robledal", "Castañeral", "Quercíneas"):
         return 1.0
     if cat == "Bosque mixto" or host:
-        return 0.9
-    if cat == "Hayedo":
-        return 0.2  # rara en haya (MicoAragón); MyBoletus la excluye
+        return 1.0
     return 0.0
 
 
