@@ -99,9 +99,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .verdict-box .mid{color:var(--warning);font-weight:700}
 .verdict-box .bad{color:var(--danger);font-weight:700}
 .prediction-banner{display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:12px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:500;text-align:left}
-.prediction-banner.nivel-alto{background:#f6ecd7;color:#7a4f14;border:1px solid #e0c58a}
-.prediction-banner.nivel-medio{background:#f7efdc;color:#8a6a2a;border:1px solid #ddc999}
-.prediction-banner.nivel-bajo{background:#fff3e0;color:#ef6c00;border:1px solid #ffcc80}
+.prediction-banner.nivel-alto{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.prediction-banner.nivel-medio{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.prediction-banner.nivel-bajo{background:#fff8e1;color:#8a6a00;border:1px solid #ffe082}
 .prediction-banner.nivel-nulo{background:#ffebee;color:#c62828;border:1px solid #ef9a9a}
 .factors-grid-compact{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
 .factor-item-compact{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);min-width:0}

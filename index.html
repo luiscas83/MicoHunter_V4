@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.80">
+<link rel="stylesheet" href="styles.css?v=1.85">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.80</p>
+        <p class="version" title="Versión de la aplicación">v1.85</p>
       </div>
     </div>
       </div>
@@ -214,10 +214,10 @@
     <h4>La doble comprobación: mirar atrás para acertar hoy</h4>
     <p>Una seta tarda en salir: unos <strong>15 días</strong> el boleto, unos <strong>21 días</strong> el níscalo y la oronja y unos <strong>10 días</strong> la chantarela desde que llueve bien. Por eso la app mira dos veces:</p>
     <ul class="method-list">
-      <li><strong>Lo de hoy</strong> → ¿habrá cosecha? Es la lectura de futuro (texto del banner).</li>
-      <li><strong>Lo de hace 10/15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha (detalle «Cosecha hoy»).</li>
+      <li><strong>Lo de hoy</strong> → futuro: el anillo (0–100) y el banner dicen si viene pico y en cuántos días.</li>
+      <li><strong>Lo de hace 10/15/21 días</strong> → ¿toca cosecha hoy? Es la lectura de cosecha (detalle «Cosecha hoy», con la causa si es que no).</li>
     </ul>
-    <p>De ahí salen los cuatro veredictos: <strong>En pico, salir ya</strong> (las dos bien), <strong>El pico es ahora y se cierra</strong> (solo la de atrás), <strong>Sin cosecha hoy</strong> (solo la de hoy) y <strong>Sin ventana de fructificación</strong> (ninguna). Los casos con futuro llevan los <strong>días estimados para fructificación</strong>: no son fijos, se cuentan desde la lluvia que disparó el proceso (el primer día en que 14 días sumaron 60 mm para el boleto y la chantarela, o 50 para el níscalo y la oronja; una racha seguida por encima del umbral cuenta como un solo episodio), así que si llovió bien hace 10 días verás 5 y no 15. Si no hubo tal disparador, se muestra el plazo entero.</p>
+    <p>De ahí salen los cuatro mensajes del banner: <strong>«¡Hoy tenemos setas para recoger! Vienen más: pico en ~X días»</strong> (verde, hay cosecha y viene más), <strong>«¡Hoy tenemos setas para recoger!»</strong> (verde, aprovecha que se cierra), <strong>«Hoy no tenemos setas en el campo. Previsión en ~X días»</strong> (amarillo, aún no) y <strong>«Condiciones inadecuadas»</strong> (rojo). Los casos con futuro llevan los <strong>días estimados para fructificación</strong>: no son fijos, se cuentan desde la lluvia que disparó el proceso (el primer día en que 14 días sumaron 60 mm para el boleto y la chantarela, o 50 para el níscalo y la oronja; una racha seguida por encima del umbral cuenta como un solo episodio), así que si llovió bien hace 10 días verás 5 y no 15. Si no hubo tal disparador, se muestra el plazo entero.</p>
     <h4>De dónde salen los datos</h4>
     <ul class="method-list">
       <li><strong>El tiempo base (Open-Meteo)</strong> — 55 días observados más el día actual y 8 de previsión (el día actual es el antepenúltimo bloque, no el último). Para el pasado se usa lo observado, no previsiones. De aquí salen la lluvia diaria, las temperaturas del aire, la humedad, el viento, la temperatura del suelo a 18 cm (media de 7 días, la profundidad del micelio), la previsión de 7 días y los tramos hora a hora de hoy. La altitud del punto viene de su servicio de elevación.</li>
@@ -246,30 +246,31 @@
   <div class="section-head"><h2>🔍 Leyenda</h2></div>
   <div class="card"><h3>Niveles y factores</h3>
     <dl class="glossary">
-      <dt><span class="indice-badge nivel-alto">≥75 excelente</span></dt><dd>Convergencia de agua, temperatura y hábitat. Ventana de salida; el veredicto dice los días estimados para fructificación.</dd>
+      <dt><span class="indice-badge nivel-alto">≥75 excelente</span></dt><dd>Convergencia de agua, temperatura y hábitat. Ventana de salida; el banner dice si hay setas hoy y los días al pico.</dd>
       <dt><span class="indice-badge nivel-medio">50–75 bueno</span></dt><dd>Casi todo a favor; falta lluvia o el suelo aún está cálido.</dd>
       <dt><span class="indice-badge nivel-bajo">25–50 regular</span></dt><dd>Algún factor flojo. Vigila la próxima lluvia.</dd>
       <dt><span class="indice-badge nivel-nulo">&lt;25 nulo</span></dt><dd>Veto activo o hábitat incompatible. No salir por esta especie.</dd>
-      <dt><strong>Anillo</strong></dt><dd>Cosecha de hoy (0–100): con lo de hace 10/15/21 días. El futuro va en texto (banner con pico estimado + detalle «Cosecha hoy»).</dd>
-      <dt><strong>Doble lectura</strong></dt><dd>Anillo = cosecha hoy (con lo de hace 15 d boleto / 21 d níscalo y oronja / 10 d chantarela). Texto = futuro: pico en +15/+21/+10 d contados desde la lluvia que disparó el proceso. Veredicto ≥ 40.</dd>
+      <dt><strong>Anillo</strong></dt><dd>Potencial futuro (0–100) con lo de hoy. La etiqueta dice el nivel (excelente / bueno / regular / nulo).</dd>
+      <dt><strong>Banner</strong></dt><dd>Verde: hay setas hoy. Amarillo: aún no, con previsión en ~X días. Rojo: condiciones inadecuadas.</dd>
+      <dt><strong>Doble lectura</strong></dt><dd>Anillo y condiciones = futuro con lo de hoy (pico en +15 d boleto / +21 d níscalo y oronja / +10 d chantarela, contados desde la lluvia que disparó el proceso). «Cosecha hoy» = con lo de hace 15/21/10 d, con la causa si es que no (faltó lluvia, helada, calor, viento). Umbral de salida ≥ 40.</dd>
       <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>P14 óptima 60–100 (boleto y chantarela) / 50–90 (níscalo) / 30–80 (oronja); reserva P30; aire óptimo 13,2 ºC (boleto) / 12–18 ºC (níscalo) / ~20 ºC (oronja) / 15–20 ºC (chantarela); suelo 12–16 ºC a 18 cm; HR ≥ 75. Veto: helada (mín ≤ 0 en boleto y chantarela, ≤ −3 níscalo, ≤ +2 oronja), calor (máx ≥ 28, salvo chantarela) o viento &gt; 45 km/h (salvo chantarela) → clima 0.</dd>
       <dt><strong>Terreno</strong></dt><dd>Boleto 600–1800 m (rampa 500–600 y 1800–2000; fuera de 400–2000 anula). Níscalo 100–1600 m (rampa 1600–1900; bajo 100 vale 0,6). Oronja 200–1200 m (rampa 1200–1500; 100–200 vale 0,6). Chantarela 50–1500 m (pleno 100–1400; rampas 50–100 y 1400–1500).</dd>
       <dt><strong>Suelo</strong></dt><dd>Boleto pH 4,5–6,5 (hasta 7,2 tolerable). Níscalo pH 4,5–8. Oronja pH 4–6. Chantarela pH 4–5,5 (estricta: fuera anula). SoilGrids 5–15 cm interpolado a 250 m; sin dato no penaliza.</dd>
       <dt><strong>Flora</strong></dt><dd>Binaria (v1.40): 1 en hábitat de la especie, 0 fuera. Boleto: Pinar, Hayedo, Robledal, Castañeral y Mixto con alguno de ellos. Níscalo: solo Pinar (mixto con pino vale). Oronja: Robledal, Castañeral, Quercíneas y Mixto con quercíneas. Chantarela: Pinar, Hayedo, Robledal, Castañeral y Mixto (+ abedul, avellano y pícea por especie). Pradera, Pasto, Matorral y Urbano siempre 0. Sin bosque MFE se usa <code>ff_uso</code> (herbáceo/cultivo = Pradera, dehesa/arbustivo = Pasto); en último caso, edificios OSM en 150 m (≥10 = urbano). Si todo falla, 0,70. Nada se mete a mano.</dd>
       <dt><strong>Temporada</strong></dt><dd>Boleto: octubre 1 · sep/nov 0,85 · ago/dic 0,4 · resto 0,1. Níscalo: noviembre 1 · octubre 0,9 · septiembre 0,85 · diciembre 0,6 · agosto 0,3 · resto 0,1. Oronja: septiembre 1 · agosto 0,9 · octubre 0,85 · julio 0,5 · junio 0,2 · resto 0,1. Chantarela: septiembre 1 · agosto/octubre 0,9 · julio 0,8 · junio 0,6 · noviembre 0,4 · resto 0,1.</dd>
       <dt><strong>Oronja</strong></dt><dd>Termófila de verano (jun–oct): retardo ~21 días (primer flush 15–22 tras tormentas; hasta 40–50 en seco), veto desde +2 ºC, quercíneas y castaño (haya y pinar: 0). Calibrada v1.39 con bibliografía (MicoAragón, sporas.io); sin validación de campo.</dd>
-      <dt><strong>Chantarela</strong></dt><dd>De junio a noviembre, pico en septiembre: retardo 10 días (flush 7–14 tras tormentas), veto solo por helada (≤ 0 ºC), sin veto de viento ni de máxima; pH 4–5,5 estricto, 50–1500 m. Valores iniciales v1.44 sin calibrar de campo; sin foto propia.</dd>
+      <dt><strong>Chantarela</strong></dt><dd>De junio a noviembre, pico en septiembre: retardo 10 días (flush 7–14 tras tormentas), veto solo por helada (≤ 0 ºC), sin veto de viento ni de máxima; pH 4–5,5 estricto, 50–1500 m. Valores iniciales v1.44 sin calibrar de campo; foto: sporas.io.</dd>
       <dt><strong>Fuentes</strong></dt><dd>Lluvia y extremos: pluviómetro AEMET ≤ 25 km (o modelo). Suelo 18 cm, previsión y altitud: Open-Meteo. Suelo: SoilGrids. Bosque: MFE. Ciudad y topónimos: OSM. Caché de punto: 10 min.</dd>
     </dl>
   </div>
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.80 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.85 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.80"></script>
-<script src="app.js?v=1.80"></script>
+<script src="cotos.js?v=1.85"></script>
+<script src="app.js?v=1.85"></script>
 </body>
 </html>
