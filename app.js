@@ -209,7 +209,7 @@ async function fetchSuelo(la,lo){
   const url=`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lo}&lat=${la}&property=phh2o&property=soc&property=sand&property=silt&property=clay&depth=5-15cm&value=mean`;
   let j=null,err=null;
   for(const espera of [0,1500,4000]){ // 3 intentos con espera creciente (SoilGrids es el más lento)
-    try{if(espera)await new Promise(r=>setTimeout(r,espera));j=await getJSON(url,30000);break;}
+    try{if(espera)await new Promise(r=>setTimeout(r,espera));j=await getJSON(url,12000);break;}
     catch(e){err=e;if(/HTTP 4/.test(e.message))break;}
   }
   if(!j)throw err;
@@ -758,6 +758,10 @@ function pintar(calc,ageMin){
     if(calc.mup&&calc.mup.geo){mupLayer=L.geoJSON(calc.mup.geo,{style:{color:"#2471a3",weight:2,fillOpacity:0.10}}).addTo(map);
       try{mupLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));}catch{}}
   }catch(e){console.warn("mup:",e);}
+  const dw=document.getElementById("dataWarn");
+  if(dw){const av=calc.avisos||[];
+    if(av.length){dw.hidden=false;dw.textContent=`⚠️ No se ha cargado: ${av.join(", ")}. La predicción de fructificación puede no ser real.`;}
+    else{dw.hidden=true;dw.textContent="";}}
   T("lastUpdate",ageMin>0?`Datos de hace ${ageMin} min`:"Actualizado "+new Date().toLocaleString("es-ES"));
   renderAll();
   renderMeteo();
@@ -777,11 +781,12 @@ async function predecir(etiqueta){
       return;
     }
     if(ld)ld.hidden=false;
+    const avisos=[];
     const [clima,suelo,lugar,dem,mup]=await Promise.all([
       fetchClima(lat,lon),
-      fetchSuelo(lat,lon).catch(()=>({})),
+      fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
       fetchLugar(lat,lon),
-      getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>({elevation:[null]})),
+      getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
       ((lon>=-7.2&&lon<=-1.7&&lat>=39.8&&lat<=43.3)||(lon>=-2.2&&lon<=-0.7&&lat>=41.9&&lat<=43.3)||(lon>=-2.2&&lon<=0.8&&lat>=39.8&&lat<=42.9))?mupCyL(lat,lon):Promise.resolve(null)
     ]);
     const alt=dem.elevation?.[0]??null;
@@ -810,11 +815,12 @@ async function predecir(etiqueta){
           else{floraCat=null;floraNota=null;fuenteHab="";habitatTxt=`sin bosque MFE ni uso aprovechable (${u.n} edificios en 150 m): hábitat sin determinar`;}
         }catch{habitatTxt="MFE sin bosque y verificación urbana no disponible: hábitat sin determinar";}
       }
+      if(enES&&floraCat==null)avisos.push("hábitat (bosque)");
     }
     // AEMET (opcional): si hay clave, el pluviómetro manda sobre el modelo en lluvia y extremos
     let am=null;
     try{am=await aemetOverride(lat,lon);}
-    catch(e){console.warn("AEMET:",e);am={estado:"error",msg:aemetErrMsg(e)};}
+    catch(e){console.warn("AEMET:",e);am={estado:"error",msg:aemetErrMsg(e)};avisos.push("pluviómetro AEMET");}
     const prov=(am&&am.estado==="ok")?am:null;
     let live=null;
     if(prov){
@@ -865,11 +871,11 @@ async function predecir(etiqueta){
     let floraNotaC=null;
     if(mfe&&mfe.categoria)floraNotaC=floraChantarella(mfe.categoria,floraEsp);
     else if(uso&&uso.categoria)floraNotaC=(["Pinar","Hayedo","Robledal","Castañeral"].includes(uso.categoria)||/quercus|fagus|castanea|pinus|picea|betula|corylus/i.test(uso.sp1||""))?1:0;
-    const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,mup:mup||null,
+    const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,mup:mup||null,avisos,
       floraCat,floraEtiq:floraEtiq||floraCat,floraNota,floraNotaN,floraNotaO,floraNotaC,phVal:suelo.ph??null,prov,live,am};
     // ¿cae en un acotado? (polígonos CyL, perezoso)
     try{
-      if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=1.62";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+      if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
       await cotoPolyLoading;
       const cfs=(typeof COTOS_POLY!=="undefined"?COTOS_POLY.features:[])||[];
       const dentro=(coords)=>{
@@ -899,6 +905,7 @@ async function predecir(etiqueta){
     const cEl=document.getElementById("condList"), bEl=document.getElementById("bannerTxt");
     if(cEl)cEl.innerHTML=`<div class="alert-box">Error red/API: ${e.message}. Revisa conexión y reintenta (F12 → Console para detalle).</div>`;
     if(bEl)bEl.textContent="No se pudo calcular.";
+    const dw0=document.getElementById("dataWarn");if(dw0){dw0.hidden=true;dw0.textContent="";}
   }finally{
     const ld2=document.getElementById("loader");if(ld2)ld2.hidden=true;
   }
@@ -1336,7 +1343,7 @@ function mostrarPoligonoCoto(nombre){
       const poly=(typeof COTOS_POLY!=="undefined"?COTOS_POLY:null);
       const fs=(poly&&poly.features||[]).filter(f=>f.properties&&f.properties.n===nombre);
       if(!fs.length)return;
-      cotoLayer=L.geoJSON(fs,{style:{color:"#c0392b",weight:2,fillOpacity:0.12}}).addTo(map);
+      cotoLayer=L.geoJSON(fs,{style:{color:"#eab308",weight:2,fillOpacity:0.15}}).addTo(map);
       cotoLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));
       cotoLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));
       try{
@@ -1347,14 +1354,14 @@ function mostrarPoligonoCoto(nombre){
     }catch(e){console.warn("poligono coto:",e);}
   };
   if(typeof COTOS_POLY!=="undefined"){dibujar();return;}
-  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=1.62";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
   cotoPolyLoading.then(dibujar);
 }
 // Capa global de cotos (botón 🗺️ Cotos): todos los polígonos, conmutada.
 let cotosLayer=null;
 function cargarPoligonosCotos(){
   if(typeof COTOS_POLY!=="undefined")return Promise.resolve();
-  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=1.62";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
   return cotoPolyLoading;
 }
 // (capa global MUP eliminada v1.61: el MUP sale al pulsar el punto)
@@ -1368,7 +1375,7 @@ document.getElementById("toggleCotos").onclick=()=>{
       const poly=(typeof COTOS_POLY!=="undefined"?COTOS_POLY:null);
       const fs=(poly&&poly.features)||[];
       if(!fs.length)return;
-      cotosLayer=L.geoJSON(fs,{style:{color:"#c0392b",weight:1.5,fillOpacity:0.10},
+      cotosLayer=L.geoJSON(fs,{style:{color:"#2471a3",weight:1.5,fillOpacity:0.10},
         onEachFeature:(f,l)=>{
           if(f.properties&&f.properties.n){
             const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===f.properties.n);
@@ -1378,6 +1385,30 @@ document.getElementById("toggleCotos").onclick=()=>{
         }}).addTo(map);
       btn.classList.remove("btn-ghost");
     }catch(e){console.warn("capa cotos:",e);}
+  });
+};
+let pnsgLayer=null, pnsgLoading=null;
+function cargarPNSG(){
+  if(typeof PNSG_RES!=="undefined")return Promise.resolve();
+  if(!pnsgLoading)pnsgLoading=new Promise(res=>{const s=document.createElement("script");s.src="pnsg_res.js?v=2.05";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  return pnsgLoading;
+}
+document.getElementById("togglePNSG").onclick=()=>{
+  const btn=document.getElementById("togglePNSG");
+  if(pnsgLayer){map.removeLayer(pnsgLayer);pnsgLayer=null;btn.classList.add("btn-ghost");return;}
+  btn.textContent="⏳ Cargando…";
+  cargarPNSG().then(()=>{
+    btn.textContent="🚫 Recolección restringida";
+    try{
+      const fs=(typeof PNSG_RES!=="undefined"&&PNSG_RES.features)||[];
+      if(!fs.length)return;
+      pnsgLayer=L.geoJSON(fs,{style:{color:"#c0392b",weight:2,fillColor:"#c0392b",fillOpacity:0.35},
+        onEachFeature:(f,l)=>{
+          if(f.properties&&f.properties.n)l.bindPopup("<strong>"+f.properties.n+"</strong><br>"+(f.properties.z||"")+"<br>🚫 Recolección restringida");
+          l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});
+        }}).addTo(map);
+      btn.classList.remove("btn-ghost");
+    }catch(e){console.warn("capa PNSG:",e);}
   });
 };
 document.getElementById("saveFavBtn").onclick=()=>{

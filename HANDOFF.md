@@ -113,6 +113,15 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Tolerancia pH ±0,5 (v1.97): perdón hacia el óptimo (4 especies, JS+PY). Red local pendiente.
 - Reintentos SoilGrids (v1.98): 3 intentos con espera creciente + 30 s timeout; pH sigue online.
 - Obj. pH con tolerancia (v1.99): "obj. 4–6 ±0,5" en la etiqueta.
+- Timeout SoilGrids 12 s (v2.00): medido 30 s y fallando; el resto (MFE/AEMET/OM) va rápido.
+- Leyenda colores (v2.01): línea al final de las tarjetas (verde/ámbar/rojo).
+- Aviso de fallo (v2.03): si falla suelo/hábitat/altitud/pluviómetro, aviso con el parámetro.
+- Polígonos Rioja (v2.04): 18 acotados oficiales IDErioja (CC BY 4.0) en `cotos_poly.js`.
+- Recolección restringida (v2.05): 70 zonas PNSG (reserva + uso restringido) en rojo sólido con botón.
+- Permisos Rioja (v2.06): los 13 cotos enlazan a micocebollera emisión de permisos.
+- Cotos en azul (v2.07): contornos de acotados en #2471a3; PNSG sigue rojo sólido.
+- Coto elegido en amarillo (v2.08): la capa global sigue azul.
+- 6 cotos Rioja al listado (v2.09): Villoslada, Lumbreras, Castroviejo, Sojuela, Daroca, La Estrella (punto centroide, enlace larioja.org).
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).
