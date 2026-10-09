@@ -103,6 +103,16 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Porqué automático (v1.87): línea bajo el banner ("No hay cosecha hoy porque..." / "Hay setas hoy y viene pico porque hay agua + ...").
 - Híbrido lluvia (v1.88): AEMET + modelo en el hueco sin validar + hoy en directo; fuera el margen de 2 días.
 - Fix hueco híbrido (v1.89): usa días de calendario; Open-Meteo rellena solo días entre último validado y ayer (hoy no se duplica).
+- Meteo 30 días (v1.90): fuera previsión 7 días; observado a 30 días (modelo + * pluviómetro).
+- Meteo previsión (v1.91): "Hoy por horas" pasa a "Previsión 7 días".
+- Margen temp ±3 ºC (v1.92): perdón hacia el óptimo en aire (4 especies, JS+PY).
+- Fuera exceso (v1.93): P14 en meseta desde el óptimo, sin penalizar encharque (4 especies, JS+PY).
+- Sin píldoras (v1.94): fuera Bien/Flojo/Mal; el valor va coloreado (verde/ámbar/rojo).
+- Obj. en etiqueta (v1.95): "Lluvia 14 días (obj. 60–100 mm)"; valor solo número + color.
+- Fix Cosecha (v1.96): la nota iba dentro del paréntesis y pintaba "0"; pasa como 3er argumento.
+- Tolerancia pH ±0,5 (v1.97): perdón hacia el óptimo (4 especies, JS+PY). Red local pendiente.
+- Reintentos SoilGrids (v1.98): 3 intentos con espera creciente + 30 s timeout; pH sigue online.
+- Obj. pH con tolerancia (v1.99): "obj. 4–6 ±0,5" en la etiqueta.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).

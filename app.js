@@ -1,34 +1,32 @@
 // Motor Boletus edulis — port exacto de boletus_engine.py (NO TOCAR pesos)
 const FLORA = {"Pinar":1,"Hayedo":1,"Robledal":1,"Castañeral":1,"Quercíneas":0,"Pradera":0,"Pasto":0,"Bosque mixto":1,"Matorral":0}; // binario v1.40: hábitat de la especie = 1, resto = 0
-const fP14=p=>p<30?0:p<60?.3+.4*(p-30)/30:p<=100?1:p<=200?1-.4*(p-100)/100:.3;
+const fP14=p=>p<30?0:p<60?.3+.4*(p-30)/30:1;
 const fRes=p=>p<30?.2:p<70?.2+.6*(p-30)/40:p<110?.8+.2*(p-70)/40:1; // reserva P30d
-const fTA=t=>(t<6||t>28)?0:Math.exp(-((t-13.2)**2)/(2*25));
+const fTA=t=>{if(t<6||t>28)return 0;const e=t>16.2?t-3:t<10.2?t+3:13.2;return Math.exp(-((e-13.2)**2)/(2*25));};
 const fTS=s=>{if(s<7||s>21)return 0;if(s>=12&&s<=16)return 1;if(s>=10&&s<12)return .6+.4*(s-10)/2;if(s>16&&s<=18)return 1-.3*(s-16)/2;return s<10?.3+.3*(s-7)/3:.5;};
 const fHR=h=>h>=80?1:h>=75?.8:h>=65?.4+.4*(h-65)/10:0;
 const fAlt=h=>h>=600&&h<=1800?1:h>=500&&h<600?.5+.5*(h-500)/100:h>1800&&h<=2000?1-.5*(h-1800)/200:h>=400&&h<500?.3:0;
-const fPH=p=>p>=4.5&&p<=6.5?1:p>6.5&&p<=7.2?.5:p>=4&&p<4.5?.6:0;
+const fPH=p=>{const e=p<4.5?p+0.5:p>6.5?p-0.5:p;return e>=4.5&&e<=6.5?1:e>6.5&&e<=7.2?.5:e>=4&&e<4.5?.6:0;};
 const fMes=m=>m===10?1:(m===9||m===11)?.85:(m===8||m===12)?.4:.1;
 // --- Níscalo (Lactarius deliciosus): valores del usuario ---
 const NIS_LAG=21; // primeros 7-15 d, pico ~21 d
-const fTA2=t=>{if(t<5||t>24)return 0;if(t>=12&&t<=18)return 1;
-  if(t>=8&&t<12)return .5+.5*(t-8)/4;if(t>=5&&t<8)return .2+.3*(t-5)/3;
-  if(t>18&&t<=20)return 1-.5*(t-18)/2;return .5-.4*(t-20)/4;};
-const fP14_2=p=>{if(p<25)return 0;if(p<50)return .3+.4*(p-25)/25;if(p<=90)return 1;
-  if(p<=180)return 1-.4*(p-90)/90;return .3;};
+const fTA2=t=>{if(t<5||t>24)return 0;const e=t<12?t+3:t>18?t-3:t;if(e>=12&&e<=18)return 1;
+  if(e>=8&&e<12)return .5+.5*(e-8)/4;if(e>=5&&e<8)return .2+.3*(e-5)/3;
+  if(e>18&&e<=20)return 1-.5*(e-18)/2;return .5-.4*(e-20)/4;};
+const fP14_2=p=>{if(p<25)return 0;if(p<50)return .3+.4*(p-25)/25;return 1;};
 const fRes2=p=>{if(p<30)return .2;if(p<70)return .2+.6*(p-30)/40;if(p<110)return .8+.2*(p-70)/40;return 1;};
-const fPH2=p=>{if(p<4)return .2;if(p<4.5)return .2+.8*(p-4)/.5;if(p<=8)return 1;
-  if(p<=8.5)return 1-.6*(p-8)/.5;return 0;};
+const fPH2=p=>{const e=p<4.5?p+0.5:p>8?p-0.5:p;if(e<4)return .2;if(e<4.5)return .2+.8*(e-4)/.5;if(e<=8)return 1;
+  if(e<=8.5)return 1-.6*(e-8)/.5;return 0;};
 const fAlt2=h=>{if(h>=100&&h<=1600)return 1;if(h>=0&&h<100)return .6;
   if(h>1600&&h<=1900)return 1-(h-1600)/300;return 0;};
 const fMes2=m=>m===11?1:m===10?.9:m===9?.85:m===12?.6:m===8?.3:.1;
 // --- Oronja (Amanita caesarea): calibrada v1.39 (MicoAragón, sporas.io, Charito, guía de campo).
 // Lag 21: primer flush 15-22 d tras tormentas (hasta 40-50 en terreno duro/seco, no modelado)
 const ORO_LAG=21;
-const fTA3=t=>{if(t<10||t>28)return 0;if(t>=16&&t<=24)return 1;
-  if(t>=12&&t<16)return .4+.6*(t-12)/4;if(t>24&&t<=28)return 1-.7*(t-24)/4;return .2;};
-const fP14_3=p=>{if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;if(p<=80)return 1;
-  if(p<=160)return 1-.4*(p-80)/80;return .3;};
-const fPH3=p=>{if(p>=4&&p<=6)return 1;if(p>6&&p<=7)return .4;if(p>=3.5&&p<4)return .6;return 0;};
+const fTA3=t=>{if(t<10||t>28)return 0;const e=t<16?t+3:t>24?t-3:t;if(e>=16&&e<=24)return 1;
+  if(e>=12&&e<16)return .4+.6*(e-12)/4;if(e>24&&e<=28)return 1-.7*(e-24)/4;return .2;};
+const fP14_3=p=>{if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;return 1;};
+const fPH3=p=>{const e=p<4?p+0.5:p>6?p-0.5:p;if(e>=4&&e<=6)return 1;if(e>6&&e<=7)return .4;if(e>=3.5&&e<4)return .6;return 0;};
 const fAlt3=h=>{if(h>=200&&h<=1200)return 1;if(h>1200&&h<=1500)return 1-.5*(h-1200)/300;
   if(h>=100&&h<200)return .6;return 0;};
 const fMes3=m=>m===9?1:m===8?.9:m===10?.85:m===7?.5:m===6?.2:.1;
@@ -52,12 +50,11 @@ function scoreOronja(o){
 // --- Chantarela (Cantharellus cibarius): valores iniciales v1.44 (sin calibrar de campo).
 // Lag 10: flush 7-14 d tras tormentas, posible hasta 15-21, se pierde >21 d
 const CHAN_LAG=10;
-const fTA4=t=>{if(t<8||t>26)return 0;if(t>=15&&t<=20)return 1;
-  if(t>=12&&t<15)return .5+.5*(t-12)/3;if(t>20&&t<=23)return 1-.5*(t-20)/3;
-  if(t>=8&&t<12)return .2+.3*(t-8)/4;return .5-.3*(t-23)/3;}; // 23-26: .5 -> .2
-const fP14_4=p=>{if(p<30)return 0;if(p<60)return (p-30)/30;if(p<=100)return 1;
-  if(p<=200)return 1-.6*(p-100)/100;return .2;}; // óptimo 60-100, exceso progresivo sin corte brusco
-const fPH4=p=>{if(p>=4&&p<=5.5)return 1;if(p>5.5&&p<=6)return .5;if(p>=3.5&&p<4)return .6;return 0;};
+const fTA4=t=>{if(t<8||t>26)return 0;const e=t<15?t+3:t>20?t-3:t;if(e>=15&&e<=20)return 1;
+  if(e>=12&&e<15)return .5+.5*(e-12)/3;if(e>20&&e<=23)return 1-.5*(e-20)/3;
+  if(e>=8&&e<12)return .2+.3*(e-8)/4;return .5-.3*(e-23)/3;}; // 23-26: .5 -> .2
+const fP14_4=p=>{if(p<30)return 0;if(p<60)return (p-30)/30;return 1;}; // óptimo 60-100, sin penalizar el exceso
+const fPH4=p=>{const e=p<4?p+0.5:p>5.5?p-0.5:p;if(e>=4&&e<=5.5)return 1;if(e>5.5&&e<=6)return .5;if(e>=3.5&&e<4)return .6;return 0;};
 const fAlt4=h=>{if(h>=100&&h<=1400)return 1;if(h>=50&&h<100)return (h-50)/50;
   if(h>1400&&h<=1500)return 1-(h-1400)/100;return 0;};
 const fMes4=m=>m===9?1:(m===8||m===10)?.9:m===7?.8:m===6?.6:m===11?.4:.1;
@@ -185,8 +182,8 @@ async function fetchClima(la,lo){
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
   const ahora={ta:C.temperature_2m??null,hr:C.relative_humidity_2m??null,prec:C.precipitation??null,viento:C.wind_speed_10m??null};
-  const oT=past("time").slice(-7), oP=past("precipitation_sum").slice(-7),
-        oX=past("temperature_2m_max").slice(-7), oN=past("temperature_2m_min").slice(-7);
+  const oT=past("time").slice(-30), oP=past("precipitation_sum").slice(-30),
+        oX=past("temperature_2m_max").slice(-30), oN=past("temperature_2m_min").slice(-30);
   const obsDia=oT.map((f,i)=>({f,p:oP[i]??0,tx:oX[i]??null,tn:oN[i]??null}));
   // Hoy por tramos de 3 h (previsión horaria del día en curso)
   let hoyTramos=[];
@@ -209,7 +206,13 @@ async function fetchClima(la,lo){
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
-  const j=await getJSON(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lo}&lat=${la}&property=phh2o&property=soc&property=sand&property=silt&property=clay&depth=5-15cm&value=mean`,15000);
+  const url=`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lo}&lat=${la}&property=phh2o&property=soc&property=sand&property=silt&property=clay&depth=5-15cm&value=mean`;
+  let j=null,err=null;
+  for(const espera of [0,1500,4000]){ // 3 intentos con espera creciente (SoilGrids es el más lento)
+    try{if(espera)await new Promise(r=>setTimeout(r,espera));j=await getJSON(url,30000);break;}
+    catch(e){err=e;if(/HTTP 4/.test(e.message))break;}
+  }
+  if(!j)throw err;
   const out={};
   for(const L of j.properties?.layers||[]){
     const v=L.depths?.[0]?.values?.mean;
@@ -537,7 +540,7 @@ async function aemetOverride(la,lo){
     return{p14,p30,tmin:mn,tmax:mx,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r10=retro(10), r21=retro(21);
-  const semana=[];for(let i=6;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
+  const semana=[];for(let i=29;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,
@@ -691,6 +694,7 @@ const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
 const RING_C=2*Math.PI*54;
 function badge(nota){return nota>=0.8?'<span class="condition-status ok">Bien</span>':nota>=0.4?'<span class="condition-status warning">Flojo</span>':'<span class="condition-status danger">Mal</span>';}
+const lv=n=>n>=0.8?"lv-ok":n>=0.4?"lv-mid":"lv-bad";
 function txtCond(n){return n==="excelente"?"Condiciones excelentes de fructificación":n==="bueno"?"Condiciones buenas de fructificación":n==="regular"?"Condiciones regulares de fructificación":"Sin condiciones de fructificación";}
 function nivelClase(n){return n==="excelente"?"nivel-alto":n==="bueno"?"nivel-medio":n==="regular"?"nivel-bajo":"nivel-nulo";}
 function T2(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
@@ -957,23 +961,21 @@ function renderAll(){
     !hoy&&hubo?`¡Hoy tenemos setas para recoger!`:
     hoy&&!hubo?`Hoy no tenemos setas en el campo. Previsión en ~${rb} días.`:
     `Condiciones inadecuadas`);
-  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} / <span class="target">${obj}</span> ${badge(n)}</span></div>`;
+  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k} <span class="target">(obj. ${obj})</span></span><span class="condition-value ${lv(n)}">${v}</span></div>`;
   setHTML("condList",
-    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",r.d.P14,"obj. 60–100 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",r.d.res,"obj. ≥70 mm")+
-    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",r.d.TA,"obj. 13,2 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",r.d.TS,"obj. 12–16 ºC")+
-    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",r.d.HR,"obj. ≥80 %")+(()=>{const v=[];if(clima.tmin<=0)v.push("Helada");if(clima.tmax>=28)v.push("Calor");if(clima.vientoMax>45)v.push("Viento");
-    return `<div class="condition-item"><span>Veto</span><span class="condition-value" title="${v.map(x=>VETO_TXT[x]).join(" ")}">${v.length?v.join(" + "):"Ninguno"} ${badge(r.veto?0:1)}</span></div>`;})());
+    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",r.d.P14,"60–100 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",r.d.res,"≥70 mm")+
+    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",r.d.TA,"13,2 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",r.d.TS,"12–16 ºC")+
+    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",r.d.HR,"≥80 %")+(()=>{const v=[];if(clima.tmin<=0)v.push("Helada");if(clima.tmax>=28)v.push("Calor");if(clima.vientoMax>45)v.push("Viento");
+    return `<div class="condition-item"><span>Veto</span><span class="condition-value ${lv(r.veto?0:1)}" title="${v.map(x=>VETO_TXT[x]).join(" ")}">${v.length?v.join(" + "):"Ninguno"}</span></div>`;})());
   const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  const di=(k,v,obj)=>{const t=obj?` / <span class="target">obj. ${obj}</span>`:"";
-  const m=v.match(/(<span class="condition-status[^>]*>.*<\/span>)$/);
-  const v2=m?v.replace(m[1],t+" "+m[1]):v+t;
-  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
+  const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
+  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   setHTML("detailList",
-    di("Disparador de fructificación",clima.trigB?`${clima.trigB} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rR.score.toFixed(0)}/100 · hace 15 días llovió bien ${badge(rR.score/100)}`:(cR.p14<30?`NO · faltó lluvia (${cR.p14.toFixed(0)} mm) ${badge(rR.score/100)}`:cR.tmin<=0?`NO · helada hace 15 días ${badge(rR.score/100)}`:cR.tmax>=28?`NO · calor hace 15 días ${badge(rR.score/100)}`:cR.vientoMax>45?`NO · viento fuerte hace 15 días ${badge(rR.score/100)}`:`NO · falló la temperatura hace 15 días ${badge(rR.score/100)}`)))+
-    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(r.terreno)}`,"600–1800 m")+
-    di("pH del suelo",`${sueloTxt} ${badge(r.suelo)}`,"4,5–6,5")+
-    di("Estación",`${MESES[mes-1]} ${badge(r.temp)}`,"pico octubre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(r.flora)}</span></div>`);
+    di("Disparador de fructificación",clima.trigB?`${clima.trigB} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rR.score.toFixed(0)}/100 · hace 15 días llovió bien`:(cR.p14<30?`NO · faltó lluvia (${cR.p14.toFixed(0)} mm)`:cR.tmin<=0?`NO · helada hace 15 días`:cR.tmax>=28?`NO · calor hace 15 días`:cR.vientoMax>45?`NO · viento fuerte hace 15 días`:`NO · falló la temperatura hace 15 días`)),rR.score/100)+
+    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,r.terreno,"600–1800 m")+
+    di("pH del suelo",`${sueloTxt}`,r.suelo,"4,5–6,5 ±0,5")+
+    di("Estación",`${MESES[mes-1]}`,r.temp,"pico octubre")+
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(r.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
   const vetE=[];if(clima.tmin<=0)vetE.push("helada");if(clima.tmax>=28)vetE.push("calor");if(clima.vientoMax>45)vetE.push("viento fuerte");
   const vetRE=[];if(cR.tmin<=0)vetRE.push("helada");if(cR.tmax>=28)vetRE.push("calor");if(cR.vientoMax>45)vetRE.push("viento fuerte");
   setHTML("verdictEdulis",resumenCond(r,clima,{
@@ -997,12 +999,6 @@ function renderMeteo(){
   const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
   const fD=s=>{const d=new Date(String(s).slice(0,10)+"T12:00");return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;};
   T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
-  const tramos=clima.hoyTramos||[];
-  setHTML("metNow",tramos.length?
-    `<div class="table-wrapper"><table class="param-table"><thead><tr><th>Hora</th><th style="text-align:right">Temp</th><th style="text-align:right">Lluvia</th><th style="text-align:right">HR</th><th style="text-align:right">Viento</th></tr></thead><tbody>`+
-    tramos.map(s=>`<tr><td>${s.h}</td><td class="num">${s.ta!=null?s.ta.toFixed(0)+"º":"—"}</td><td class="num">${s.pp.toFixed(1)} mm${s.prob!=null?" ("+s.prob+"%)":""}</td><td class="num">${s.hr!=null?s.hr.toFixed(0)+" %":"—"}</td><td class="num">${s.w!=null?s.w.toFixed(0)+" km/h":"—"}</td></tr>`).join("")+
-    `</tbody></table></div>`
-    :`<p class="hint-text">Tramos horarios no disponibles.</p>`);
   const fcD=(clima.fc||[]);
   setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
@@ -1013,7 +1009,7 @@ function renderMeteo(){
     return{f:o.f,p,tx:o.tx,tn:o.tn,ac};
   });
   setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
-  T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado y previsión del modelo (sin pluviómetro AEMET en 25 km).`);
+  T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
 function renderNiscalo(){
@@ -1045,23 +1041,21 @@ function renderNiscalo(){
     `Condiciones inadecuadas`);
   const vn=[];if(clima.tmin<=-3)vn.push("Helada");if(clima.tmax>=28)vn.push("Calor");if(clima.vientoMax>45)vn.push("Viento");
   const vtxt=n=>n==="Helada"?"Helada con mínimas de −3 ºC o menos: quema los primordios. El aborto es total.":VETO_TXT[n];
-  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} / <span class="target">${obj}</span> ${badge(n)}</span></div>`;
+  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k} <span class="target">(obj. ${obj})</span></span><span class="condition-value ${lv(n)}">${v}</span></div>`;
   setHTML("condListN",
-    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rN.d.P14,"obj. 50–90 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rN.d.res,"obj. ≥70 mm")+
-    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rN.d.TA,"obj. 12–18 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rN.d.TS,"obj. 12–16 ºC")+
-    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rN.d.HR,"obj. ≥80 %")+
-    `<div class="condition-item"><span>Veto</span><span class="condition-value" title="${vn.map(vtxt).join(" ")}">${vn.length?vn.join(" + "):"Ninguno"} ${badge(rN.veto?0:1)}</span></div>`);
-  const di=(k,v,obj)=>{const t=obj?` / <span class="target">obj. ${obj}</span>`:"";
-  const m=v.match(/(<span class="condition-status[^>]*>.*<\/span>)$/);
-  const v2=m?v.replace(m[1],t+" "+m[1]):v+t;
-  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
+    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rN.d.P14,"50–90 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rN.d.res,"≥70 mm")+
+    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rN.d.TA,"12–18 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rN.d.TS,"12–16 ºC")+
+    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rN.d.HR,"≥80 %")+
+    `<div class="condition-item"><span>Veto</span><span class="condition-value ${lv(rN.veto?0:1)}" title="${vn.map(vtxt).join(" ")}">${vn.length?vn.join(" + "):"Ninguno"}</span></div>`);
+  const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
+  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESESN=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListN",
-    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rNR.score.toFixed(0)}/100 · hace 21 días llovió bien ${badge(rNR.score/100)}`:(cN.p14<25?`NO · faltó lluvia (${cN.p14.toFixed(0)} mm) ${badge(rNR.score/100)}`:cN.tmin<=-3?`NO · helada hace 21 días ${badge(rNR.score/100)}`:cN.tmax>=28?`NO · calor hace 21 días ${badge(rNR.score/100)}`:cN.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(rNR.score/100)}`:`NO · falló la temperatura hace 21 días ${badge(rNR.score/100)}`)))+
-    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rN.terreno)}`,"100–1600 m")+
-    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rN.suelo)}`,"4,5–8")+
-    di("Estación",`${MESESN[mes-1]} ${badge(rN.temp)}`,"pico noviembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(rN.flora)}</span></div>`);
+    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rNR.score.toFixed(0)}/100 · hace 21 días llovió bien`:(cN.p14<25?`NO · faltó lluvia (${cN.p14.toFixed(0)} mm)`:cN.tmin<=-3?`NO · helada hace 21 días`:cN.tmax>=28?`NO · calor hace 21 días`:cN.vientoMax>45?`NO · viento fuerte hace 21 días`:`NO · falló la temperatura hace 21 días`)),rNR.score/100)+
+    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rN.terreno,"100–1600 m")+
+    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rN.suelo,"4,5–8 ±0,5")+
+    di("Estación",`${MESESN[mes-1]}`,rN.temp,"pico noviembre")+
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rN.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
   const vetRN=[];if(cN.tmin<=-3)vetRN.push("helada");if(cN.tmax>=28)vetRN.push("calor");if(cN.vientoMax>45)vetRN.push("viento fuerte");
   setHTML("verdictNiscalo",resumenCond(rN,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
@@ -1102,23 +1096,21 @@ function renderOronja(){
     `Condiciones inadecuadas`);
   const vo=[];if(clima.tmin<=2)vo.push("Helada");if(clima.tmax>=28)vo.push("Calor");if(clima.vientoMax>45)vo.push("Viento");
   const vtx=n=>n==="Helada"?"Helada con mínimas de +2 ºC o menos: es termófila y aborta.":VETO_TXT[n];
-  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} / <span class="target">${obj}</span> ${badge(n)}</span></div>`;
+  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k} <span class="target">(obj. ${obj})</span></span><span class="condition-value ${lv(n)}">${v}</span></div>`;
   setHTML("condListO",
-    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rO.d.P14,"obj. 30–80 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rO.d.res,"obj. ≥70 mm")+
-    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rO.d.TA,"obj. 16–24 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rO.d.TS,"obj. 12–16 ºC")+
-    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rO.d.HR,"obj. ≥80 %")+
-    `<div class="condition-item"><span>Veto</span><span class="condition-value" title="${vo.map(vtx).join(" ")}">${vo.length?vo.join(" + "):"Ninguno"} ${badge(rO.veto?0:1)}</span></div>`);
-  const di=(k,v,obj)=>{const t=obj?` / <span class="target">obj. ${obj}</span>`:"";
-  const m=v.match(/(<span class="condition-status[^>]*>.*<\/span>)$/);
-  const v2=m?v.replace(m[1],t+" "+m[1]):v+t;
-  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
+    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rO.d.P14,"30–80 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rO.d.res,"≥70 mm")+
+    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rO.d.TA,"16–24 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rO.d.TS,"12–16 ºC")+
+    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rO.d.HR,"≥80 %")+
+    `<div class="condition-item"><span>Veto</span><span class="condition-value ${lv(rO.veto?0:1)}" title="${vo.map(vtx).join(" ")}">${vo.length?vo.join(" + "):"Ninguno"}</span></div>`);
+  const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
+  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListO",
-    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rOR.score.toFixed(0)}/100 · hace 21 días llovió bien ${badge(rOR.score/100)}`:(cO.p14<30?`NO · faltó lluvia (${cO.p14.toFixed(0)} mm) ${badge(rOR.score/100)}`:cO.tmin<=2?`NO · frío hace 21 días ${badge(rOR.score/100)}`:cO.tmax>=28?`NO · calor hace 21 días ${badge(rOR.score/100)}`:cO.vientoMax>45?`NO · viento fuerte hace 21 días ${badge(rOR.score/100)}`:`NO · falló la temperatura hace 21 días ${badge(rOR.score/100)}`)))+
-    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rO.terreno)}`,"200–1200 m")+
-    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rO.suelo)}`,"4–6")+
-    di("Estación",`${MESO[mes-1]} ${badge(rO.temp)}`,"pico septiembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(rO.flora)}</span></div>`);
+    di("Disparador de fructificación",clima.trigN?`${clima.trigN} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rOR.score.toFixed(0)}/100 · hace 21 días llovió bien`:(cO.p14<30?`NO · faltó lluvia (${cO.p14.toFixed(0)} mm)`:cO.tmin<=2?`NO · frío hace 21 días`:cO.tmax>=28?`NO · calor hace 21 días`:cO.vientoMax>45?`NO · viento fuerte hace 21 días`:`NO · falló la temperatura hace 21 días`)),rOR.score/100)+
+    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rO.terreno,"200–1200 m")+
+    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rO.suelo,"4–6 ±0,5")+
+    di("Estación",`${MESO[mes-1]}`,rO.temp,"pico septiembre")+
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rO.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
   const vetRO=[];if(cO.tmin<=2)vetRO.push("helada");if(cO.tmax>=28)vetRO.push("calor");if(cO.vientoMax>45)vetRO.push("viento fuerte");
   setHTML("verdictOronja",resumenCond(rO,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
@@ -1159,23 +1151,21 @@ function renderChantarella(){
     `Condiciones inadecuadas`);
   const vc=[];if(clima.tmin<=0)vc.push("Helada");
   const vtxC="Helada con mínimas de 0 ºC o menos: aborta la fructificación en curso.";
-  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k}</span><span class="condition-value">${v} / <span class="target">${obj}</span> ${badge(n)}</span></div>`;
+  const ci=(k,v,n,obj)=>`<div class="condition-item"><span>${k} <span class="target">(obj. ${obj})</span></span><span class="condition-value ${lv(n)}">${v}</span></div>`;
   setHTML("condListC",
-    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rC.d.P14,"obj. 60–100 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rC.d.res,"obj. ≥70 mm")+
-    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rC.d.TA,"obj. 15–20 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rC.d.TS,"obj. 12–16 ºC")+
-    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rC.d.HR,"obj. ≥80 %")+
-    `<div class="condition-item"><span>Veto</span><span class="condition-value" title="${vtxC}">${vc.length?vc.join(" + "):"Ninguno"} ${badge(rC.veto?0:1)}</span></div>`);
-  const di=(k,v,obj)=>{const t=obj?` / <span class="target">obj. ${obj}</span>`:"";
-  const m=v.match(/(<span class="condition-status[^>]*>.*<\/span>)$/);
-  const v2=m?v.replace(m[1],t+" "+m[1]):v+t;
-  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}</span><span class="mushroom-detail-value">${v2}</span></div>`;};
+    ci("Lluvia 14 días",clima.p14.toFixed(0)+" mm",rC.d.P14,"60–100 mm")+ci("Reserva lluvia 30 días",clima.p30.toFixed(0)+" mm",rC.d.res,"≥70 mm")+
+    ci("Temp aire 7 días (media)",clima.ta.toFixed(1)+" ºC",rC.d.TA,"15–20 ºC")+ci("Temp suelo 18 cm 7 días (media)",clima.ts.toFixed(1)+" ºC",rC.d.TS,"12–16 ºC")+
+    ci("Humedad relativa 7 días (media)",clima.hr.toFixed(0)+" %",rC.d.HR,"≥80 %")+
+    `<div class="condition-item"><span>Veto</span><span class="condition-value ${lv(rC.veto?0:1)}" title="${vtxC}">${vc.length?vc.join(" + "):"Ninguno"}</span></div>`);
+  const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
+  return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESC=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListC",
-    di("Disparador de fructificación",clima.trigC?`${clima.trigC} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rCR.score.toFixed(0)}/100 · hace 10 días llovió bien ${badge(rCR.score/100)}`:(cC.p14<30?`NO · faltó lluvia (${cC.p14.toFixed(0)} mm) ${badge(rCR.score/100)}`:cC.tmin<=0?`NO · helada hace 10 días ${badge(rCR.score/100)}`:`NO · falló la temperatura hace 10 días ${badge(rCR.score/100)}`)))+
-    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"} ${badge(rC.terreno)}`,"50–1500 m")+
-    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"} ${badge(rC.suelo)}`,"4–5,5")+
-    di("Estación",`${MESC[mes-1]} ${badge(rC.temp)}`,"pico septiembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt} ${badge(rC.flora)}</span></div>`);
+    di("Disparador de fructificación",clima.trigC?`${clima.trigC} · empezó la cuenta`:"sin disparador claro")+di("Cosecha hoy",(hubo?`SÍ · ${rCR.score.toFixed(0)}/100 · hace 10 días llovió bien`:(cC.p14<30?`NO · faltó lluvia (${cC.p14.toFixed(0)} mm)`:cC.tmin<=0?`NO · helada hace 10 días`:`NO · falló la temperatura hace 10 días`)),rCR.score/100)+
+    di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rC.terreno,"50–1500 m")+
+    di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rC.suelo,"4–5,5 ±0,5")+
+    di("Estación",`${MESC[mes-1]}`,rC.temp,"pico septiembre")+
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rC.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
   const vetRC=[];if(cC.tmin<=0)vetRC.push("helada");
   setHTML("verdictChantarella",resumenCond(rC,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",

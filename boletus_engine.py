@@ -72,16 +72,12 @@ def _clamp01(x):
 
 
 def f_p14d(p):
-    """Lluvia acumulada 14 días. Óptimo 60-100mm."""
+    """Lluvia acumulada 14 días. Óptimo desde 60mm, sin penalizar el exceso (v1.93)."""
     if p < 30:
         return 0.0
     if p < 60:
         return 0.3 + 0.4 * (p - 30) / 30  # 0.3 -> 0.7
-    if p <= 100:
-        return 1.0
-    if p <= 200:
-        return 1.0 - 0.4 * (p - 100) / 100  # 1.0 -> 0.6
-    return 0.3
+    return 1.0
 
 
 def f_reserva(p30):
@@ -96,12 +92,12 @@ def f_reserva(p30):
 
 
 def f_t_aire(t):
-    """Media 7d. Óptimo 13.2C (biorxiv 2025). Límites duros 6 y 28."""
+    """Media 7d. Óptimo 13.2C (biorxiv 2025). Límites duros 6 y 28. Margen ±3C (v1.92)."""
     if t < 6 or t > 28:
         return 0.0
-    # gaussiana centrada 13.2, sigma ~5
+    e = t - 3 if t > 16.2 else (t + 3 if t < 10.2 else 13.2)
     import math
-    return math.exp(-((t - 13.2) ** 2) / (2 * 5.0 ** 2))
+    return math.exp(-((e - 13.2) ** 2) / (2 * 5.0 ** 2))
 
 
 def f_t_suelo(ts):
@@ -144,12 +140,13 @@ def f_altitud(h):
 
 
 def f_ph(ph):
-    """Ácido a neutro."""
-    if 4.5 <= ph <= 6.5:
+    """Ácido a neutro. Tolerancia ±0,5 (v1.97)."""
+    e = ph + 0.5 if ph < 4.5 else (ph - 0.5 if ph > 6.5 else ph)
+    if 4.5 <= e <= 6.5:
         return 1.0
-    if 6.5 < ph <= 7.2:
+    if 6.5 < e <= 7.2:
         return 0.5
-    if 4.0 <= ph < 4.5:
+    if 4.0 <= e < 4.5:
         return 0.6
     return 0.0
 
@@ -166,15 +163,16 @@ def f_temporada(mes):
 def f_t_aire_niscalo(t):
     if t < 5 or t > 24:
         return 0.0
-    if 12 <= t <= 18:
+    e = t + 3 if t < 12 else (t - 3 if t > 18 else t)  # margen ±3C (v1.92)
+    if 12 <= e <= 18:
         return 1.0
-    if 8 <= t < 12:
-        return 0.5 + 0.5 * (t - 8) / 4
-    if 5 <= t < 8:
-        return 0.2 + 0.3 * (t - 5) / 3
-    if 18 < t <= 20:
-        return 1.0 - 0.5 * (t - 18) / 2
-    return 0.5 - 0.4 * (t - 20) / 4  # 20-24
+    if 8 <= e < 12:
+        return 0.5 + 0.5 * (e - 8) / 4
+    if 5 <= e < 8:
+        return 0.2 + 0.3 * (e - 5) / 3
+    if 18 < e <= 20:
+        return 1.0 - 0.5 * (e - 18) / 2
+    return 0.5 - 0.4 * (e - 20) / 4  # 20-24
 
 
 def f_p14_niscalo(p):
@@ -182,22 +180,19 @@ def f_p14_niscalo(p):
         return 0.0
     if p < 50:
         return 0.3 + 0.4 * (p - 25) / 25
-    if p <= 90:
-        return 1.0
-    if p <= 180:
-        return 1.0 - 0.4 * (p - 90) / 90
-    return 0.3
+    return 1.0  # sin penalizar el exceso (v1.93)
 
 
 def f_ph_niscalo(ph):
-    if ph < 4:
+    e = ph + 0.5 if ph < 4.5 else (ph - 0.5 if ph > 8 else ph)  # tolerancia ±0,5 (v1.97)
+    if e < 4:
         return 0.2
-    if ph < 4.5:
-        return 0.2 + 0.8 * (ph - 4) / 0.5
-    if ph <= 8:
+    if e < 4.5:
+        return 0.2 + 0.8 * (e - 4) / 0.5
+    if e <= 8:
         return 1.0
-    if ph <= 8.5:
-        return 1.0 - 0.6 * (ph - 8) / 0.5
+    if e <= 8.5:
+        return 1.0 - 0.6 * (e - 8) / 0.5
     return 0.0
 
 
@@ -228,12 +223,13 @@ def flora_niscalo(cat, componentes=None):
 def f_t_aire_oronja(t):
     if t < 10 or t > 28:
         return 0.0
-    if 16 <= t <= 24:
+    e = t + 3 if t < 16 else (t - 3 if t > 24 else t)  # margen ±3C (v1.92)
+    if 16 <= e <= 24:
         return 1.0
-    if 12 <= t < 16:
-        return 0.4 + 0.6 * (t - 12) / 4
-    if 24 < t <= 28:
-        return 1.0 - 0.7 * (t - 24) / 4
+    if 12 <= e < 16:
+        return 0.4 + 0.6 * (e - 12) / 4
+    if 24 < e <= 28:
+        return 1.0 - 0.7 * (e - 24) / 4
     return 0.2  # 10-12
 
 
@@ -242,19 +238,16 @@ def f_p14_oronja(p):
         return 0.0
     if p < 50:
         return 0.3 + 0.4 * (p - 30) / 20
-    if p <= 80:
-        return 1.0
-    if p <= 160:
-        return 1.0 - 0.4 * (p - 80) / 80
-    return 0.3
+    return 1.0  # sin penalizar el exceso (v1.93)
 
 
 def f_ph_oronja(ph):
-    if 4 <= ph <= 6:
+    e = ph + 0.5 if ph < 4 else (ph - 0.5 if ph > 6 else ph)  # tolerancia ±0,5 (v1.97)
+    if 4 <= e <= 6:
         return 1.0
-    if 6 < ph <= 7:
+    if 6 < e <= 7:
         return 0.4  # rara en neutros (MicoAragón)
-    if 3.5 <= ph < 4:
+    if 3.5 <= e < 4:
         return 0.6
     return 0.0
 
@@ -395,15 +388,16 @@ def score_oronja(p14d, p30d, t_aire_7d, t_suelo, hr_7d, altitud, ph, flora,
 def f_t_aire_chantarella(t):
     if t < 8 or t > 26:
         return 0.0
-    if 15 <= t <= 20:
+    e = t + 3 if t < 15 else (t - 3 if t > 20 else t)  # margen ±3C (v1.92)
+    if 15 <= e <= 20:
         return 1.0
-    if 12 <= t < 15:
-        return 0.5 + 0.5 * (t - 12) / 3
-    if 20 < t <= 23:
-        return 1.0 - 0.5 * (t - 20) / 3
-    if 8 <= t < 12:
-        return 0.2 + 0.3 * (t - 8) / 4
-    return 0.5 - 0.3 * (t - 23) / 3  # 23-26
+    if 12 <= e < 15:
+        return 0.5 + 0.5 * (e - 12) / 3
+    if 20 < e <= 23:
+        return 1.0 - 0.5 * (e - 20) / 3
+    if 8 <= e < 12:
+        return 0.2 + 0.3 * (e - 8) / 4
+    return 0.5 - 0.3 * (e - 23) / 3  # 23-26
 
 
 def f_p14_chantarella(p):
@@ -411,19 +405,16 @@ def f_p14_chantarella(p):
         return 0.0
     if p < 60:
         return (p - 30) / 30
-    if p <= 100:
-        return 1.0
-    if p <= 200:
-        return 1.0 - 0.6 * (p - 100) / 100
-    return 0.2
+    return 1.0  # sin penalizar el exceso (v1.93)
 
 
 def f_ph_chantarella(ph):
-    if 4 <= ph <= 5.5:
+    e = ph + 0.5 if ph < 4 else (ph - 0.5 if ph > 5.5 else ph)  # tolerancia ±0,5 (v1.97)
+    if 4 <= e <= 5.5:
         return 1.0
-    if 5.5 < ph <= 6:
+    if 5.5 < e <= 6:
         return 0.5
-    if 3.5 <= ph < 4:
+    if 3.5 <= e < 4:
         return 0.6
     return 0.0
 

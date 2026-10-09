@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=1.89">
+<link rel="stylesheet" href="styles.css?v=1.99">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v1.89</p>
+        <p class="version" title="Versión de la aplicación">v1.99</p>
       </div>
     </div>
       </div>
@@ -149,15 +149,12 @@
 <section id="meteorologia" class="section">
   <div class="section-head"><h2>🌤️ Meteorología del punto</h2>
   <p id="metTitle">Pulsa el mapa para ver la meteo del punto.</p></div>
-  <div class="card"><h3>Hoy por horas</h3><div class="terrain-list" id="metNow"></div>
-    <p class="hint-text">Previsión hora a hora para hoy.</p></div>
-  <div class="card" style="margin-top:20px"><h3>Previsión 7 días</h3>
+  <div class="card"><h3>Previsión 7 días</h3>
     <div class="table-wrapper"><table class="param-table">
       <thead><tr><th>Día</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Prob.</th><th style="text-align:right">Viento</th></tr></thead>
       <tbody id="metFcBody"></tbody>
-    </table></div>
-  </div>
-  <div class="card" style="margin-top:20px"><h3>Observado últimos 7 días</h3>
+    </table></div></div>
+  <div class="card" style="margin-top:20px"><h3>Observado últimos 30 días</h3>
     <div class="table-wrapper"><table class="param-table">
       <thead><tr><th>Día</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Acumulada</th></tr></thead>
       <tbody id="metObsBody"></tbody>
@@ -204,8 +201,8 @@
     <h4>La pregunta de cada seta</h4>
     <p>Las setas no salen porque sí: el micelio, que vive todo el año bajo tierra, solo fabrica setas cuando se juntan agua, temperatura suave y su árbol. La app traduce eso a cinco preguntas por especie. Cada una se responde con una nota de 0 a 1 y al final se combinan en un número de 0 a 100.</p>
     <ol class="method-list">
-      <li><strong>¿Ha llovido bastante? (40 % del clima)</strong> Lluvia de los últimos 14 días: el boleto puntúa desde 30 mm, rinde al máximo entre 60 y 100, y penaliza el encharque por encima de 100; el níscalo arranca en 25 y rinde entre 50 y 90; la chantarela arranca en 30 y rinde entre 60 y 100, con exceso progresivo sin corte brusco. La reserva de 30 días aporta otro 20 %: por debajo de 30 mm el suelo se considera seco y la primera lluvia solo recarga.</li>
-      <li><strong>¿Hace la temperatura justa? (20 % aire + 10 % suelo + 10 % humedad)</strong> El boleto quiere fresquito otoñal (óptimo 13,2 ºC, útil entre 6 y 28); el níscalo tiene más margen (óptimo 12–18 ºC, útil entre 5 y 24); la chantarela es intermedia (óptimo 15–20 ºC, útil entre 8 y 26). El suelo a 18 cm, donde vive el micelio, rinde entre 12 y 16 ºC. La humedad relativa acompaña desde el 75 % y es óptima desde el 80 %.</li>
+      <li><strong>¿Ha llovido bastante? (40 % del clima)</strong> Lluvia de los últimos 14 días: el boleto puntúa desde 30 mm y rinde al máximo desde 60, sin penalizar el exceso; el níscalo arranca en 25 y rinde desde 50; la chantarela arranca en 30 y rinde desde 60. La reserva de 30 días aporta otro 20 %: por debajo de 30 mm el suelo se considera seco y la primera lluvia solo recarga.</li>
+      <li><strong>¿Hace la temperatura justa? (20 % aire + 10 % suelo + 10 % humedad)</strong> El boleto quiere fresquito otoñal (óptimo 13,2 ºC ±3 ºC de margen, útil entre 6 y 28); el níscalo tiene más margen (óptimo 12–18 ºC ±3 ºC, útil entre 5 y 24); la chantarela es intermedia (óptimo 15–20 ºC ±3 ºC, útil entre 8 y 26). El suelo a 18 cm, donde vive el micelio, rinde entre 12 y 16 ºC. La humedad relativa acompaña desde el 75 % y es óptima desde el 80 %.</li>
       <li><strong>¿Hay bosque del bueno?</strong> Cada especie vale 1 en su hábitat y 0 fuera: el boleto en pinar, hayedo, robledal, castañar y mixto con alguno de ellos; el níscalo solo en pinar (mixto con pino vale); la oronja en robledal, castañar y quercíneas (encina, carrasca, alcornoque); la chantarela en pinar, hayedo, robledal, castañar y mixto (más abedul, avellano y pícea por especie). Pradera, pasto, matorral y ciudad valen cero para todas.</li>
       <li><strong>¿Es su época, su altura y su suelo?</strong> Boleto: septiembre–noviembre con pico en octubre, 600–1800 m, pH ácido 4,5–6,5. Níscalo: septiembre–diciembre con pico en noviembre, 100–1600 m, pH 4,5–8 (le importa poco). Oronja: junio–octubre con pico en septiembre, 200–1200 m, pH ácido 4–6. Chantarela: junio–noviembre con pico en septiembre, 50–1500 m (preferencia 100–1400), pH acidófila 4–5,5.</li>
       <li><strong>¿Hay veto?</strong> La helada (mínimas ≤ 0 ºC en boleto y chantarela, ≤ −3 ºC en níscalo, ≤ +2 ºC en oronja), el calor (máximas ≥ 28 ºC, salvo chantarela que no veta por máxima aislada) o el viento fuerte (rachas &gt; 45 km/h, salvo chantarela que no veta por viento) ponen el clima a cero directamente, aunque llueva bien.</li>
@@ -253,9 +250,9 @@
       <dt><strong>Anillo</strong></dt><dd>Potencial futuro (0–100) con lo de hoy. La etiqueta dice el nivel (excelente / bueno / regular / nulo).</dd>
       <dt><strong>Banner</strong></dt><dd>Verde: hay setas hoy. Amarillo: aún no, con previsión en ~X días. Rojo: condiciones inadecuadas.</dd>
       <dt><strong>Doble lectura</strong></dt><dd>Anillo y condiciones = futuro con lo de hoy (pico en +15 d boleto / +21 d níscalo y oronja / +10 d chantarela, contados desde la lluvia que disparó el proceso). «Cosecha hoy» = con lo de hace 15/21/10 d, con la causa si es que no (faltó lluvia, helada, calor, viento). Umbral de salida ≥ 40.</dd>
-      <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>P14 óptima 60–100 (boleto y chantarela) / 50–90 (níscalo) / 30–80 (oronja); reserva P30; aire óptimo 13,2 ºC (boleto) / 12–18 ºC (níscalo) / ~20 ºC (oronja) / 15–20 ºC (chantarela); suelo 12–16 ºC a 18 cm; HR ≥ 75. Veto: helada (mín ≤ 0 en boleto y chantarela, ≤ −3 níscalo, ≤ +2 oronja), calor (máx ≥ 28, salvo chantarela) o viento &gt; 45 km/h (salvo chantarela) → clima 0.</dd>
+      <dt><strong>Clima (40·P14 + 20·reserva + 20·T_aire + 10·T_suelo + 10·HR)</strong></dt><dd>P14 óptima 60–100 (boleto y chantarela) / 50–90 (níscalo) / 30–80 (oronja); reserva P30; aire óptimo 13,2 ºC ±3 (boleto) / 12–18 ºC ±3 (níscalo) / ~20 ºC ±3 (oronja) / 15–20 ºC ±3 (chantarela); suelo 12–16 ºC a 18 cm; HR ≥ 75. Veto: helada (mín ≤ 0 en boleto y chantarela, ≤ −3 níscalo, ≤ +2 oronja), calor (máx ≥ 28, salvo chantarela) o viento &gt; 45 km/h (salvo chantarela) → clima 0.</dd>
       <dt><strong>Terreno</strong></dt><dd>Boleto 600–1800 m (rampa 500–600 y 1800–2000; fuera de 400–2000 anula). Níscalo 100–1600 m (rampa 1600–1900; bajo 100 vale 0,6). Oronja 200–1200 m (rampa 1200–1500; 100–200 vale 0,6). Chantarela 50–1500 m (pleno 100–1400; rampas 50–100 y 1400–1500).</dd>
-      <dt><strong>Suelo</strong></dt><dd>Boleto pH 4,5–6,5 (hasta 7,2 tolerable). Níscalo pH 4,5–8. Oronja pH 4–6. Chantarela pH 4–5,5 (estricta: fuera anula). SoilGrids 5–15 cm interpolado a 250 m; sin dato no penaliza.</dd>
+      <dt><strong>Suelo</strong></dt><dd>Boleto pH 4,5–6,5 ±0,5 (hasta 7,2 tolerable). Níscalo pH 4,5–8 ±0,5. Oronja pH 4–6 ±0,5. Chantarela pH 4–5,5 ±0,5 (estricta: fuera anula). SoilGrids 5–15 cm interpolado a 250 m; sin dato no penaliza.</dd>
       <dt><strong>Flora</strong></dt><dd>Binaria (v1.40): 1 en hábitat de la especie, 0 fuera. Boleto: Pinar, Hayedo, Robledal, Castañeral y Mixto con alguno de ellos. Níscalo: solo Pinar (mixto con pino vale). Oronja: Robledal, Castañeral, Quercíneas y Mixto con quercíneas. Chantarela: Pinar, Hayedo, Robledal, Castañeral y Mixto (+ abedul, avellano y pícea por especie). Pradera, Pasto, Matorral y Urbano siempre 0. Sin bosque MFE se usa <code>ff_uso</code> (herbáceo/cultivo = Pradera, dehesa/arbustivo = Pasto); en último caso, edificios OSM en 150 m (≥10 = urbano). Si todo falla, 0,70. Nada se mete a mano.</dd>
       <dt><strong>Temporada</strong></dt><dd>Boleto: octubre 1 · sep/nov 0,85 · ago/dic 0,4 · resto 0,1. Níscalo: noviembre 1 · octubre 0,9 · septiembre 0,85 · diciembre 0,6 · agosto 0,3 · resto 0,1. Oronja: septiembre 1 · agosto 0,9 · octubre 0,85 · julio 0,5 · junio 0,2 · resto 0,1. Chantarela: septiembre 1 · agosto/octubre 0,9 · julio 0,8 · junio 0,6 · noviembre 0,4 · resto 0,1.</dd>
       <dt><strong>Oronja</strong></dt><dd>Termófila de verano (jun–oct): retardo ~21 días (primer flush 15–22 tras tormentas; hasta 40–50 en seco), veto desde +2 ºC, quercíneas y castaño (haya y pinar: 0). Calibrada v1.39 con bibliografía (MicoAragón, sporas.io); sin validación de campo.</dd>
@@ -266,11 +263,11 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v1.89 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v1.99 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=1.89"></script>
-<script src="app.js?v=1.89"></script>
+<script src="cotos.js?v=1.99"></script>
+<script src="app.js?v=1.99"></script>
 </body>
 </html>
