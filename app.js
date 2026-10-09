@@ -685,7 +685,7 @@ async function buscar(){
   }catch(e){box.innerHTML="<small>Error buscando: "+e.message+"</small>";}
 }
 // --- mapa ---
-const map=L.map("dashboardMap").setView([41.76,-2.46],6);
+const map=L.map("dashboardMap",{preferCanvas:true}).setView([41.76,-2.46],6);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
 let marker=L.marker([41.76,-2.46]).addTo(map), lat=41.76, lon=-2.46;
 map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);

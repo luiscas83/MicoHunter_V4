@@ -71,7 +71,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(circle at 100% 0%,rgba(201,154,60,.1),transparent 55%),var(--surface)}
 .dashboard-grid .mushroom-cards-grid{grid-column:1/-1;grid-row:2}
 .map-card .map{width:100%;flex:1 1 auto;min-height:420px;border-radius:20px;overflow:hidden;border:1px solid var(--border);z-index:1;
-  filter:hue-rotate(-15deg) saturate(.85) brightness(.85);background:#0d0a06}
+  background:#0d0a06}
 
 /* ── Buscador / botones ────────────────────────────────── */
 .search-row{display:flex;gap:8px;margin-bottom:10px}
