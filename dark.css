@@ -6,9 +6,9 @@
 :root{
   --bg:#14100a;--bg-2:#1e1810;
   --surface:rgba(255,240,210,.045);--surface-2:rgba(255,240,210,.08);
-  --card-bg:rgba(255,240,210,.045);
+  --card-bg:rgba(255,240,210,.11);
   --bg-subtle:rgba(255,240,210,.06);
-  --border:rgba(212,165,90,.15);
+  --border:rgba(212,165,90,.32);
   --primary:#c99a3c;--primary-light:#e6b95c;--primary-ink:#f0c982;
   --secondary:#b96b3f;--accent:#e6b95c;
   --moss:#6b8e3d;--moss-2:#8fae4c;--ochre:#c99a3c;--ochre-2:#e6b95c;
@@ -58,10 +58,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .section-head p{color:var(--text-dim);font-size:.92rem;max-width:70ch}
 
 /* ── Tarjetas cristal ──────────────────────────────────── */
-.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px;
+.card{background:linear-gradient(180deg,rgba(255,240,210,.05),rgba(255,240,210,0)),var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px;
+  box-shadow:0 14px 40px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,240,210,.08);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:relative;overflow:hidden;
   overflow-wrap:break-word;word-break:break-word;transition:border-color .3s}
-.card:hover{border-color:rgba(201,154,60,.28)}
+.card:hover{border-color:rgba(201,154,60,.45)}
 .card h2{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
 .card h3{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
 .dashboard-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:stretch}
