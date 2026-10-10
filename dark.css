@@ -65,9 +65,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .card:hover{border-color:rgba(201,154,60,.45)}
 .card h2{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
 .card h3{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
-.dashboard-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:stretch}
-.dashboard-grid .map-card{grid-column:1;grid-row:1;display:flex;flex-direction:column}
-.dashboard-grid .terrain-card{grid-column:2;grid-row:1;align-self:stretch;height:100%;display:flex;flex-direction:column;
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:stretch}
+.dashboard-grid .map-card{grid-column:1;grid-row:1;display:flex;flex-direction:column;min-width:0}
+.dashboard-grid .terrain-card{grid-column:2;grid-row:1;align-self:stretch;height:100%;display:flex;flex-direction:column;min-width:0;
   background:radial-gradient(circle at 100% 0%,rgba(201,154,60,.1),transparent 55%),var(--surface)}
 .dashboard-grid .mushroom-cards-grid{grid-column:1/-1;grid-row:2}
 .map-card .map{width:100%;flex:1 1 auto;min-height:420px;border-radius:20px;overflow:hidden;border:1px solid var(--border);z-index:1;
@@ -263,7 +263,7 @@ ul.method-list{list-style:disc}
 ::-webkit-scrollbar-thumb{background:rgba(201,154,60,.28);border-radius:4px}
 
 /* ── Responsive (se conserva el comportamiento táctil) ─── */
-@media(max-width:1024px){.dashboard-grid{grid-template-columns:1fr}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
 .header{padding:14px 16px;margin-bottom:12px}
 .logo h1{font-size:18px}
