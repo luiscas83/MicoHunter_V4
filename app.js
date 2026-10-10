@@ -704,6 +704,44 @@ Calor:"Calor (máxima 7 días ≥ 28 ºC): deshidrata el micelio y el primordio;
 Viento:"Viento (racha máxima > 45 km/h): seca la seta en horas aunque el suelo esté húmedo. Es el que más cosechas arruina con buena lluvia."};
 function nivelIcon(n){return n==="excelente"?"🟢":n==="bueno"?"🟡":n==="regular"?"🟠":"🔴";}
 const calcCache=new Map(); // punto -> {t, calc}: sin recargar antes de 10 min
+const MODO_TXT={online:"En línea",in_person:"Presencial",unknown:"Sin confirmar",no_permit:"Sin permiso específico",free_registration:"Registro libre"};
+function escH(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function entradaCoto(n){const cs=(typeof COTOS!=="undefined"?COTOS:[]);return cs.find(c=>c.n===n)||null;}
+function cotoBits(e){
+  const b=[];
+  if(e.modo&&MODO_TXT[e.modo])b.push(MODO_TXT[e.modo]);
+  if(e.precio!=null)b.push("desde "+e.precio+" €");
+  if(e.cupo)b.push("cupo "+e.cupo);
+  if(e.esp)b.push(e.esp+" especies");
+  return b;
+}
+function cotoFichaCorta(t){
+  const e=t.e;if(!e)return "—";
+  const nc=escH(e.n)+(t.prox?" (cerca)":"");
+  let h=e.url?'<a href="'+e.url+'" target="_blank" rel="noopener">🎫 '+nc+'</a>':nc+" (verifica permiso)";
+  const b=cotoBits(e).filter(x=>!/\d+ especies/.test(x));
+  if(e.fecha)b.push("verificado "+e.fecha);
+  else if(e.v===0)b.push("sin ficha verificada");
+  if(b.length)h+=' <small title="Comprueba vigencia en la fuente oficial">'+escH(b.join(" · "))+"</small>";
+  return h;
+}
+function cotoCuerpo(e){
+  let h="";
+  const loc=[e.pr,e.ccaa].filter(Boolean).join(" · ");
+  if(loc)h+="<br>"+escH(loc);
+  if(e.mu&&e.mu.length)h+="<br>"+e.mu.length+(e.mu.length===1?" municipio":" municipios");
+  const b=cotoBits(e);
+  if(b.length)h+="<br>"+escH(b.join(" · "));
+  if(e.norma)h+="<br><small>"+escH(e.norma)+"</small>";
+  if(e.url)h+='<br><a href="'+e.url+'" target="_blank" rel="noopener">🎫 Tramitar permiso</a>';
+  else h+="<br>Permiso: verifica la normativa vigente";
+  h+="<br><small>Comprueba vigencia en la fuente oficial"+(e.fecha?": verificado "+escH(e.fecha):"")+"</small>";
+  return h;
+}
+function cotoPopup(t){
+  const e=t.e;if(!e)return "";
+  return "<strong>"+escH(e.n)+"</strong>"+cotoCuerpo(e);
+}
 function pintar(calc,ageMin){
   lastCalc=calc;
   const{clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo,floraCat,floraNota,phVal}=calc;
@@ -747,10 +785,7 @@ function pintar(calc,ageMin){
   T("mupValue",calc.mup?`MUP ${calc.mup.num} · ${calc.mup.nombre}`:"—");
   const cotoEl=document.getElementById("cotoValue");
   if(cotoEl){
-    if(calc.coto){cotoEl.innerHTML="";const a=document.createElement("a");
-      if(calc.coto.u){a.href=calc.coto.u;a.target="_blank";a.rel="noopener";a.textContent="🎫 "+calc.coto.n;}
-      else{a.textContent=calc.coto.n+" (verifica permiso)";}
-      cotoEl.appendChild(a);}
+    if(calc.coto&&calc.coto.e)cotoEl.innerHTML=cotoFichaCorta(calc.coto);
     else cotoEl.textContent="—";
   }
   try{
@@ -873,9 +908,9 @@ async function predecir(etiqueta){
     else if(uso&&uso.categoria)floraNotaC=(["Pinar","Hayedo","Robledal","Castañeral"].includes(uso.categoria)||/quercus|fagus|castanea|pinus|picea|betula|corylus/i.test(uso.sp1||""))?1:0;
     const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,mup:mup||null,avisos,
       floraCat,floraEtiq:floraEtiq||floraCat,floraNota,floraNotaN,floraNotaO,floraNotaC,phVal:suelo.ph??null,prov,live,am};
-    // ¿cae en un acotado? (polígonos CyL, perezoso)
+    // ¿cae en un acotado? Polígonos oficiales primero; si no, ficha más cercana (≤3 km, orientativo)
     try{
-      if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+      if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.18";s.onload=res;s.onerror=res;document.head.appendChild(s);});
       await cotoPolyLoading;
       const cfs=(typeof COTOS_POLY!=="undefined"?COTOS_POLY.features:[])||[];
       const dentro=(coords)=>{
@@ -890,11 +925,21 @@ async function predecir(etiqueta){
         return false;
       };
       for(const f of cfs){
-        if(f.properties&&f.properties.n&&dentro(f.geometry.coordinates)){
-          const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===f.properties.n);
-          calc.coto={n:f.properties.n,u:cu&&cu.u};
+        const p=f.properties||{};
+        if((p.c||p.n)&&dentro(f.geometry.coordinates)){
+          const e=entradaCoto(p.c||p.n);
+          calc.coto={e:e||{n:p.c||p.n,url:""}};
           break;
         }
+      }
+      if(!calc.coto&&(typeof COTOS!=="undefined")){
+        let best=null,bd=3;
+        for(const c of COTOS){
+          if(c.la==null||c.lo==null)continue;
+          const d=havKm(lat,lon,c.la,c.lo);
+          if(d<bd){bd=d;best=c;}
+        }
+        if(best)calc.coto={e:best,prox:true};
       }
     }catch(e){console.warn("coto en punto:",e);}
     calcCache.set(pkey,{t:Date.now(),calc});
@@ -1309,12 +1354,54 @@ function renderFavs(){
   document.querySelectorAll("#favList .favorite-btn.delete").forEach(b=>b.onclick=()=>{const a=getFavs();a.splice(+b.dataset.d,1);saveFavs(a);renderFavs();});
   renderFavSelect();
 }
+function renderCotosTab(){
+  const cs=typeof COTOS!=="undefined"?COTOS:[];
+  const sel=document.getElementById("cotosCCAA");
+  if(sel&&!sel.dataset.lleno){
+    const CC=[...new Set(cs.map(c=>c.ccaa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+    sel.innerHTML='<option value="">Todas las comunidades</option>'+CC.map(cc=>`<option value="${escH(cc)}">${escH(cc)}</option>`).join("");
+    sel.dataset.lleno="1";
+  }
+  const nFichas=cs.filter(c=>c.fecha).length, nVer=cs.filter(c=>c.v===1).length;
+  T2("cotosResumen",`${cs.length} zonas (${nFichas} con ficha, ${nVer} verificadas). La ficha enlaza a la fuente oficial: comprueba vigencia antes de salir.`);
+  const q=document.getElementById("cotosQ"), m=document.getElementById("cotosModo");
+  if(q&&!q.dataset.lleno){q.addEventListener("input",pintarCotos);q.dataset.lleno="1";}
+  if(sel&&!sel.dataset.oyente){sel.addEventListener("change",pintarCotos);sel.dataset.oyente="1";}
+  if(m&&!m.dataset.oyente){m.addEventListener("change",pintarCotos);m.dataset.oyente="1";}
+  pintarCotos();
+}
+function pintarCotos(){
+  const cs=(typeof COTOS!=="undefined"?COTOS:[]);
+  const box=document.getElementById("cotosList");
+  if(!box)return;
+  const q=((document.getElementById("cotosQ")||{}).value||"").toLowerCase().trim();
+  const cc=(document.getElementById("cotosCCAA")||{}).value||"";
+  const md=(document.getElementById("cotosModo")||{}).value||"";
+  const list=cs.filter(c=>{
+    if(cc&&c.ccaa!==cc)return false;
+    if(md==="punto"){if(c.fecha)return false;}
+    else if(md&&c.modo!==md)return false;
+    if(q&&!(c.n+" "+(c.pr||"")+" "+(c.ccaa||"")+" "+((c.mu||[]).join(" "))).toLowerCase().includes(q))return false;
+    return true;
+  });
+  T2("cotosCount",list.length+" / "+cs.length);
+  box.innerHTML=list.length?list.map(c=>{
+    const idx=cs.indexOf(c);
+    return `<div class="favorite-item coto-item"><span class="favorite-icon">🎫</span><div class="favorite-info"><div class="favorite-name">${escH(c.n)}</div><div class="coto-detail">${cotoCuerpo(c)}</div><div class="favorite-coords">${escH([c.pr,c.ccaa].filter(Boolean).join(" · ")||"Punto en el monte")} · ${c.la.toFixed(4)}, ${c.lo.toFixed(4)}</div></div><div class="favorite-actions"><button class="favorite-btn load" data-ir="${idx}">Ir</button></div></div>`;
+  }).join(""):'<p class="hint-text">Sin resultados con esos filtros.</p>';
+  box.querySelectorAll("[data-ir]").forEach(b=>b.onclick=()=>{
+    const c=cs[+b.dataset.ir];
+    if(!c||c.la==null)return;
+    document.querySelector('.nav-btn[data-section="dashboard"]').click();
+    goTo(c.la,c.lo,c.n);mostrarPoligonoCoto(c.n);
+  });
+}
 function renderFavSelect(){
   const sel=document.getElementById("favSelect"), f=getFavs();
   if(!sel)return;
   const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
   const cs=typeof COTOS!=="undefined"?COTOS:[];
-  const CCAA=["Castilla y León","Aragón","Navarra","Comunidad de Madrid","Cataluña","País Vasco","La Rioja","Asturias","Cantabria","Castilla-La Mancha","Extremadura","Andalucía","Canarias"].sort((a,b)=>a.localeCompare(b,"es"));
+  const CCAA=[...new Set(cs.map(c=>c.ccaa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
   const grupos=CCAA.map(cc=>{
     const l=cs.map((c,i)=>({c,i})).filter(x=>x.c.ccaa===cc)
       .sort((a,b)=>a.c.n.localeCompare(b.c.n,"es"));
@@ -1341,27 +1428,26 @@ function mostrarPoligonoCoto(nombre){
     try{
       if(cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}
       const poly=(typeof COTOS_POLY!=="undefined"?COTOS_POLY:null);
-      const fs=(poly&&poly.features||[]).filter(f=>f.properties&&f.properties.n===nombre);
+      const fs=(poly&&poly.features||[]).filter(f=>f.properties&&((f.properties.c||f.properties.n)===nombre));
       if(!fs.length)return;
       cotoLayer=L.geoJSON(fs,{style:{color:"#eab308",weight:2,fillOpacity:0.15}}).addTo(map);
       cotoLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));
-      cotoLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));
       try{
-        const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===nombre);
-        if(cu)cotoLayer.bindPopup("<strong>"+cu.n+"</strong><br>"+(cu.u?'<a href="'+cu.u+'" target="_blank" rel="noopener">🎫 Tramitar permiso</a>':"Permiso: verifica la normativa vigente"));
+        const e=entradaCoto(nombre);
+        if(e)cotoLayer.bindPopup(cotoPopup({e}));
       }catch{}
       try{map.fitBounds(cotoLayer.getBounds(),{padding:[20,20]});}catch{}
     }catch(e){console.warn("poligono coto:",e);}
   };
   if(typeof COTOS_POLY!=="undefined"){dibujar();return;}
-  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.18";s.onload=res;s.onerror=res;document.head.appendChild(s);});
   cotoPolyLoading.then(dibujar);
 }
 // Capa global de cotos (botón 🗺️ Cotos): todos los polígonos, conmutada.
 let cotosLayer=null;
 function cargarPoligonosCotos(){
   if(typeof COTOS_POLY!=="undefined")return Promise.resolve();
-  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.04";s.onload=res;s.onerror=res;document.head.appendChild(s);});
+  if(!cotoPolyLoading)cotoPolyLoading=new Promise(res=>{const s=document.createElement("script");s.src="cotos_poly.js?v=2.18";s.onload=res;s.onerror=res;document.head.appendChild(s);});
   return cotoPolyLoading;
 }
 // (capa global MUP eliminada v1.61: el MUP sale al pulsar el punto)
@@ -1377,9 +1463,10 @@ document.getElementById("toggleCotos").onclick=()=>{
       if(!fs.length)return;
       cotosLayer=L.geoJSON(fs,{style:{color:"#2471a3",weight:1.5,fillOpacity:0.10},
         onEachFeature:(f,l)=>{
-          if(f.properties&&f.properties.n){
-            const cu=(typeof COTOS!=="undefined"?COTOS:[]).find(c=>c.n===f.properties.n);
-            l.bindPopup("<strong>"+f.properties.n+"</strong><br>"+(cu&&cu.u?'<a href="'+cu.u+'" target="_blank" rel="noopener">🎫 Tramitar permiso</a>':"Permiso: verifica la normativa vigente"));
+          const p=f.properties||{};
+          if(p.c||p.n){
+            const e=entradaCoto(p.c||p.n);
+            l.bindPopup(e?cotoPopup({e}):"<strong>"+escH(p.c||p.n)+"</strong>");
           }
           l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});
         }}).addTo(map);
@@ -1436,6 +1523,7 @@ document.getElementById("gps").onclick=()=>navigator.geolocation?.getCurrentPosi
 renderFavs();
 applyVisibility();
 renderSpeciesSelector();
+renderCotosTab();
 
 // punto inicial: vista de Soria con marcador; el cálculo solo arranca al pulsar el mapa, GPS o un setal (v1.43: sin cálculo inicial)
 

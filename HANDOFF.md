@@ -130,6 +130,8 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 - Oscuro con más relieve (v2.15): solo `dark.css?v=2.15` (claro sigue 2.14); tarjeta .07→.11, borde .22→.32, degradado superior + filo interior y sombra más profunda.
 - Rendimiento móvil (v2.16): en ≤768px se quitan blur (`header/nav/card/btn`), animación del fondo y del logo, filtro oscuro del mapa y sombras grandes (tarjeta sólida #2a2313); `prefers-reduced-motion` sin animaciones; mapa Leaflet con `preferCanvas:true` (`app.js?v=2.16`, vectores de cotos/PNSG a canvas).
 - Revertido bloque móvil (v2.17): vuelve el cristal/animaciones como en v2.15; solo se quita el filtro oscuro del mapa en `dark.css` (el mapa queda con colores OSM normales); se mantiene `preferCanvas:true` (`app.js?v=2.16`).
+- Cotos híbrido (v2.18): `cotos.js` con 175 entradas (144 fichas con permiso/tarifa/cupo/especies/norma/fuente oficial y fecha de verificación + 31 puntos complementarios en el monte); las fichas adoptan el punto en el monte cuando cae en su contorno, y 16 fichas sin geometría se geocodificaron por municipio/parque. `cotos_poly.js` mantiene los 631 oficiales + 44 perímetros oficiales de respaldo (presupuesto ~1500 pts, 1,75 MB perezoso). Detección: polígono oficial primero, si no ficha a ≤3 km (marca "cerca"). Fila Coto y popups con ficha rica (modo/precio/cupo/fecha + "comprueba vigencia"); CCAA del desplegable dinámicas. Regla: cada cambio versiona (`cotos.js?v=2.18`, `app.js?v=2.18`).
+- Pestaña Cotos (v2.19): nueva sección con el listado completo (buscador por nombre/municipio/provincia + filtros por comunidad y permiso, contador, botón «Ir» que lleva al mapa y dibuja el contorno). Reutiliza `cotoCuerpo` (extraído de `cotoPopup`), clases `favorite-*` + `.coto-item/.coto-detail` en `styles.css?v=2.19`.
 - Fixes v1.38: textos con oronja (intro Metodología + Doble lectura en Leyenda) y `boletus_engine.py` con `score_niscalo()`/`score_oronja()` espejo del JS (paridad verificada: 100/100/100 en casos óptimos).
 - Días restantes al pico (v1.26): `restantes()` busca el disparador (último día con 14 d ≥60/50 mm) en `hist45` (modelo) o `serie45`+hoy parcial (pluviómetro, con corrección del lag); banner y pies de anillo (`ringCap`/`ringCapN`) muestran +N real con fallback al plazo entero. Pesos intactos.
 - Tarjeta Suelo y clima: Lluvia 14 días y Reserva 30 días en doble unidad `X mm = X L/m²` (1 mm = 1 L/m²); fix `forecastBody` ausente que rompía el cálculo (guardas nulas + `app.js?v=1.06`).
@@ -138,6 +140,13 @@ con doble lectura (hoy → pico +15/+21 d; hace 15/21 d → cosecha hoy).
 ## Para ejecutar
 Sin build: `python3 -m http.server` en la carpeta y abrir `http://localhost:8000`
 (o abrir `index.html` directamente; Leaflet y las APIs necesitan internet).
+
+## Consulta local pH/hábitat/altitud (sin versión app, herramienta aparte):
+`consulta_local.py` + `descarga_{ph,mdt,mfe}_espana.py` + `datos_local/README.md`.
+Nacional offline: pH (WCS ISRIC 2 piezas), MDT (Terrarium z9 2 piezas),
+MFE (WFS IEPNB 153 teselas 1x1 en `datos_local/mfe/*.json.gz`).
+Verificado Soria 41.934,-2.792 local==remoto (pH 6,2 · 1420/1421 m ·
+Bosque mixto Fagus/Pinus/Quercus). `.gitignore`: .tif/.gpkg/.zip + mfe/.
 
 ## Ideas pendientes (no empezadas)
 - Avisos "hoy es el día" con fecha de disparador guardada por punto.

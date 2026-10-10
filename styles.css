@@ -128,7 +128,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .lv-mid{color:var(--warning)}
 .lv-bad{color:var(--danger)}
 .add-fav-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px}
-.add-fav-row input{padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;min-width:0;background:var(--card-bg);color:var(--text)}
+.add-fav-row input,.add-fav-row select{padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;min-width:0;background:var(--card-bg);color:var(--text)}
+.coto-item{align-items:flex-start}
+.coto-detail{font-size:.85rem;line-height:1.55;margin:6px 0}
+.coto-detail small{color:var(--text-light)}
 .hint-text{font-size:.85rem;color:var(--text-light);font-style:italic;margin-top:12px}
 .alert-box{background:#ffebee;color:#c62828;border:1px solid #ef9a9a;border-radius:var(--radius-sm);padding:10px 12px;font-size:.85rem;font-weight:500}
 .favorites-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}

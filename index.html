@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=2.14">
+<link rel="stylesheet" href="styles.css?v=2.19">
 <link id="themeDark" rel="stylesheet" href="dark.css?v=2.17" disabled>
 <script>try{if(localStorage.getItem('mh-theme')==='dark'){document.getElementById('themeDark').disabled=false;}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v2.17</p>
+        <p class="version" title="Versión de la aplicación">v2.19</p>
       </div>
     </div>
     <button class="btn btn-ghost" id="themeToggle" title="Cambiar entre tema claro y oscuro">🌙 Tema oscuro</button>
@@ -30,6 +30,7 @@
   <button class="nav-btn" data-section="meteorologia">🌤️ Meteorología</button>
   <button class="nav-btn" data-section="especie">🍄 Especie</button>
   <button class="nav-btn" data-section="setales">⭐ Mis setales</button>
+  <button class="nav-btn" data-section="cotos">🎫 Cotos</button>
   <button class="nav-btn" data-section="metodologia">📖 Metodología</button>
   <button class="nav-btn" data-section="leyenda">🔍 Leyenda</button>
 </nav>
@@ -44,12 +45,12 @@
         <button class="btn" id="find">Buscar</button>
       </div>
       <div id="results"></div>
-      <select id="favSelect" title="Tus setales y los principales cotos regulados (punto en el monte, orientativo; verifica siempre la norma y el permiso)"><option value="">⭐ Setales y cotos…</option></select>
+      <select id="favSelect" title="Tus setales y el catálogo de cotos regulados (ficha con permiso, tarifa y cupo cuando están publicados; verifica siempre norma y permiso)"><option value="">⭐ Setales y cotos…</option></select>
       <div id="dashboardMap" class="map"></div>
       <div class="map-actions">
         <button class="btn" id="gps">📍 Mi ubicación</button>
         <button class="btn" id="saveFavBtn">⭐ Guardar setal</button>
-        <button class="btn btn-ghost" id="toggleCotos" title="Mostrar los contornos reales de los acotados de CyL">🗺️ Cotos</button>
+        <button class="btn btn-ghost" id="toggleCotos" title="Mostrar los contornos oficiales de los cotos (el resto, punto orientativo)">🗺️ Cotos</button>
         <button class="btn btn-ghost" id="togglePNSG" title="Zonas del Parque Nacional con recolección restringida">🚫 Recolección restringida</button>
       </div>
       <div class="save-fav-panel" id="saveFavPanel" hidden>
@@ -78,7 +79,7 @@
         <div class="terrain-item"><span class="ti">⚗️</span><span class="tl">pH 5-15cm</span><span class="tv" id="phValue">—</span></div>
         <div class="terrain-item"><span class="ti">🌲</span><span class="tl">Hábitat en el punto</span><span class="tv" id="habitatLine">consultando…</span></div>
         <div class="terrain-item"><span class="ti">🗺️</span><span class="tl">Monte (MUP)</span><span class="tv" id="mupValue" title="Monte de Utilidad Pública">—</span></div>
-        <div class="terrain-item"><span class="ti">🎫</span><span class="tl">Coto</span><span class="tv" id="cotoValue" title="Acotado micológico (permiso de pago)">—</span></div>
+        <div class="terrain-item"><span class="ti">🎫</span><span class="tl">Coto</span><span class="tv" id="cotoValue" title="Zona regulada: comprueba permiso, cupo y vigencia en la fuente oficial">—</span></div>
       </div>
             <div class="last-update" id="lastUpdate"></div>
     </div>
@@ -191,10 +192,34 @@
       <input type="number" id="favLng" step="0.0001" placeholder="Longitud" min="-180" max="180">
       <button class="btn" id="addFav">Añadir</button>
     </div>
-    <p class="hint-text">La forma rápida es pulsar «⭐ Guardar setal» en el dashboard: usa el punto actual del mapa. El desplegable del dashboard incluye además 32 cotos y parques regulados (permiso de pago, punto en el monte (orientativo)): al elegir uno el mapa va allí y calcula. Verifica siempre norma y permiso vigentes.</p>
+    <p class="hint-text">La forma rápida es pulsar «⭐ Guardar setal» en el dashboard: usa el punto actual del mapa. El desplegable del dashboard incluye además el catálogo de cotos regulados con su ficha (permiso, tarifa y cupo cuando están publicados; punto orientativo): al elegir uno el mapa va allí y calcula. Verifica siempre norma y permiso vigentes.</p>
   </div>
   <div class="card" style="margin-top:20px"><h3>Guardados <span class="count-badge" id="favCount"></span></h3>
     <div id="favList" class="favorites-list"></div>
+  </div>
+</section>
+
+<section id="cotos" class="section">
+  <div class="section-head"><h2>🎫 Cotos regulados</h2>
+  <p id="cotosResumen">Catálogo de zonas reguladas con su ficha.</p></div>
+  <div class="card"><h3>Buscar</h3>
+    <div class="add-fav-row">
+      <input type="text" id="cotosQ" placeholder="Nombre, municipio o provincia" maxlength="60">
+      <select id="cotosCCAA"><option value="">Todas las comunidades</option></select>
+      <select id="cotosModo">
+        <option value="">Todos los permisos</option>
+        <option value="online">En línea</option>
+        <option value="in_person">Presencial</option>
+        <option value="unknown">Sin confirmar</option>
+        <option value="no_permit">Sin permiso específico</option>
+        <option value="free_registration">Registro libre</option>
+        <option value="punto">Punto sin ficha</option>
+      </select>
+    </div>
+    <p class="hint-text">Coordenadas orientativas. Verifica siempre norma y permiso vigentes en la fuente oficial antes de salir.</p>
+  </div>
+  <div class="card" style="margin-top:20px"><h3>Listado <span class="count-badge" id="cotosCount"></span></h3>
+    <div id="cotosList" class="favorites-list"></div>
   </div>
 </section>
 
@@ -269,12 +294,12 @@
 </section>
 </main>
 <footer class="footer">
-  <p>Predicción Micológica v2.17 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
+  <p>Predicción Micológica v2.19 — Lluvia y extremos: AEMET OpenData (pluviómetro ≤ 25 km) · Clima y altitud: Open-Meteo · Suelo: SoilGrids/ISRIC · Bosque: MFE-MITECO (CC BY 4.0) · Toponimia: OSM/Nominatim</p>
   <p class="disclaimer">Estima de potencial, no confirma setas ni puntos concretos. Respeta permisos y cupos. Fotos: Pixabay · sporas.io.</p>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="cotos.js?v=2.13"></script>
-<script src="app.js?v=2.16"></script>
+<script src="cotos.js?v=2.18"></script>
+<script src="app.js?v=2.19"></script>
 <script>
 (function(){
   var link=document.getElementById('themeDark'), btn=document.getElementById('themeToggle');
