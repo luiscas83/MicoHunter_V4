@@ -1,6 +1,0 @@
-__pycache__/
-datos_local/*.tif
-datos_local/*.gpkg
-datos_local/*.zip
-datos_local/mfe/
-datos_local/wfs_cap.xml
