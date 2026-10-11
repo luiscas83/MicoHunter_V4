@@ -190,7 +190,7 @@ html{scroll-behavior:smooth}
 body{-webkit-tap-highlight-color:transparent}
 .btn,.nav-btn,#favSelect,.search-row .btn,.map-actions .btn{min-height:44px}
 .btn:focus-visible,.nav-btn:focus-visible,.search-row input:focus-visible,.save-fav-row input:focus-visible,#favSelect:focus-visible{outline:2px solid var(--primary-light);outline-offset:2px}
-@media(max-width:1024px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){.main{padding:0 16px}.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
 /* Header compacto + nav fija bajo él, como la barra superior del modo web */
 .header{position:sticky;top:0;z-index:1000;padding:14px 16px;margin-bottom:12px}

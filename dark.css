@@ -42,7 +42,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .sources span{padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:999px;font-size:.75rem;font-weight:500;white-space:nowrap;color:var(--text-dim)}
 
 /* ── Contenedor y pestañas ─────────────────────────────── */
-.main{max-width:1400px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+.main{max-width:1400px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 .nav{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;background:var(--surface);padding:8px;border-radius:18px;
   border:1px solid var(--border);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .nav-btn{padding:10px 20px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:600;
@@ -270,7 +270,7 @@ ul.method-list{list-style:disc}
 ::-webkit-scrollbar-thumb{background:rgba(201,154,60,.28);border-radius:4px}
 
 /* ── Responsive (se conserva el comportamiento táctil) ─── */
-@media(max-width:1024px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){.main{padding:0 16px}.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){
 .header{padding:14px 16px;margin-bottom:12px}
 .logo h1{font-size:18px}
