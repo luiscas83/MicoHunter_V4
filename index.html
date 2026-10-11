@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Predicción Micológica</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styles.css?v=2.39">
-<link id="themeDark" rel="stylesheet" href="dark.css?v=2.39" disabled>
-<script>try{if(localStorage.getItem('mh-theme')==='dark'){document.getElementById('themeDark').disabled=false;}}catch(e){}</script>
+<link rel="stylesheet" href="styles.css?v=2.40">
+<link id="themeDark" rel="stylesheet" href="dark.css?v=2.40" disabled>
+<link id="themeGuia" rel="stylesheet" href="guia.css?v=1.00" disabled>
+<script>try{var t=localStorage.getItem('mh-theme');if(t==='dark'){document.getElementById('themeDark').disabled=false;}else if(t==='guia'){document.getElementById('themeGuia').disabled=false;}}catch(e){}</script>
 <script src="https://unpkg.com/geotiff@2.1.3/dist-browser/geotiff.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -18,10 +19,14 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>Predicción Micológica</h1>
-        <p class="version" title="Versión de la aplicación">v2.39</p>
+        <p class="version" title="Versión de la aplicación">v2.40</p>
       </div>
     </div>
-    <button class="btn btn-ghost" id="themeToggle" title="Cambiar entre tema claro y oscuro">🌙 Tema oscuro</button>
+    <select class="theme-select" id="themeSelect" title="Estilo de color">
+      <option value="light">☀️ Claro</option>
+      <option value="dark">🌙 Oscuro</option>
+      <option value="guia">🌿 Guía</option>
+    </select>
       </div>
 </header>
 <main class="main">
@@ -321,15 +326,17 @@
 <script src="app.js?v=2.36"></script>
 <script>
 (function(){
-  var link=document.getElementById('themeDark'), btn=document.getElementById('themeToggle');
-  function paint(){ if(!btn) return; btn.textContent = link.disabled ? '\uD83C\uDF19 Tema oscuro' : '\u2600\uFE0F Tema claro'; }
-  try{ if(localStorage.getItem('mh-theme')==='dark'){ link.disabled=false; } }catch(e){}
-  paint();
-  if(btn) btn.addEventListener('click', function(){
-    link.disabled=!link.disabled;
-    try{ localStorage.setItem('mh-theme', link.disabled?'light':'dark'); }catch(e){}
-    paint();
-  });
+  var dark=document.getElementById('themeDark'), guia=document.getElementById('themeGuia'), sel=document.getElementById('themeSelect');
+  function apply(t){
+    if(dark)dark.disabled=(t!=='dark');
+    if(guia)guia.disabled=(t!=='guia');
+    if(sel)sel.value=t;
+    try{ localStorage.setItem('mh-theme',t); }catch(e){}
+  }
+  var t='light';
+  try{ t=localStorage.getItem('mh-theme')||'light'; if(t!=='light'&&t!=='dark'&&t!=='guia')t='light'; }catch(e){}
+  apply(t);
+  if(sel) sel.addEventListener('change', function(){ apply(sel.value); });
 })();
 </script>
 </body>

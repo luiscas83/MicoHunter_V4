@@ -48,6 +48,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .btn:hover{background:var(--primary-light)}
 .btn:active{transform:translateY(1px)}
 .btn-ghost{background:transparent;color:var(--text-light);border:1px solid var(--border)}
+.theme-select{padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);color:var(--text);font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;min-height:44px}
 .btn-ghost:hover{background:var(--border);color:var(--text)}
 .map-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 .map-actions .btn{flex:1;white-space:nowrap}

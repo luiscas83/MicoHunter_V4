@@ -1,0 +1,301 @@
+/* MicoHunter v2.40 — tercer tema "guía" (verde musgo/crema), inspirado en la
+   guía de Boletus pinophilus del usuario. Claro mate sin blur: rápido en
+   móvil por construcción. Mismas clases/IDs que styles.css y dark.css. */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#eef0df;--bg-2:#e2e5cf;
+  --surface:#fffef8;--surface-2:#f3f6e6;
+  --card-bg:#fffef8;
+  --bg-subtle:#f3f6e6;
+  --border:#cfd8a6;
+  --primary:#53633b;--primary-light:#687c3d;--primary-ink:#3c4a2a;
+  --secondary:#7a8c3f;--accent:#b9cc60;
+  --moss:#53633b;--moss-2:#6b8e3d;--ochre:#7a8c3f;--ochre-2:#93a854;
+  --terracotta:#a89a5b;--miel:#4c5c30;
+  --text:#20251b;--text-light:#59604d;--text-dim:#59604d;--text-faint:#8a917c;
+  --success:#5c7a3a;--warning:#9a7b2d;--danger:#b0503c;--info:#53633b;
+  --shadow:0 6px 22px rgba(39,53,27,.10);--shadow-hover:0 10px 30px rgba(39,53,27,.16);
+  --radius:18px;--radius-sm:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;overflow-x:hidden;position:relative;-webkit-tap-highlight-color:transparent}
+
+/* ── Cabecera ─────────────────────────────────────── */
+.header{position:sticky;top:0;z-index:1000;
+  background:linear-gradient(120deg,#34452b,#687c3d);color:#fff;padding:16px 32px;margin:0 0 20px}
+.header-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{font-size:26px}
+.logo h1{font-family:'Fraunces',serif;font-size:22px;font-weight:700;letter-spacing:-.5px;color:#fff}
+.tagline{display:none}
+.version{margin:2px 0 0;font-size:.72rem;font-weight:600;letter-spacing:1.5px;color:#d8dfb8;font-variant-numeric:tabular-nums}
+.theme-select{padding:10px 14px;border:1px solid rgba(255,255,255,.4);border-radius:12px;background:rgba(255,255,255,.14);
+  color:#fff;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;min-height:44px}
+.theme-select option{color:#20251b}
+.sources{display:flex;gap:8px;flex-wrap:wrap}
+.sources span{padding:5px 12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:999px;font-size:.75rem;font-weight:500;white-space:nowrap;color:#eef0df}
+
+/* ── Contenedor y pestañas ────────────────────────── */
+.main{max-width:1180px;margin:28px auto;padding:0 18px 48px;position:relative;z-index:1}
+.nav{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;background:var(--surface);padding:8px;border-radius:18px;border:1px solid var(--border)}
+.nav-btn{padding:10px 20px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:600;
+  color:var(--text-dim);transition:all .2s;font-family:inherit;min-height:44px}
+.nav-btn:hover{color:var(--text);background:var(--surface-2)}
+.nav-btn.active{color:#fff;background:linear-gradient(120deg,#53633b,#687c3d);font-weight:700;box-shadow:var(--shadow)}
+.nav-btn:focus-visible{outline:2px solid var(--primary-light);outline-offset:2px}
+.section{display:none}
+.section.active{display:block}
+.section-head{margin-bottom:24px}
+.section-head h2{font-family:'Fraunces',serif;font-size:clamp(24px,3vw,32px);font-weight:900;letter-spacing:-1px;margin-bottom:6px;color:var(--moss)}
+.section-head p{color:var(--text-dim);font-size:.92rem;max-width:70ch}
+
+/* ── Tarjetas ─────────────────────────────────────── */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+  overflow-wrap:break-word;word-break:break-word}
+.card h2{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.card h3{font-size:.75rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:stretch}
+.dashboard-grid .map-card{grid-column:1;grid-row:1;display:flex;flex-direction:column;min-width:0}
+.dashboard-grid .terrain-card{grid-column:2;grid-row:1;align-self:stretch;height:100%;display:flex;flex-direction:column;min-width:0}
+.dashboard-grid .mushroom-cards-grid{grid-column:1/-1;grid-row:2}
+.map-card .map{width:100%;flex:1 1 auto;min-height:420px;border-radius:14px;overflow:hidden;border:1px solid var(--border);z-index:1}
+
+/* ── Buscador / botones ───────────────────────────── */
+.search-row{display:flex;gap:8px;margin-bottom:10px}
+.search-row input{flex:1;min-width:0;padding:12px 16px;border:1px solid var(--border);border-radius:12px;
+  background:#fff;color:var(--text);font-family:inherit;font-size:.9rem}
+.search-row input::placeholder{color:var(--text-faint)}
+.search-row input:focus{outline:2px solid var(--primary-light);outline-offset:-1px}
+#results{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+#results button{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 12px;
+  font-size:.85rem;text-align:left;cursor:pointer;font-family:inherit;color:var(--text)}
+#results button:hover{background:var(--surface-2)}
+#favSelect{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;
+  color:var(--text);font-family:inherit;font-size:.9rem;margin:0 0 10px;cursor:pointer}
+#favSelect:focus{outline:2px solid var(--primary-light);outline-offset:-1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .25s;min-height:44px}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(1px)}
+.search-row .btn,.map-actions .btn:not(.btn-ghost){background:linear-gradient(120deg,#53633b,#687c3d);color:#fff;border:none;font-weight:700}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn:focus-visible,.search-row input:focus-visible,.save-fav-row input:focus-visible,#favSelect:focus-visible{outline:2px solid var(--primary-light);outline-offset:2px}
+.map-actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.map-actions .btn{flex:1;white-space:nowrap}
+.save-fav-panel{margin-top:12px;padding:14px;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);border-left:4px solid var(--moss)}
+.save-fav-panel[hidden]{display:none}
+.save-fav-label{display:block;margin-bottom:8px;font-size:.75rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim)}
+.save-fav-row{display:flex;gap:8px}
+.save-fav-row input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--text);font-family:inherit;font-size:.9rem}
+.save-fav-row .btn{padding:10px 16px;flex:0 0 auto}
+.save-fav-coords{margin:8px 0 0;font-size:.78rem;color:var(--text-dim);font-variant-numeric:tabular-nums}
+
+/* ── Suelo y clima ────────────────────────────────── */
+.terrain-list{display:flex;flex-direction:column}
+.terrain-item{display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.terrain-item:last-child{border-bottom:none}
+.terrain-item .ti{grid-column:1;grid-row:1/3;align-self:center;font-size:1.05rem;line-height:1;text-align:left;min-width:0}
+.terrain-item .tl{grid-column:2;grid-row:1;font-size:.68rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;line-height:1.4;color:var(--text-dim);margin-bottom:3px;overflow-wrap:break-word}
+.terrain-item .tv{grid-column:2;grid-row:2;font-size:.9rem;font-weight:600;line-height:1.35;color:var(--moss);font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:break-word}
+.soil-summary{margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.8rem;line-height:1.6;color:var(--text-dim)}
+.soil-summary strong{color:var(--text);font-weight:600}
+.last-update{margin-top:12px;font-size:.8rem;color:var(--text-faint);text-align:right}
+
+/* ── Tarjetas de seta ─────────────────────────────── */
+.mushroom-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+#mushroomCards{grid-template-columns:repeat(2,1fr)}
+#mushroomCards .mushroom-card{grid-column:auto}
+.mushroom-card{text-align:center}
+.mushroom-title-section{display:flex;align-items:center;gap:16px;margin-bottom:20px;text-align:left}
+.mushroom-icon-large{font-size:3rem;flex-shrink:0}
+.mushroom-photo{width:96px;height:96px;object-fit:cover;border-radius:18px;flex-shrink:0;border:1px solid var(--border)}
+.mushroom-photo-placeholder{display:flex;align-items:center;justify-content:center;font-size:3rem;background:var(--surface-2)}
+.mushroom-name{display:block;margin:0;font-family:'Fraunces',serif;font-size:1.15rem;line-height:1.3;font-weight:700;letter-spacing:-.3px}
+.mushroom-scientific{display:block;font-size:.8rem;color:var(--text-dim);font-style:italic;margin:2px 0 0;line-height:1.3}
+.probability-ring{position:relative;width:150px;height:150px;margin:0 auto 16px}
+.probability-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ring-bg{fill:none;stroke:#d8dfb8;stroke-width:10}
+.ring-fill{fill:none;stroke:var(--moss);stroke-width:10;stroke-linecap:round;transition:stroke-dasharray 1.6s cubic-bezier(.4,0,.2,1)}
+.ring-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-text .percentage{display:block;font-family:'Fraunces',serif;font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1;color:var(--moss)}
+.ring-text .label{display:block;font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;line-height:1.3;
+  white-space:nowrap;margin:6px auto 0;background:var(--moss);border-radius:100px;padding:3px 10px}
+.calc-hint{margin:8px 2px 0;font-size:.75rem;line-height:1.5;color:var(--text-faint);text-align:center}
+#fichaGrid .card{box-shadow:var(--shadow)}
+#fichaGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.ficha-dest{margin:10px 0;padding:12px 14px;background:#f3f6e6;border:1px solid var(--border);border-left:4px solid var(--leaf);border-radius:0 9px 9px 0;font-size:.85rem;line-height:1.6;color:var(--text)}
+.ficha-dest strong{color:var(--moss)}
+.ficha-galeria{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.ficha-galeria img{width:100%;height:170px;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
+.ficha-credito{font-size:.75rem;color:var(--text-dim);font-style:italic;margin:0}
+.toxi-box{margin:10px 0;padding:12px 14px;background:#f9ecec;border:1px solid #d9a8a0;border-left:4px solid var(--danger);
+  border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
+.toxi-box strong{color:var(--danger)}
+.loader{position:fixed;inset:0;background:rgba(32,37,27,.55);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;z-index:2000;color:#fff;font-weight:600}
+.loader[hidden]{display:none}
+.loader p{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:8px 18px;border-radius:999px;font-size:.9rem}
+.loading-tarjetas{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;
+  padding:48px 24px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)}
+.loading-spinner{width:34px;height:34px;border:3px solid rgba(83,99,59,.2);border-top-color:var(--moss);border-radius:50%;animation:giro 900ms linear infinite}
+@keyframes giro{to{transform:rotate(360deg)}}
+
+/* ── Banner + porqué ──────────────────────────────── */
+.prediction-banner{display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:10px;border-radius:var(--radius-sm);
+  font-size:.85rem;font-weight:600;text-align:left;border:1px solid}
+.prediction-banner.nivel-alto,.prediction-banner.nivel-medio{background:#eef3df;color:#42522a;border-color:#b9cc60}
+.prediction-banner.nivel-bajo{background:#f7f0d8;color:#7a6420;border-color:#d9c46a}
+.prediction-banner.nivel-nulo{background:#f7e8e4;color:#96402e;border-color:#d9a8a0}
+.porque{font-size:.8rem;color:var(--text-dim);margin:0 0 12px;line-height:1.5}
+
+/* ── Condiciones y detalle ────────────────────────── */
+.conditions-list{text-align:left;margin-bottom:6px}
+.condition-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.condition-item:last-child{border-bottom:none}
+.condition-item>*{min-width:0}
+.condition-value{font-weight:600;font-variant-numeric:tabular-nums;text-align:left;overflow-wrap:break-word}
+.target{font-weight:400;color:var(--text-faint);font-size:.75rem;white-space:nowrap}
+.condition-status{padding:3px 10px;border-radius:100px;font-size:.68rem;font-weight:700;white-space:nowrap;letter-spacing:.5px}
+.condition-status.ok{background:#e3ecd2;color:#42522a}
+.condition-status.warning{background:#f3e8c4;color:#7a6420}
+.condition-status.danger{background:#f5d9d2;color:#96402e}
+.lv-ok{color:var(--success);font-weight:700}
+.lv-mid{color:var(--warning);font-weight:700}
+.lv-bad{color:var(--danger);font-weight:700}
+.mushroom-details{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);text-align:left}
+.mushroom-detail-item{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:7px 0;font-size:.8rem;border-bottom:1px solid var(--border)}
+.mushroom-detail-item:last-child{border-bottom:none}
+.mushroom-detail-item>*{min-width:0}
+.mushroom-detail-label{color:var(--text-dim);font-weight:500;white-space:nowrap}
+.mushroom-detail-value{color:var(--text);text-align:right;flex:1;overflow-wrap:break-word;font-weight:700}
+.factors-grid-compact{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.factor-item-compact{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--radius-sm);min-width:0}
+.factor-item-compact .factor-label{font-size:.68rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);text-align:center;line-height:1.2;overflow-wrap:break-word}
+.factor-item-compact .factor-value{font-size:1rem;font-weight:700;color:var(--moss);font-family:'Fraunces',serif}
+
+/* ── Favoritos / tablas / metodología ─────────────── */
+.add-fav-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px}
+.add-fav-row input{padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-family:inherit;font-size:.9rem;min-width:0;
+  background:#fff;color:var(--text)}
+.add-fav-row input::placeholder{color:var(--text-faint)}
+.hint-text{font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:12px;line-height:1.6}
+.alert-box{background:#f7e8e4;color:#96402e;border:1px solid #d9a8a0;border-radius:var(--radius-sm);
+  padding:10px 12px;font-size:.85rem;font-weight:500}
+.favorites-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.favorite-item{display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);border-left:4px solid var(--moss)}
+.favorite-item>*{min-width:0}
+.favorite-icon{font-size:1.5rem}
+.favorite-info{flex:1}
+.favorite-name{font-weight:600;font-size:1rem;margin-bottom:4px}
+.favorite-coords{font-size:.85rem;color:var(--text-dim)}
+.favorite-actions{display:flex;gap:8px}
+.favorite-btn{padding:8px 14px;border:none;border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600;font-family:inherit}
+.favorite-btn.load{background:linear-gradient(120deg,#53633b,#687c3d);color:#fff}
+.favorite-btn.load:hover{filter:brightness(1.08)}
+.favorite-btn.delete{background:#f5d9d2;color:#96402e}
+.count-badge{display:inline-block;min-width:22px;padding:2px 8px;background:linear-gradient(120deg,#53633b,#687c3d);color:#fff;
+  border-radius:999px;font-size:.75rem;font-weight:700;vertical-align:middle}
+.method-list{margin:0 0 16px;padding-left:22px;display:flex;flex-direction:column;gap:10px;font-size:.92rem;line-height:1.65;color:var(--text)}
+.method-list strong{color:var(--moss)}
+ol.method-list{list-style:decimal}
+ul.method-list{list-style:disc}
+.hint,.model-note{margin:12px 0;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.85rem;line-height:1.7;color:var(--text-dim)}
+.model-note{border-left:4px solid var(--moss)}
+.model-note code,.card code{padding:1px 5px;background:#e7ebcf;border-radius:4px;font-family:'SF Mono',ui-monospace,monospace;font-size:.85em;color:var(--moss)}
+.formula{margin:16px 0 0;padding:14px;background:#e7ebcf;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;
+  font-family:'SF Mono',ui-monospace,monospace;font-size:.95rem;font-weight:600;color:var(--moss)}
+.table-wrapper{overflow-x:auto;margin-bottom:12px}
+.param-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:6px}
+.param-table th{text-align:left;font-weight:700;padding:8px 10px;border-bottom:2px solid var(--moss);color:var(--text);white-space:nowrap;vertical-align:bottom;
+  font-size:.68rem;letter-spacing:1px;text-transform:uppercase}
+.param-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-dim)}
+.param-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.glossary{margin:0}
+.glossary dt{margin-top:14px;font-size:.9rem;font-weight:600;color:var(--text)}
+.glossary dt:first-child{margin-top:8px}
+.glossary dd{margin:4px 0 0;padding-left:14px;border-left:2px solid var(--moss);font-size:.88rem;line-height:1.7;color:var(--text-dim)}
+.glossary dd strong{color:var(--text)}
+.indice-badge{display:inline-block;min-width:42px;padding:4px 10px;border-radius:100px;font-weight:700;font-size:.85rem;text-align:center}
+.indice-badge.nivel-alto{background:#dfe8c8;color:#42522a}
+.indice-badge.nivel-medio{background:#e7ebcf;color:var(--moss)}
+.indice-badge.nivel-bajo{background:#f3e8c4;color:#7a6420}
+.indice-badge.nivel-nulo{background:#eef0df;color:var(--text-dim)}
+.ficha-p{font-size:.88rem;line-height:1.7;color:var(--text-dim);margin:0 0 10px;overflow-wrap:break-word}
+.ficha-p strong{color:var(--text)}
+.mushroom-selector{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.mushroom-option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--radius-sm);cursor:pointer;min-width:0;transition:border-color .2s}
+.mushroom-option.selected{border-color:var(--moss);background:#eef3df}
+.mushroom-option input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:var(--moss);cursor:pointer}
+.mushroom-option-info{flex:1;min-width:0}
+.mushroom-option-name{font-weight:600;font-size:.9rem}
+.mushroom-option-scientific{font-size:.75rem;color:var(--text-dim);font-style:italic}
+.mushroom-option.off{opacity:.55}
+.mushroom-option.off .mushroom-option-name{color:var(--text-faint)}
+.sp-dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;border:2px solid rgba(32,37,27,.15)}
+.sp-status{margin-top:6px;font-size:.72rem;font-style:italic;color:var(--text-dim);line-height:1.5}
+.footer{text-align:center;padding:40px 32px;margin-top:40px;border-top:1px solid var(--border);color:var(--text-faint);font-size:.85rem;position:relative;z-index:1}
+.footer strong{color:var(--moss)}
+.disclaimer{margin-top:8px;font-size:.8rem;opacity:.8}
+.leaflet-popup-content-wrapper{border-radius:var(--radius-sm)}
+.leaflet-container{font-family:'Inter',sans-serif}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#b9cc60;border-radius:4px}
+
+/* ── Responsive ───────────────────────────────────── */
+@media(max-width:1024px){.dashboard-grid{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.dashboard-grid .terrain-card{padding:20px}.mushroom-cards-grid{grid-template-columns:repeat(2,1fr)}#mushroomCards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+.header{padding:14px 16px;margin-bottom:12px}
+.logo h1{font-size:18px}
+.main{padding:0 12px 88px}
+.nav{overflow-x:auto;flex-wrap:nowrap;gap:6px;padding:6px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{white-space:nowrap;padding:10px 16px;font-size:.88rem;scroll-snap-align:start;flex:0 0 auto}
+.dashboard-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+.dashboard-grid .map-card,.dashboard-grid .terrain-card,.dashboard-grid .mushroom-cards-grid{grid-column:1;grid-row:auto}
+.mushroom-cards-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+#mushroomCards,#fichaGrid{grid-template-columns:minmax(0,1fr)}
+.terrain-card{height:auto}
+.section-head h2{font-size:1.4rem}
+.section-head p{font-size:.85rem}
+.map-card .map{min-height:min(58dvh,420px);min-height:min(58vh,420px)}
+.search-row{flex-wrap:nowrap}
+.search-row input{flex:1 1 auto;font-size:16px}
+.search-row .btn{flex:0 0 auto;padding-left:16px;padding-right:16px}
+.map-actions{display:grid;grid-template-columns:1fr 1fr}
+.map-actions .btn{flex:none;white-space:normal;text-align:center}
+.add-fav-row{grid-template-columns:1fr}.add-fav-row .btn{grid-column:auto}
+.favorite-item{flex-direction:row;text-align:left;gap:12px;padding:14px}
+.favorite-actions{flex-wrap:wrap}
+.terrain-item{padding:8px 0}
+.probability-ring{width:130px;height:130px}
+.mushroom-title-section{margin-bottom:14px}
+.mushroom-photo{width:72px;height:72px;border-radius:14px}
+.footer{padding:20px 12px 12px;margin-top:28px;font-size:.8rem}
+}
+@media(max-width:480px){
+html,body{overflow-x:clip}
+.main{padding:0 12px 88px}
+.card{padding:20px;border-radius:20px}
+.factors-grid-compact{grid-template-columns:1fr 1fr}
+.mushroom-cards-grid .condition-item{flex-direction:row;align-items:center;gap:8px}
+.condition-value{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-start}
+.map-actions{grid-template-columns:1fr 1fr;gap:8px}
+.save-fav-row{flex-wrap:nowrap}
+.save-fav-row input{flex:1 1 auto;font-size:16px}
+.save-fav-row .btn{flex:0 0 auto}
+.add-fav-row input{font-size:16px}
+.glossary dd{padding-left:10px}
+.param-table{font-size:.78rem}
+.param-table th,.param-table td{padding:6px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
