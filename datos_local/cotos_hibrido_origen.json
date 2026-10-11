@@ -1,0 +1,872 @@
+{
+ "origen": {
+  "Aprovechamiento micológico de Fuencaliente": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Viso del Marqués": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Puebla de Don Rodrigo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Tragacete": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Boniches": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Huélamo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Huerta del Marquesado (MUP 49 y 50)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Salvacañete": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Valdemeca": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "MUP 48 de La Huérguina": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Cantalojas": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Cobeta": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Arbancón": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Campisábalos": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de La Huerce": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico de Orea": {
+   "tipo": "ficha",
+   "punto_monte": "Alto Tajo (Guadalajara)",
+   "fecha": "2026-08-05"
+  },
+  "Coto micológico La Sierra (Alto Tajo)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "MUP 20 de Condemios de Abajo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "MUP 23 de Galve de Sorbe": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Navamorcuende": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Aprovechamiento micológico de Urda": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Coto de setas de Hontanar": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-05"
+  },
+  "Acotado La Estrella": {
+   "tipo": "ficha",
+   "punto_monte": "La Estrella (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 103 Dehesa y pago privativo": {
+   "tipo": "ficha",
+   "punto_monte": "Nestares (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 104 Moncalvillo": {
+   "tipo": "ficha",
+   "punto_monte": "Castroviejo (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 107 Mohosa y agregados": {
+   "tipo": "ficha",
+   "punto_monte": "Nieva de Cameros (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 108 Dehesa Boyal y agregados": {
+   "tipo": "ficha",
+   "punto_monte": "Ortigosa (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 118 Agenzana, Pinar y Vacariza": {
+   "tipo": "ficha",
+   "punto_monte": "El Rasillo (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 141 Montes Madres": {
+   "tipo": "ficha",
+   "punto_monte": "Sierra de Cebollera (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 156 Dehesa Sierra Mala y Agregados (Las Cañadillas)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-08"
+  },
+  "MUP 160 Dehesa La Verde": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-08"
+  },
+  "MUP 165 Monte El Horcajo": {
+   "tipo": "ficha",
+   "punto_monte": "Sotés (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 17 Gil de Puerco, La Horna y Valdecornago (La Horna)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-08"
+  },
+  "MUP 174 Barranco Hayedo y San Antón": {
+   "tipo": "ficha",
+   "punto_monte": "Ventosa (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 23 y 24 Dehesa y Moncalvillo": {
+   "tipo": "ficha",
+   "punto_monte": "Daroca (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 25 Dehesa y Moncalvillo": {
+   "tipo": "ficha",
+   "punto_monte": "Sojuela (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 26 Mancomunidad de Moncalvillo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-08"
+  },
+  "MUP 38 Espinar, Serradero y Moncalvillo": {
+   "tipo": "ficha",
+   "punto_monte": "Castroviejo (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 46 Dehesilla y Montero": {
+   "tipo": "ficha",
+   "punto_monte": "Santa Coloma (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 64 y 65 Collado de San Millán y Robledal": {
+   "tipo": "ficha",
+   "punto_monte": "Viniegra de Arriba (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 77 Urquiara": {
+   "tipo": "ficha",
+   "punto_monte": "Santurdejo (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "MUP 97 Dehesa Lastornal": {
+   "tipo": "ficha",
+   "punto_monte": "Lumbreras (La Rioja)",
+   "fecha": "2026-09-08"
+  },
+  "Acotado de setas H-131 de Tella-Sin": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico MUP H-0102 Montaña de Sensa y La Valle": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico MUP H-0106 Picalver": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico MUP H-0112 Clot y Elit": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamientos micológicos de Laspuña (MUP H-0082, H-0083 y H-0084)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto de hongos Carrascal de Javierregay": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico Ansó–Fago": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico de Bielsa": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico de Canfranc": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico de Loarre": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico Metils (MUP HU-066)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico Plan–Saravillo–Serveto": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto municipal de setas de Gistaín": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico de Mosqueruela": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto Micológico del Maestrazgo": {
+   "tipo": "ficha",
+   "punto_monte": "Maestrazgo (Teruel)",
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico Comunidad de Albarracín": {
+   "tipo": "ficha",
+   "punto_monte": "Comunidad de Albarracín (Teruel)",
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico del Moncayo": {
+   "tipo": "ficha",
+   "punto_monte": "Moncayo (Zaragoza)",
+   "fecha": "2026-08-06"
+  },
+  "Acotado de trufa Torralba del Río": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Abaurrea Alta": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Abaurrea Baja": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Azparren": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Castillonuevo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Concejo de Bigüezal": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Garralda": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Hiriberri / Villanueva de Aezkoa": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Luzaide / Valcarlos": {
+   "tipo": "ficha",
+   "punto_monte": "Erro-Roncesvalles (Navarra)",
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Urraul Alto": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Uztarroz": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Valle de Aezkoa": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Valle de Roncal": {
+   "tipo": "ficha",
+   "punto_monte": "Roncal (Navarra)",
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico Valle de Salazar": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico Erro-Roncesvalles": {
+   "tipo": "ficha",
+   "punto_monte": "Erro-Roncesvalles (Navarra)",
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico Ultzama": {
+   "tipo": "ficha",
+   "punto_monte": "Ultzama (Navarra)",
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Campo Oliva": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Aprovechamiento micológico de Valencia del Mombuey": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Zona de aprovechamiento micológico de Villanueva del Fresno": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Aprovechamiento micológico de Aceituna": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "Aprovechamiento micológico de Hervás": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "Aprovechamiento micológico de Torrecilla de los Ángeles": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "Aprovechamiento micológico de Valverde del Fresno": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "Aprovechamiento micológico de Villanueva de la Sierra": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "MUP 110 Dehesa Boyal de Pedroso de Acím": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "MUP 114 Dehesa Boyal y Cuarto de los Arroyos": {
+   "tipo": "ficha",
+   "punto_monte": "Dehesa Boyal-Serradilla (Cáceres)",
+   "fecha": "2026-08-03"
+  },
+  "MUP 132 Dehesa Boyal de Mirabel": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Recogida de setas de Jarandilla de la Vera (MUP 40 y 41)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03"
+  },
+  "Recogida de setas de La Garganta": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Recogida de setas de Madrigal de la Vera": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-04"
+  },
+  "Acotado de Setas de Gordoa — MUP 312 Oraneta": {
+   "tipo": "ficha",
+   "punto_monte": "Asparrena (Álava)",
+   "fecha": "2026-08-06"
+  },
+  "Coto de Setas de Arraia": {
+   "tipo": "ficha",
+   "punto_monte": "Arraia-Maeztu (Álava)",
+   "fecha": "2026-08-06"
+  },
+  "Coto Micológico Consierra de Árcena": {
+   "tipo": "ficha",
+   "punto_monte": "Valdegovía-Árcena (Álava)",
+   "fecha": "2026-08-06"
+  },
+  "Coto Micológico de Montevite": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto Micológico de Nanclares de la Oca": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto Micológico de Ollávarre/Olabarri": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico Asparrena-Apota": {
+   "tipo": "ficha",
+   "punto_monte": "Asparrena (Álava)",
+   "fecha": "2026-08-06"
+  },
+  "Parque Micológico de Gorbeialdea": {
+   "tipo": "ficha",
+   "punto_monte": "Gorbeialdea (Álava)",
+   "fecha": "2026-08-06"
+  },
+  "Recogida regulada de setas — Gorbeia (vertiente Bizkaia)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Recogida regulada de setas — Parque Natural de Aiako Harria": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Recogida regulada de setas — Parque Natural de Aizkorri-Aratz": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Recogida regulada de setas — Parque Natural de Aralar": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Recogida regulada de setas — Parque Natural de Pagoeta": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Acotado \"Gredos\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03"
+  },
+  "Acotado \"San Zadornil\"": {
+   "tipo": "ficha",
+   "punto_monte": "San Zadornil (Burgos)",
+   "fecha": "2026-09-03"
+  },
+  "Acotado \"Río Cea\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03"
+  },
+  "Parque Micológico de Velilla del Río Carrión": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Acotado \"Ribera de Cañedo\"": {
+   "tipo": "ficha",
+   "punto_monte": "Ribera de Cañedo (Salamanca)",
+   "fecha": "2026-09-03"
+  },
+  "Parque micológico \"Sierras de Francia, Béjar, Quilamas y el Rebollar\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03"
+  },
+  "Acotado \"Monte de la Comunidad de Castilla y León en Segovia\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03"
+  },
+  "Parque micológico y acotado \"Montes de Soria\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-02"
+  },
+  "Parque Micológico \"Montes del Noroeste Zamorano\"": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-09-03"
+  },
+  "Recogida regulada — Parque Natural de la Serra de Mariola": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque"
+  },
+  "Recogida regulada — Parque Natural del Carrascal de la Font Roja": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Recogida regulada de setas y hongos — Lorcha/Lorxa": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Regulación municipal de recogida de setas — Alcoi": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Coto micológico Els Ports": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Recogida regulada — Tinença de Benifassà, Turmell y Vallivana": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Recogida regulada de setas — Vistabella del Maestrat": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Coto/regulación micológica histórica — Sierra de Enguera": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Braojos": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Bustarviejo (MUP 66 a 70)": {
+   "tipo": "ficha",
+   "punto_monte": "Bustarviejo (Madrid)",
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Canencia": {
+   "tipo": "ficha",
+   "punto_monte": "Canencia (Madrid)",
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Miraflores de la Sierra (MUP 13 y 140)": {
+   "tipo": "ficha",
+   "punto_monte": "Miraflores de la Sierra (Madrid)",
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico de Rascafría": {
+   "tipo": "ficha",
+   "punto_monte": "Rascafría (Madrid)",
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico de Lozoya": {
+   "tipo": "ficha",
+   "punto_monte": "Lozoya (Madrid)",
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico La Pedriza y Hoya de San Blas": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico Bosc de Virós — Alins / Vall Ferrera": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Coto micológico Vall d’Esterri de Cardós": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Prohibida la recogida de setas — Parque Nacional de Aigüestortes": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque"
+  },
+  "Recogida regulada de boletos — Val d’Aran": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por parque/municipio"
+  },
+  "Zona micológica regulada — Bosc de Poblet": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Couto Micolóxico de Baroña": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Couto Micolóxico do Forgoselo": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Couto Micolóxico de Beade": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Couto Micolóxico de Matamá": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Coutos Micolóxicos Souto de San Brais e Souto do Pereiral": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Aprovechamiento micológico de Loja": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico del Monte Público Sierras (Alhama de Granada)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico del Parque Natural Sierra de Baza (Baza y Caniles)": {
+   "tipo": "ficha",
+   "punto_monte": "Sierra de Baza (Granada)",
+   "fecha": "2026-08-06"
+  },
+  "Aprovechamiento micológico del monte Lomas y Ferreiras (Júzcar)": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-06"
+  },
+  "Acotado micológico de Pesoz": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-07"
+  },
+  "Aprovechamiento micológico de Boal": {
+   "tipo": "ficha",
+   "punto_monte": "Boal (Asturias)",
+   "fecha": "2026-08-07"
+  },
+  "Recogida de setas en montes públicos de Miera": {
+   "tipo": "ficha",
+   "punto_monte": "Miera (Cantabria)",
+   "fecha": "2026-08-07"
+  },
+  "Recogida regulada de setas — Montes municipales de Cehegín": {
+   "tipo": "ficha",
+   "punto_monte": null,
+   "fecha": "2026-08-03",
+   "nota": "geocodificada por municipio/parque"
+  },
+  "Pinares de Urbión (Soria)": {
+   "tipo": "punto"
+  },
+  "Montes de Soria": {
+   "tipo": "punto"
+  },
+  "Montes CyL Soria (SO-50003)": {
+   "tipo": "punto"
+  },
+  "Demanda-San Millán (Burgos)": {
+   "tipo": "punto"
+  },
+  "Montes de Oca (Burgos)": {
+   "tipo": "punto"
+  },
+  "Fresneda Sierra Tirón (Burgos)": {
+   "tipo": "punto"
+  },
+  "Valle de Mena (Burgos)": {
+   "tipo": "punto"
+  },
+  "Gredos (Ávila)": {
+   "tipo": "punto"
+  },
+  "Montes CyL Ávila (AV-50006)": {
+   "tipo": "punto"
+  },
+  "Peguerinos (Ávila, AV-50009)": {
+   "tipo": "punto"
+  },
+  "Montes de Segovia (SG-50002)": {
+   "tipo": "punto"
+  },
+  "Montes CyL Segovia (SG-50005)": {
+   "tipo": "punto"
+  },
+  "Río Cea (León)": {
+   "tipo": "punto"
+  },
+  "Torozos-Mayorga-Valladolid": {
+   "tipo": "punto"
+  },
+  "Noroeste Zamorano (Zamora)": {
+   "tipo": "punto"
+  },
+  "Camarzana-Rabanales (Zamora)": {
+   "tipo": "punto"
+  },
+  "Velilla del Río Carrión (Palencia)": {
+   "tipo": "punto"
+  },
+  "Triollo (Palencia)": {
+   "tipo": "punto"
+  },
+  "Sierras Francia-Béjar (Salamanca)": {
+   "tipo": "punto"
+  },
+  "Aguilar de Campoo (Palencia)": {
+   "tipo": "punto"
+  },
+  "Barbadillo del Mercado (Burgos)": {
+   "tipo": "punto"
+  },
+  "Aezkoa-Irati (Navarra)": {
+   "tipo": "punto"
+  },
+  "Salazar (Navarra)": {
+   "tipo": "punto"
+  },
+  "Soto del Real MUP-141 (Madrid)": {
+   "tipo": "punto"
+  },
+  "Poblet (Tarragona, piloto)": {
+   "tipo": "punto"
+  },
+  "Moncalvillo (La Rioja)": {
+   "tipo": "punto"
+  },
+  "Cornago (La Rioja)": {
+   "tipo": "punto"
+  },
+  "Igea (La Rioja)": {
+   "tipo": "punto"
+  },
+  "Bayárcal (Almería)": {
+   "tipo": "punto"
+  },
+  "Corona Forestal-Lagunetas (Tenerife)": {
+   "tipo": "punto"
+  },
+  "Osorio-Teror (Gran Canaria)": {
+   "tipo": "punto"
+  }
+ },
+ "antiguo_a_ficha": {
+  "Alto Tajo (Guadalajara)": "Coto micológico de Orea",
+  "La Estrella (La Rioja)": "Acotado La Estrella",
+  "Nestares (La Rioja)": "MUP 103 Dehesa y pago privativo",
+  "Castroviejo (La Rioja)": "MUP 38 Espinar, Serradero y Moncalvillo",
+  "Nieva de Cameros (La Rioja)": "MUP 107 Mohosa y agregados",
+  "Ortigosa (La Rioja)": "MUP 108 Dehesa Boyal y agregados",
+  "El Rasillo (La Rioja)": "MUP 118 Agenzana, Pinar y Vacariza",
+  "Sierra de Cebollera (La Rioja)": "MUP 141 Montes Madres",
+  "Sotés (La Rioja)": "MUP 165 Monte El Horcajo",
+  "Ventosa (La Rioja)": "MUP 174 Barranco Hayedo y San Antón",
+  "Daroca (La Rioja)": "MUP 23 y 24 Dehesa y Moncalvillo",
+  "Sojuela (La Rioja)": "MUP 25 Dehesa y Moncalvillo",
+  "Santa Coloma (La Rioja)": "MUP 46 Dehesilla y Montero",
+  "Viniegra de Arriba (La Rioja)": "MUP 64 y 65 Collado de San Millán y Robledal",
+  "Santurdejo (La Rioja)": "MUP 77 Urquiara",
+  "Lumbreras (La Rioja)": "MUP 97 Dehesa Lastornal",
+  "Maestrazgo (Teruel)": "Coto Micológico del Maestrazgo",
+  "Comunidad de Albarracín (Teruel)": "Parque Micológico Comunidad de Albarracín",
+  "Moncayo (Zaragoza)": "Parque Micológico del Moncayo",
+  "Erro-Roncesvalles (Navarra)": "Parque Micológico Erro-Roncesvalles",
+  "Roncal (Navarra)": "Acotado micológico Valle de Roncal",
+  "Ultzama (Navarra)": "Parque Micológico Ultzama",
+  "Dehesa Boyal-Serradilla (Cáceres)": "MUP 114 Dehesa Boyal y Cuarto de los Arroyos",
+  "Asparrena (Álava)": "Parque Micológico Asparrena-Apota",
+  "Arraia-Maeztu (Álava)": "Coto de Setas de Arraia",
+  "Valdegovía-Árcena (Álava)": "Coto Micológico Consierra de Árcena",
+  "Gorbeialdea (Álava)": "Parque Micológico de Gorbeialdea",
+  "San Zadornil (Burgos)": "Acotado \"San Zadornil\"",
+  "Ribera de Cañedo (Salamanca)": "Acotado \"Ribera de Cañedo\"",
+  "Bustarviejo (Madrid)": "Aprovechamiento micológico de Bustarviejo (MUP 66 a 70)",
+  "Canencia (Madrid)": "Aprovechamiento micológico de Canencia",
+  "Miraflores de la Sierra (Madrid)": "Aprovechamiento micológico de Miraflores de la Sierra (MUP 13 y 140)",
+  "Rascafría (Madrid)": "Aprovechamiento micológico de Rascafría",
+  "Lozoya (Madrid)": "Coto micológico de Lozoya",
+  "Sierra de Baza (Granada)": "Aprovechamiento micológico del Parque Natural Sierra de Baza (Baza y Caniles)",
+  "Boal (Asturias)": "Aprovechamiento micológico de Boal",
+  "Miera (Cantabria)": "Recogida de setas en montes públicos de Miera"
+ }
+}

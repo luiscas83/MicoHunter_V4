@@ -205,18 +205,208 @@ async function fetchClima(la,lo){
     restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restC:restantes(hist45,10,60),
     trigB:fechaTrig(hist45,60,new Date()),trigN:fechaTrig(hist45,50,new Date()),trigC:fechaTrig(hist45,60,new Date())};
 }
-// --- 2b) Servidor local (servidor_local.py): pH/suelo/altitud/hábitat 100 %
-// offline. Si no está en marcha, null y la web usa las fuentes online. ---
-const LOCAL_API="http://127.0.0.1:8134/api/punto";
+// --- 2b) Datos locales estáticos (datos_local/): pH/suelo/altitud/hábitat sin
+// servidor ni Python. Si faltan (o falla el CDN de geotiff), null y la web
+// usa las fuentes online. En GitHub Pages van commiteados junto a la web. ---
+const PIEZAS_ES={peninsula:[-9.6,35.4,4.6,44.0],canarias:[-18.3,27.6,-13.5,29.6]};
+function piezaDe(la,lo){
+  for(const k of Object.keys(PIEZAS_ES)){const[minx,miny,maxx,maxy]=PIEZAS_ES[k];
+    if(lo>=minx&&lo<=maxx&&la>=miny&&la<=maxy)return k;}
+  return null;
+}
+const _tifCache=new Map(); // url -> {w,h,sx,sy,x0,y0,data}
+async function tifPixel(prop,la,lo){
+  if(typeof GeoTIFF==="undefined")return null;
+  const pz=piezaDe(la,lo);if(!pz)return null;
+  const url=`datos_local/${prop}_${pz}.tif`;
+  let t=_tifCache.get(url);
+  if(!t){
+    const r=await fetch(url);if(!r.ok)return null;
+    const g=await GeoTIFF.fromArrayBuffer(await r.arrayBuffer());
+    const img=await g.getImage();
+    const[x0,y0]=img.getOrigin(),[sx,sy]=img.getResolution();
+    const data=(await img.readRasters({samples:[0]}))[0];
+    t={w:img.getWidth(),h:img.getHeight(),sx,sy,x0,y0,data};
+    _tifCache.set(url,t);
+  }
+  const col=Math.floor((lo-t.x0)/t.sx),row=Math.floor((t.y0-la)/t.sy);
+  if(col<0||row<0||col>=t.w||row>=t.h)return null;
+  return t.data[row*t.w+col];
+}
+async function sueloLocal(la,lo){
+  const div={ph:10,soc:10,sand:10,silt:10,clay:10},out={};
+  await Promise.all(Object.keys(div).map(async p=>{
+    try{const v=await tifPixel(p,la,lo);if(v!=null&&v>0)out[p]=v/div[p];}catch{}
+  }));
+  if(out.ph!=null)out.ph=+out.ph.toFixed(2);
+  if(out.soc!=null)out.soc=+out.soc.toFixed(1);
+  for(const p of["sand","silt","clay"])if(out[p]!=null)out[p]=+out[p].toFixed(0);
+  if(out.sand!=null){const s=out.sand,c=out.clay;
+    out.textura=s>=70?"arenoso":s>=50?(c>=20?"franco-arcillo-arenoso":"franco-arenoso"):c>=35?"arcilloso":s>=30?"franco":"franco-limoso";}
+  return out;
+}
+async function altLocal(la,lo){
+  try{
+    const pz=piezaDe(la,lo);if(!pz)return null;
+    const v=await tifPixel("mdt_"+pz,la,lo);
+    return (v!=null&&v>-1000)?Math.round(v):null; // océano = nodata
+  }catch{return null;}
+}
+// MFE local: teselas 1x1 + intersección caja (espejo de consulta_local.py)
+const _mfeTiles=new Map();
+function bbGeom(g){
+  try{
+    const c=g.coordinates||[],polys=g.type==="MultiPolygon"?c:[c];
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;
+    for(const poly of polys)for(const an of poly)for(const p of an){
+      if(p[0]<x0)x0=p[0];if(p[1]<y0)y0=p[1];
+      if(p[0]>x1)x1=p[0];if(p[1]>y1)y1=p[1];n++;
+    }
+    if(!n)return null;
+    return[x0,y0,x1,y1];
+  }catch{return null;}
+}
+function pipLocal(an,la,lo){
+  let d=false;
+  for(let i=0,j=an.length-1;i<an.length;j=i++){
+    const xi=an[i][0],yi=an[i][1],xj=an[j][0],yj=an[j][1];
+    if(((yi>la)!==(yj>la))&&(lo<(xj-xi)*(la-yi)/(yj-yi)+xi))d=!d;
+  }
+  return d;
+}
+function pipFeat(f,la,lo){
+  const g=f.geometry||{},t=g.type,c=g.coordinates||[];
+  if(t==="Polygon")return pipLocal(c[0]||[],la,lo);
+  if(t==="MultiPolygon")return c.some(poly=>poly.some(an=>pipLocal(an,la,lo)));
+  return false;
+}
+function segSeg(a,b,c,d){
+  const o=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);
+  const o1=o(a,b,c),o2=o(a,b,d),o3=o(c,d,a),o4=o(c,d,b);
+  return((o1>0)!==(o2>0))&&((o3>0)!==(o4>0));
+}
+function aristaCaja(an,x0,y0,x1,y1){
+  const cj=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+  const bd=[[0,1],[1,2],[2,3],[3,0]];
+  for(let i=0;i<an.length;i++){
+    const p=an[i],q=an[(i+1)%an.length];
+    if(p[0]>=x0&&p[0]<=x1&&p[1]>=y0&&p[1]<=y1)return true;
+    for(const[ia,ib]of bd)if(segSeg(p,q,cj[ia],cj[ib]))return true;
+  }
+  return false;
+}
+function tocaLocal(f,la,lo,half){
+  half=(half||0.0011)+0.00025; // +tolerancia del simplificado (v TEST_50)
+  const g=f.geometry||{};
+  const bb=f._bb||bbGeom(g);
+  const x0=lo-half,x1=lo+half,y0=la-half,y1=la+half;
+  if(!bb||bb[2]<x0||bb[0]>x1||bb[3]<y0||bb[1]>y1)return false;
+  for(const da of[-half,0,half])for(const dob of[-half,0,half])
+    if(pipFeat(f,la+da,lo+dob))return true;
+  const c=g.coordinates||[],polys=g.type==="MultiPolygon"?c:[c];
+  return polys.some(poly=>poly.some(an=>aristaCaja(an,x0,y0,x1,y1)));
+}
+function nombreTesela(lon0,lat0){
+  return `mfe_lon${lon0<0?"":"+"}${lon0}_lat${lat0<0?"":"+"}${lat0}.json.gz`;
+}
+async function mfeTile(lon0,lat0){
+  const k=lon0+","+lat0;
+  if(!_mfeTiles.has(k)){
+    if(_mfeTiles.size>=6)_mfeTiles.delete(_mfeTiles.keys().next().value);
+    const r=await fetch("datos_local/mfe/"+nombreTesela(lon0,lat0));
+    if(!r.ok){_mfeTiles.set(k,null);return null;}
+    const buf=await r.arrayBuffer();
+    const dec=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    const feats=(JSON.parse(new TextDecoder().decode(dec)).features)||[];
+    for(const f of feats)if(!f._bb)f._bb=bbGeom(f.geometry||{});
+    _mfeTiles.set(k,feats);
+  }
+  return _mfeTiles.get(k);
+}
+function clasificarUsoLocal(p){
+  const txt=((p.descr_clamfe||"")+" "+(p.agrupacion_clamfe||"")+" "+(p.nb_lulucf_nivel1||"")).toLowerCase();
+  if(/artificial|asentamiento|urbano/.test(txt))return[null,null,"artificial"];
+  if(/dehesa/.test(txt))return["Pasto",0,"dehesa"];
+  if(/matorral/.test(txt))return["Matorral",0,"matorral"];
+  if(/arbustiva/.test(txt))return["Pasto",0,"pastizal arbustivo"];
+  if(/herbácea|herbacea|prado|pradera/.test(txt))return["Pradera",0,"pradera"];
+  if(/past|puerto/.test(txt))return["Pasto",0,"pasto"];
+  if(/cultiv|agr/.test(txt))return["Pradera",0,"cultivo"];
+  if(/agua|humedal|improductivo/.test(txt))return["Pradera",0,"agua/improductivo"];
+  if(/forestal/.test(txt)){
+    const n=p.nom_sp1;
+    if(n&&!/sin especie/i.test(n)){const c=categoriaDeEspecie(n);return[c.categoria,c.nota,"arbolado (ff_uso)"];}
+  }
+  return[null,null,(txt.slice(0,120)||"sin uso aprovechable")];
+}
+async function habLocal(la,lo){
+  const lon0=Math.floor(lo),lat0=Math.floor(la);
+  const teselas=(await Promise.all([0,-1,1].flatMap(dx=>[0,-1,1].map(dy=>
+    mfeTile(lon0+dx,lat0+dy).catch(()=>null))))).filter(Boolean);
+  if(!teselas.length)return null;
+  const hits=[];
+  for(const t of teselas)for(const f of t){
+    if(f._capa==="ff_uso")continue;
+    const g=f.geometry||{};
+    if(!(g.coordinates||[]).length)continue;
+    if(tocaLocal(f,la,lo))hits.push(f);
+  }
+  if(hits.length){
+    const esp=new Map();
+    for(const f of hits){const p=f.properties||{};
+      for(const k of["nom_sp1","nom_sp2","nom_sp3"]){const n=p[k];
+        if(n&&!/sin especie/i.test(n)&&!esp.has(n))
+          esp.set(n,{fcc:p.nm_fccarb??null,form:p.descr_forarb||f._capa||""});}}
+    const notas={};
+    for(const n of esp.keys()){const{categoria,nota}=categoriaDeEspecie(n);
+      notas[categoria]=Math.max(notas[categoria]??-1,nota);}
+    const nobles=Object.keys(notas).filter(c=>CAT_NOBLE.includes(c));
+    let categoria,nota;
+    if(nobles.length>=2){categoria="Bosque mixto";nota=Math.max(...nobles.map(c=>notas[c]));}
+    else if(nobles.length===1){categoria=nobles[0];nota=notas[categoria];}
+    else{categoria="Matorral";nota=0;}
+    const comp=[];
+    for(const n of esp.keys()){
+      if(categoriaDeEspecie(n).categoria!=="Matorral")continue;
+      const f=[[/abies/i,"abetal"],[/fraxinus/i,"fresneda"],[/betula/i,"abedular"],[/corylus/i,"avellaneda"]].find(([re])=>re.test(n));
+      if(f&&!comp.includes(f[1]))comp.push(f[1]);
+    }
+    return{kind:"mfe",categoria,nota,
+      etiqueta:comp.length?`${categoria} + ${comp.slice(0,2).join(" + ")}`:categoria,
+      componentes:nobles,
+      especies:[...esp.keys()].sort().slice(0,12).map(n=>({n,oc:null,fcc:esp.get(n).fcc,form:esp.get(n).form}))};
+  }
+  for(const half of[0,0.0011]){
+    for(const t of teselas)for(const f of t){
+      if(f._capa!=="ff_uso")continue;
+      const ok=half===0?pipFeat(f,la,lo):tocaLocal(f,la,lo);
+      if(!ok)continue;
+      const p=f.properties||{},[cat,nota,clase]=clasificarUsoLocal(p);
+      if(clase==="artificial")return{kind:"uso",clase,categoria:null,nota:null};
+      if(cat){const sp1=p.nom_sp1||null;
+        return{kind:"uso",clase:clase.startsWith("arbolado")?`arbolado ff_uso: ${sp1}`:clase,
+          categoria:categoria,nota,sp1};}
+      return{kind:"uso",clase,categoria:null,nota:null};
+    }
+  }
+  return{kind:"nada"};
+}
+// fetchLocal estático: devuelve {suelo,altitud,mfe,uso} o null (→ online)
 async function fetchLocal(la,lo){
   try{
-    const c=new AbortController();
-    const t=setTimeout(()=>c.abort(),3000);
-    const r=await fetch(`${LOCAL_API}?lat=${la}&lon=${lo}`,{signal:c.signal});
-    clearTimeout(t);
-    if(!r.ok)return null;
-    const j=await r.json();
-    return (j&&(j.suelo||j.altitud!=null||j.mfe||j.uso))?j:null;
+    if(typeof DecompressionStream==="undefined")return null;
+    const[s,v,h]=await Promise.all([sueloLocal(la,lo).catch(()=>({})),
+      altLocal(la,lo).catch(()=>null),habLocal(la,lo).catch(()=>null)]);
+    const out={};
+    if(s&&(s.ph!=null||s.textura))out.suelo=s;
+    if(v!=null)out.altitud=v;
+    if(h&&h.kind==="mfe")out.mfe={categoria:h.categoria,nota:h.nota,
+      etiqueta:h.etiqueta,componentes:h.componentes,especies:h.especies};
+    else if(h&&h.kind==="uso")out.uso={clase:h.clase,categoria:h.categoria,
+      nota:h.nota,clam:h.clase,agr:"",lulucf:"",id_lulucf:null,
+      sp1:h.sp1||null,fcc:null};
+    else if(h&&h.kind==="nada")out.vacio=true;
+    return(out.suelo||out.altitud!=null||out.mfe||out.uso||out.vacio)?out:null;
   }catch{return null;}
 }
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
