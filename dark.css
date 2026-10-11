@@ -143,7 +143,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   white-space:nowrap;margin:6px auto 0;background:rgba(201,154,60,.15);border-radius:100px;padding:3px 10px}
 .calc-hint{margin:8px 2px 0;font-size:.75rem;line-height:1.5;color:var(--text-faint);text-align:center}
 #fichaGrid .card{box-shadow:var(--shadow)}
-#fichaGrid{grid-template-columns:minmax(0,1fr)}
+#fichaGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
 .ficha-dest{margin:10px 0;padding:12px 14px;background:rgba(201,154,60,.08);border:1px solid var(--border);border-left:4px solid var(--ochre);border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
 .ficha-dest strong{color:var(--miel)}
 .ficha-galeria{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
