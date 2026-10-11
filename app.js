@@ -214,8 +214,10 @@ function restosPasados(sp,lag,umb){
 }
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
 async function fetchClima(la,lo){
+  const PD=MOTOR_V2?92:65; // v2: 90 días de observado para restos
+  const NOBS=MOTOR_V2?90:30;
   const [d,h,hh]=await Promise.all([
-    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=65&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=${PD}&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=40&forecast_days=1`,20000),
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=auto&past_days=1&forecast_days=2`,20000).catch(()=>null)
   ]);
@@ -256,8 +258,8 @@ async function fetchClima(la,lo){
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
   const ahora={ta:C.temperature_2m??null,hr:C.relative_humidity_2m??null,prec:C.precipitation??null,viento:C.wind_speed_10m??null};
-  const oT=past("time").slice(-30), oP=past("precipitation_sum").slice(-30),
-        oX=past("temperature_2m_max").slice(-30), oN=past("temperature_2m_min").slice(-30);
+  const oT=past("time").slice(-NOBS), oP=past("precipitation_sum").slice(-NOBS),
+        oX=past("temperature_2m_max").slice(-NOBS), oN=past("temperature_2m_min").slice(-NOBS);
   const obsDia=oT.map((f,i)=>({f,p:oP[i]??0,tx:oX[i]??null,tn:oN[i]??null}));
   // Hoy por tramos de 3 h (previsión horaria del día en curso)
   let hoyTramos=[];
@@ -819,7 +821,7 @@ async function aemetOverride(la,lo){
   if(!cands.length)return{estado:"lejos"};
   const hoy=new Date(), pad=n=>String(n).padStart(2,"0");
   const f=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const ini=new Date(hoy);ini.setDate(ini.getDate()-62);
+  const ini=new Date(hoy);ini.setDate(ini.getDate()-(MOTOR_V2?92:62));
   let falloRed=null, sinDatos=false;
   for(const{ e:best, bd }of cands){
     let serie=aemetDayCache.get(best.ind);
@@ -871,7 +873,8 @@ async function aemetOverride(la,lo){
     return{p14,p30,tmin:mn,tmax:mx,calor:hot,calor30:hot30,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r10=retro(10), r21=retro(21), r13=retro(13);
-  const semana=[];for(let i=29;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
+  const NS=MOTOR_V2?90:30;
+  const semana=[];for(let i=NS-1;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,calor:e7.hot,calor30:e7.hot30,
@@ -1477,6 +1480,7 @@ function renderMeteo(){
   const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
   const fD=s=>{const d=new Date(String(s).slice(0,10)+"T12:00");return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;};
   T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
+  T2("metObsTitle",`Observado últimos ${MOTOR_V2?90:30} días`);
   const fcD=(clima.fc||[]);
   setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;

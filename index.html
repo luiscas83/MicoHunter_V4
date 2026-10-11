@@ -19,7 +19,7 @@
       <img class="logo-icon" src="img/edulis.png" alt="MicoHunter" width="36" height="36">
       <div>
         <h1>MicoHunter</h1>
-        <p class="version" title="Versión de la aplicación">v2.46</p>
+        <p class="version" title="Versión de la aplicación">v2.47</p>
       </div>
     </div>
     <select class="theme-select" id="motorSelect" title="Motor de cálculo">
@@ -187,7 +187,7 @@
       <thead><tr><th>Día</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Prob.</th><th style="text-align:right">Viento</th></tr></thead>
       <tbody id="metFcBody"></tbody>
     </table></div></div>
-  <div class="card" style="margin-top:20px"><h3>Observado últimos 30 días</h3>
+  <div class="card" style="margin-top:20px"><h3 id="metObsTitle">Observado últimos 30 días</h3>
     <div class="table-wrapper"><table class="param-table">
       <thead><tr><th>Día</th><th style="text-align:right">Lluvia</th><th style="text-align:right">Máx / Mín</th><th style="text-align:right">Acumulada</th></tr></thead>
       <tbody id="metObsBody"></tbody>
@@ -328,7 +328,7 @@
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="cotos.js?v=2.18"></script>
-<script src="app.js?v=2.37"></script>
+<script src="app.js?v=2.38"></script>
 <script>
 (function(){
   var dark=document.getElementById('themeDark'), guia=document.getElementById('themeMusgo'), sel=document.getElementById('themeSelect');
