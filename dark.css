@@ -144,6 +144,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .calc-hint{margin:8px 2px 0;font-size:.75rem;line-height:1.5;color:var(--text-faint);text-align:center}
 #fichaGrid .card{box-shadow:var(--shadow)}
 #fichaGrid{grid-template-columns:minmax(0,1fr)}
+.ficha-dest{margin:10px 0;padding:12px 14px;background:rgba(201,154,60,.08);border:1px solid var(--border);border-left:4px solid var(--ochre);border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
+.ficha-dest strong{color:var(--miel)}
 .toxi-box{margin:10px 0;padding:12px 14px;background:rgba(217,119,87,.1);border:1px solid rgba(217,119,87,.4);border-left:4px solid var(--danger);
   border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
 .toxi-box strong{color:var(--danger)}
