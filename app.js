@@ -946,6 +946,14 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribu
 let marker=L.marker([41.76,-2.46]).addTo(map), lat=41.76, lon=-2.46;
 map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);
   if(cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}predecir();});
+// Precarga en fondo (v2.31): calienta cachés de TIFF/MFE/MUP del punto
+// inicial mientras el usuario mira el mapa; el primer clic va rápido.
+function precargar(){try{
+  fetchLocal(lat,lon).catch(()=>{});
+  mupLocal(lat,lon).catch(()=>{});
+}catch{}}
+if("requestIdleCallback"in window)requestIdleCallback(()=>precargar(),{timeout:4000});
+else setTimeout(precargar,1500);
 const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
 const RING_C=2*Math.PI*54;
@@ -1076,6 +1084,7 @@ async function predecir(etiqueta){
     const local=await fetchLocal(lat,lon); // offline primero (v2.28)
     const mupLocalP=mupLocal(lat,lon).catch(()=>null);
     const enMupReg=mupRegDe(lat,lon)!=null;
+    const amP=aemetOverride(lat,lon).catch(e=>({estado:"error",msg:aemetErrMsg(e)})); // en paralelo con MFE (v2.31)
     const [clima,suelo,lugar,dem,mup]=await Promise.all([
       fetchClima(lat,lon),
       local&&local.suelo?local.suelo:fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
@@ -1124,10 +1133,9 @@ async function predecir(etiqueta){
       }
       if(enES&&floraCat==null)avisos.push("hábitat (bosque)");
     }
-    // AEMET (opcional): si hay clave, el pluviómetro manda sobre el modelo en lluvia y extremos
-    let am=null;
-    try{am=await aemetOverride(lat,lon);}
-    catch(e){console.warn("AEMET:",e);am={estado:"error",msg:aemetErrMsg(e)};avisos.push("pluviómetro AEMET");}
+    // AEMET (opcional): venía en paralelo desde arriba
+    let am=await amP;
+    if(am&&am.estado==="error"){console.warn("AEMET:",am.msg);avisos.push("pluviómetro AEMET");}
     const prov=(am&&am.estado==="ok")?am:null;
     let live=null;
     if(prov){
