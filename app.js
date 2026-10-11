@@ -205,6 +205,20 @@ async function fetchClima(la,lo){
     restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restC:restantes(hist45,10,60),
     trigB:fechaTrig(hist45,60,new Date()),trigN:fechaTrig(hist45,50,new Date()),trigC:fechaTrig(hist45,60,new Date())};
 }
+// --- 2b) Servidor local (servidor_local.py): pH/suelo/altitud/hábitat 100 %
+// offline. Si no está en marcha, null y la web usa las fuentes online. ---
+const LOCAL_API="http://127.0.0.1:8134/api/punto";
+async function fetchLocal(la,lo){
+  try{
+    const c=new AbortController();
+    const t=setTimeout(()=>c.abort(),3000);
+    const r=await fetch(`${LOCAL_API}?lat=${la}&lon=${lo}`,{signal:c.signal});
+    clearTimeout(t);
+    if(!r.ok)return null;
+    const j=await r.json();
+    return (j&&(j.suelo||j.altitud!=null||j.mfe||j.uso))?j:null;
+  }catch{return null;}
+}
 // --- 2) SoilGrids 2.0: horizonte 5-15 cm, rejilla 250 m (interpolado, no campo) ---
 async function fetchSuelo(la,lo){
   const url=`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lo}&lat=${la}&property=phh2o&property=soc&property=sand&property=silt&property=clay&depth=5-15cm&value=mean`;
@@ -832,11 +846,12 @@ async function predecir(etiqueta){
     }
     if(ld)ld.hidden=false;
     const avisos=[];
+    const local=await fetchLocal(lat,lon); // offline primero (v2.26)
     const [clima,suelo,lugar,dem,mup]=await Promise.all([
       fetchClima(lat,lon),
-      fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
+      local&&local.suelo?local.suelo:fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
       fetchLugar(lat,lon),
-      getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
+      local&&local.altitud!=null?{elevation:[local.altitud]}:getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
       ((lon>=-7.2&&lon<=-1.7&&lat>=39.8&&lat<=43.3)||(lon>=-2.2&&lon<=-0.7&&lat>=41.9&&lat<=43.3)||(lon>=-2.2&&lon<=0.8&&lat>=39.8&&lat<=42.9))?mupCyL(lat,lon):Promise.resolve(null)
     ]);
     const alt=dem.elevation?.[0]??null;
@@ -844,19 +859,32 @@ async function predecir(etiqueta){
     const enES=lon>=-9.6&&lon<=4.6&&lat>=35.4&&lat<=44.2;
     const key=lat.toFixed(3)+","+lon.toFixed(3);
     let mfe=mfeCache.get(key);
+    if(local&&local.mfe&&!mfe){ // offline: del servidor local, sin GetFeatureInfo
+      mfe={hits:[],especies:local.mfe.especies||[],categoria:local.mfe.categoria,
+        nota:local.mfe.nota,componentes:local.mfe.componentes||[],
+        etiqueta:local.mfe.etiqueta||local.mfe.categoria,local:true};
+      mfeCache.set(key,mfe);
+    }
     if(!mfe&&enES){
       mfe=await mfeBosque(lat,lon,(h,n)=>{if(det)det.textContent=`MFE: ${h}/${n} formaciones…`;});
       mfeCache.set(key,mfe);
     }
     let floraCat=null,floraNota=null,floraEtiq=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null;
     if(mfe&&mfe.categoria){
-      floraCat=mfe.categoria;floraNota=mfe.nota;floraEtiq=mfe.etiqueta||mfe.categoria;fuenteHab="MFE";
-      habitatTxt=mfe.categoria+(mfe.categoria==="Bosque mixto"&&mfe.componentes?" ("+mfe.componentes.join(" + ")+")":"")+": "+mfe.especies.map(e=>`${e.n} (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`).join(" + ");
+      floraCat=mfe.categoria;floraNota=mfe.nota;floraEtiq=mfe.etiqueta||mfe.categoria;fuenteHab=mfe.local?"MFE (local)":"MFE";
+      habitatTxt=mfe.categoria+(mfe.categoria==="Bosque mixto"&&mfe.componentes?" ("+mfe.componentes.join(" + ")+")":"")+": "+mfe.especies.map(e=>e.n+(e.oc!=null?` (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`:"")).join(" + ");
     }else{
-      uso=await mfeUso(lat,lon).catch(()=>null);
+      if(local&&local.uso)uso={clase:local.uso.clase,categoria:local.uso.categoria,
+        nota:local.uso.nota,clam:local.uso.clase,agr:"",lulucf:"",id_lulucf:null,
+        sp1:local.uso.sp1||null,fcc:null};
+      else uso=await mfeUso(lat,lon).catch(()=>null);
       if(uso&&uso.categoria){
-        floraCat=uso.categoria;floraNota=uso.nota;fuenteHab="MFE ff_uso";
-        habitatTxt=`${uso.clam||uso.clase} · LULUCF ${uso.id_lulucf??"?"} ${uso.lulucf}`;
+        floraCat=uso.categoria;floraNota=uso.nota;fuenteHab=local&&local.uso?"MFE ff_uso (local)":"MFE ff_uso";
+        habitatTxt=fuenteHab==="MFE ff_uso (local)"?uso.clase:`${uso.clam||uso.clase} · LULUCF ${uso.id_lulucf??"?"} ${uso.lulucf}`;
+      }else if(local&&(local.mfe||local.uso)){
+        // offline: sin bosque y sin uso aprovechable; sin check urbano (online)
+        if(local.uso&&local.uso.clase==="artificial"){floraCat="Urbano";floraNota=0;fuenteHab="local";habitatTxt="núcleo urbano (ff_uso local)";}
+        else{floraCat=null;floraNota=null;fuenteHab="local";habitatTxt=(local.uso&&local.uso.clase)||"hábitat sin determinar (local)";}
       }else{
         // tercer paso: solo descampado vs plaza
         try{
