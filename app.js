@@ -504,7 +504,44 @@ async function mfeUso(la,lo){
     lulucf:[p.nb_lulucf_nivel1,p.nb_lulucf_nivel2,p.nb_lulucf_nivel3].filter(Boolean).join(" · "),
     id_lulucf:p.id_lulucf,sp1:p.nom_sp1,fcc:p.nm_fccarb??null};
 }
-// --- MUP por CCAA (IDECyL, IDENA, ICEAragón): número, nombre y contorno. Solo CyL/Navarra/Aragón; resto, null ---
+// --- MUP por CCAA, primero local estático (datos_local/mup/) ---
+// (Online: IDECyL, IDENA, ICEAragón como respaldo. Solo CyL/Navarra/Aragón.)
+// MUP local estático (datos_local/mup/): sin WFS. Respaldo online si falta.
+const MUP_REG={cyl:[-7.2,39.8,-1.7,43.3],navarra:[-2.2,41.9,-0.7,43.3],aragon:[-2.2,39.8,0.8,42.9]};
+const _mupCache=new Map();
+function mupRegDe(la,lo){
+  for(const k of Object.keys(MUP_REG)){const[w,s,e,n]=MUP_REG[k];
+    if(lo>=w&&lo<=e&&la>=s&&la<=n)return k;}
+  return null;
+}
+function pipMup(an,la,lo){
+  let d=false;
+  for(let i=0,j=an.length-1;i<an.length;j=i++){
+    const xi=an[i][0],yi=an[i][1],xj=an[j][0],yj=an[j][1];
+    if(((yi>la)!==(yj>la))&&(lo<(xj-xi)*(la-yi)/(yj-yi)+xi))d=!d;
+  }
+  return d;
+}
+async function mupLocal(la,lo){
+  const rg=mupRegDe(la,lo);if(!rg)return null;
+  const k="mup_"+rg;
+  if(!_mupCache.has(k)){
+    const r=await fetch(`datos_local/mup/mup_${rg}.json.gz`);if(!r.ok)return null;
+    const buf=await r.arrayBuffer();
+    const dec=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    _mupCache.set(k,JSON.parse(new TextDecoder().decode(dec)));
+  }
+  const fs=_mupCache.get(k),dentro=[];
+  for(const f of fs){const gs=f.g||[];
+    if(gs.some(poly=>poly.some(an=>pipMup(an,la,lo))))dentro.push(f);}
+  if(!dentro.length)return null;
+  const l0=dentro[0];
+  return{mups:dentro.map(f=>({num:f.u,nombre:f.n,pert:f.p||null,sup:f.s||null})),
+    nombre:l0.n,num:l0.u,
+    geo:{type:"FeatureCollection",features:dentro.map(f=>({type:"Feature",
+      properties:{mup:f.u,nombre:f.n},
+      geometry:{type:"MultiPolygon",coordinates:f.g}}))}};
+}
 function jsonpGeo(url,ms){ // ICEAragón no manda CORS: JSONP por <script> como alternativa
   return new Promise((res,rej)=>{
     const cb="mupcb"+Date.now()+Math.floor(Math.random()*1e6);
@@ -1036,13 +1073,15 @@ async function predecir(etiqueta){
     }
     if(ld)ld.hidden=false;
     const avisos=[];
-    const local=await fetchLocal(lat,lon); // offline primero (v2.26)
+    const local=await fetchLocal(lat,lon); // offline primero (v2.28)
+    const mupLocalP=mupLocal(lat,lon).catch(()=>null);
+    const enMupReg=mupRegDe(lat,lon)!=null;
     const [clima,suelo,lugar,dem,mup]=await Promise.all([
       fetchClima(lat,lon),
       local&&local.suelo?local.suelo:fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
       fetchLugar(lat,lon),
       local&&local.altitud!=null?{elevation:[local.altitud]}:getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
-      ((lon>=-7.2&&lon<=-1.7&&lat>=39.8&&lat<=43.3)||(lon>=-2.2&&lon<=-0.7&&lat>=41.9&&lat<=43.3)||(lon>=-2.2&&lon<=0.8&&lat>=39.8&&lat<=42.9))?mupCyL(lat,lon):Promise.resolve(null)
+      mupLocalP.then(m=>m??(enMupReg?mupCyL(lat,lon):mupExtraEn(lat,lon).catch(()=>null)))
     ]);
     const alt=dem.elevation?.[0]??null;
     // MFE con caché y progreso (solo España; fuera, manual)
