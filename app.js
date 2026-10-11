@@ -1068,18 +1068,22 @@ function pintar(calc,ageMin){
 async function predecir(etiqueta){
   const det=document.getElementById("habitatLine");
   const ringPctEl=document.getElementById("ringPct"), bannerTxtEl=document.getElementById("bannerTxt");
-  const ld=document.getElementById("loader");
   const pkey=lat.toFixed(4)+","+lon.toFixed(4);
   const hit=calcCache.get(pkey); // punto ya visitado: sin red si tiene menos de 10 min
   if(ringPctEl)ringPctEl.textContent="…";
   const rpN=document.getElementById("ringPctN");if(rpN)rpN.textContent="…";
-  if(bannerTxtEl)bannerTxtEl.textContent="Detectando parámetros del punto…";
+  if(bannerTxtEl)bannerTxtEl.textContent="Calculando…";
+  const pon=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  for(const id of["altitudeValue","airNowValue","humNowValue","windNowValue",
+    "rain14Value","rain30Value","soilTypeValue","phValue","metStationValue",
+    "mupValue","cotoValue","lastUpdate"])pon(id,"calculando…");
+  if(det)det.textContent="calculando…";
+  pon("coordinatesValue",`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
   try{
     if(hit&&Date.now()-hit.t<10*60e3){
       pintar(hit.calc,Math.max(1,Math.round((Date.now()-hit.t)/60e3)));
       return;
     }
-    if(ld)ld.hidden=false;
     const avisos=[];
     const local=await fetchLocal(lat,lon); // offline primero (v2.28)
     const mupLocalP=mupLocal(lat,lon).catch(()=>null);
