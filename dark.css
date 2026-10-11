@@ -146,6 +146,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #fichaGrid{grid-template-columns:minmax(0,1fr)}
 .ficha-dest{margin:10px 0;padding:12px 14px;background:rgba(201,154,60,.08);border:1px solid var(--border);border-left:4px solid var(--ochre);border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
 .ficha-dest strong{color:var(--miel)}
+.ficha-galeria{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.ficha-galeria img{width:100%;height:170px;object-fit:cover;border-radius:14px;border:1px solid var(--border)}
+.ficha-credito{font-size:.75rem;color:var(--text-dim);font-style:italic;margin:0}
 .toxi-box{margin:10px 0;padding:12px 14px;background:rgba(217,119,87,.1);border:1px solid rgba(217,119,87,.4);border-left:4px solid var(--danger);
   border-radius:var(--radius-sm);font-size:.85rem;line-height:1.6;color:var(--text)}
 .toxi-box strong{color:var(--danger)}
