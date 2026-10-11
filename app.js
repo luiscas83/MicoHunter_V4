@@ -339,10 +339,11 @@ function clasificarUsoLocal(p){
   }
   return[null,null,(txt.slice(0,120)||"sin uso aprovechable")];
 }
-async function habLocal(la,lo){
+async function habLocal(la,lo,soloCentro){
   const lon0=Math.floor(lo),lat0=Math.floor(la);
-  const teselas=(await Promise.all([0,-1,1].flatMap(dx=>[0,-1,1].map(dy=>
-    mfeTile(lon0+dx,lat0+dy).catch(()=>null))))).filter(Boolean);
+  const celdas=soloCentro?[[0,0]]:[0,-1,1].flatMap(dx=>[0,-1,1].map(dy=>[dx,dy]));
+  const teselas=(await Promise.all(celdas.map(([dx,dy])=>
+    mfeTile(lon0+dx,lat0+dy).catch(()=>null)))).filter(Boolean);
   if(!teselas.length)return null;
   const hits=[];
   for(const t of teselas)for(const f of t){
@@ -391,12 +392,14 @@ async function habLocal(la,lo){
   }
   return{kind:"nada"};
 }
-// fetchLocal estático: devuelve {suelo,altitud,mfe,uso} o null (→ online)
-async function fetchLocal(la,lo){
+// fetchLocal estático: devuelve {suelo,altitud,mfe,uso} o null (→ online).
+// rapido=true: hábitat solo con la tesela central (fase 1); luego se refina.
+async function fetchLocal(la,lo,rapido){
   try{
     if(typeof DecompressionStream==="undefined")return null;
     const[s,v,h]=await Promise.all([sueloLocal(la,lo).catch(()=>({})),
-      altLocal(la,lo).catch(()=>null),habLocal(la,lo).catch(()=>null)]);
+      altLocal(la,lo).catch(()=>null),
+      habLocal(la,lo,rapido).catch(()=>null)]);
     const out={};
     if(s&&(s.ph!=null||s.textura))out.suelo=s;
     if(v!=null)out.altitud=v;
@@ -1048,7 +1051,7 @@ function pintar(calc,ageMin){
     `AEMET falló (${am.msg||"error de red"}): lluvia según modelo.`);
   T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
   T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
-  if(det){det.textContent=floraEtiq||"sin determinar";det.title=habitatTxt||"";}
+  if(det){det.textContent=floraEtiq||"sin determinar";det.removeAttribute("title");}
   T("mupValue",calc.mup?`MUP ${calc.mup.num} · ${calc.mup.nombre}`:"—");
   const cotoEl=document.getElementById("cotoValue");
   if(cotoEl){
@@ -1067,6 +1070,17 @@ function pintar(calc,ageMin){
   T("lastUpdate",ageMin>0?`Datos de hace ${ageMin} min`:"Actualizado "+new Date().toLocaleString("es-ES"));
   renderAll();
   renderMeteo();
+}
+function floraDe(mfe,uso){ // notas por especie desde mfe/uso (v2.34)
+  let n=null,o=null,c=null;
+  if(mfe&&mfe.categoria)n=floraNiscalo(mfe.categoria,mfe.componentes);
+  else if(uso&&uso.categoria)n=uso.categoria==="Pinar"?1:0;
+  const esp=mfe&&mfe.especies?mfe.especies.map(e=>e.n):(uso&&uso.sp1?[uso.sp1]:[]);
+  if(mfe&&mfe.categoria)o=floraOronja(mfe.categoria,esp);
+  else if(uso&&uso.categoria)o=(uso.categoria==="Robledal"||uso.categoria==="Castañeral"||uso.categoria==="Quercíneas"||/quercus|castanea/i.test(uso.sp1||""))?1:0;
+  if(mfe&&mfe.categoria)c=floraChantarella(mfe.categoria,esp);
+  else if(uso&&uso.categoria)c=(["Pinar","Hayedo","Robledal","Castañeral"].includes(uso.categoria)||/quercus|fagus|castanea|pinus|picea|betula|corylus/i.test(uso.sp1||""))?1:0;
+  return{n,o,c,esp};
 }
 async function predecir(etiqueta){
   const det=document.getElementById("habitatLine");
@@ -1088,7 +1102,7 @@ async function predecir(etiqueta){
       return;
     }
     const avisos=[];
-    const local=await fetchLocal(lat,lon); // offline primero (v2.28)
+    const local=await fetchLocal(lat,lon,true); // offline fase 1: tesela central (v2.34)
     const mupLocalP=mupLocal(lat,lon).catch(()=>null);
     const enMupReg=mupRegDe(lat,lon)!=null;
     const amP=aemetOverride(lat,lon).catch(e=>({estado:"error",msg:aemetErrMsg(e)})); // en paralelo con MFE (v2.31)
@@ -1124,7 +1138,7 @@ async function predecir(etiqueta){
       mfe=await mfeBosque(lat,lon,(h,n)=>{if(det)det.textContent=`MFE: ${h}/${n} formaciones…`;});
       mfeCache.set(key,mfe);
     }
-    let floraCat=null,floraNota=null,floraEtiq=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null;
+    let floraCat=null,floraNota=null,floraEtiq=null,habitatTxt="",fuenteHab="",uso=null,floraNotaN=null,floraNotaO=null,floraNotaC=null;
     if(mfe&&mfe.categoria){
       floraCat=mfe.categoria;floraNota=mfe.nota;floraEtiq=mfe.etiqueta||mfe.categoria;fuenteHab=mfe.local?"MFE (local)":"MFE";
       habitatTxt=mfe.categoria+(mfe.categoria==="Bosque mixto"&&mfe.componentes?" ("+mfe.componentes.join(" + ")+")":"")+": "+mfe.especies.map(e=>e.n+(e.oc!=null?` (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`:"")).join(" + ");
@@ -1199,14 +1213,9 @@ async function predecir(etiqueta){
       }
     }
     const mes=new Date().getMonth()+1;
-    if(mfe&&mfe.categoria)floraNotaN=floraNiscalo(mfe.categoria,mfe.componentes);
-    else if(uso&&uso.categoria)floraNotaN=uso.categoria==="Pinar"?1:0;
-    const floraEsp=mfe&&mfe.especies?mfe.especies.map(e=>e.n):(uso&&uso.sp1?[uso.sp1]:[]);
-    if(mfe&&mfe.categoria)floraNotaO=floraOronja(mfe.categoria,floraEsp);
-    else if(uso&&uso.categoria)floraNotaO=(uso.categoria==="Robledal"||uso.categoria==="Castañeral"||uso.categoria==="Quercíneas"||/quercus|castanea/i.test(uso.sp1||""))?1:0;
-    let floraNotaC=null;
-    if(mfe&&mfe.categoria)floraNotaC=floraChantarella(mfe.categoria,floraEsp);
-    else if(uso&&uso.categoria)floraNotaC=(["Pinar","Hayedo","Robledal","Castañeral"].includes(uso.categoria)||/quercus|fagus|castanea|pinus|picea|betula|corylus/i.test(uso.sp1||""))?1:0;
+    const fd=floraDe(mfe,uso);
+    floraNotaN=fd.n;floraNotaO=fd.o;floraNotaC=fd.c;
+    const floraEsp=fd.esp;
     const calc={clima,alt,mes,lugar:lugar||etiqueta||"",fuenteHab,habitatTxt,suelo,mup:mup||null,avisos,
       floraCat,floraEtiq:floraEtiq||floraCat,floraNota,floraNotaN,floraNotaO,floraNotaC,phVal:suelo.ph??null,prov,live,am};
     // ¿cae en un acotado? Polígonos oficiales primero; si no, ficha más cercana (≤3 km, orientativo)
@@ -1246,6 +1255,34 @@ async function predecir(etiqueta){
     calcCache.set(pkey,{t:Date.now(),calc});
     if(calcCache.size>50)calcCache.delete(calcCache.keys().next().value);
     pintar(calc,0);
+    // Fase 2 (v2.34): refina el hábitat con las teselas vecinas en fondo;
+    // si cambia, repinta. Sin red extra (todo local).
+    fetchLocal(lat,lon,false).then(l2=>{
+      if(!l2||lat.toFixed(4)+","+lon.toFixed(4)!==pkey)return;
+      const sig=h=>h?(h.mfe?("M:"+h.mfe.categoria+"|"+(h.mfe.componentes||[]).join("+")+"|"+(h.mfe.especies||[]).map(e=>e.n).join("+")):(h.uso?("U:"+(h.uso.categoria||h.uso.clase)):"?")):"?";
+      if(sig(l2)===sig(local))return;
+      let m2=null,u2=null;
+      if(l2.mfe)m2={hits:[],especies:l2.mfe.especies||[],categoria:l2.mfe.categoria,
+        nota:l2.mfe.nota,componentes:l2.mfe.componentes||[],
+        etiqueta:l2.mfe.etiqueta||l2.mfe.categoria,local:true};
+      else if(l2.uso&&l2.uso.categoria)u2={clase:l2.uso.clase,categoria:l2.uso.categoria,
+        nota:l2.uso.nota,clam:l2.uso.clase,agr:"",lulucf:"",id_lulucf:null,
+        sp1:l2.uso.sp1||null,fcc:null};
+      else return;
+      if(m2){calc.floraCat=m2.categoria;calc.floraNota=m2.nota;
+        mfeCache.set(key,m2);
+        calc.floraEtiq=m2.etiqueta||m2.categoria;calc.fuenteHab="MFE (local)";
+        calc.habitatTxt=m2.categoria+(m2.categoria==="Bosque mixto"&&m2.componentes?" ("+m2.componentes.join(" + ")+")":"")+": "+m2.especies.map(e=>e.n+(e.oc!=null?` (oc.${e.oc}${e.fcc!=null?", FCC "+e.fcc+"%":""})`:"")).join(" + ");
+        const fd=floraDe(m2,null);
+        calc.floraNotaN=fd.n;calc.floraNotaO=fd.o;calc.floraNotaC=fd.c;
+      }else{calc.floraCat=u2.categoria;calc.floraNota=u2.nota;
+        calc.fuenteHab="MFE ff_uso (local)";calc.habitatTxt=u2.clase;
+        const fd=floraDe(null,u2);
+        calc.floraNotaN=fd.n;calc.floraNotaO=fd.o;calc.floraNotaC=fd.c;
+      }
+      calcCache.set(pkey,{t:Date.now(),calc});
+      pintar(calc,0);
+    }).catch(()=>{});
   }catch(e){
     console.error("predecir:",e);
     const cEl=document.getElementById("condList"), bEl=document.getElementById("bannerTxt");
@@ -1328,7 +1365,7 @@ function renderAll(){
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,r.terreno,"600–1800 m")+
     di("pH del suelo",`${sueloTxt}`,r.suelo,"4,5–6,5 ±0,5")+
     di("Estación",`${MESES[mes-1]}`,r.temp,"pico octubre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(r.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(r.flora)}">${floraTxt}</span></div>`);
   const vetE=[];if(clima.tmin<=0)vetE.push("helada");if(hayCalor(clima))vetE.push("calor");if(clima.vientoMax>45)vetE.push("viento fuerte");
   const vetRE=[];if(cR.tmin<=0)vetRE.push("helada");if(hayCalor(cR))vetRE.push("calor");if(cR.vientoMax>45)vetRE.push("viento fuerte");
   setHTML("verdictEdulis",resumenCond(r,clima,{
@@ -1408,7 +1445,7 @@ function renderNiscalo(){
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rN.terreno,"100–1600 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rN.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESESN[mes-1]}`,rN.temp,"pico noviembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rN.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rN.flora)}">${floraTxt}</span></div>`);
   const vetRN=[];if(cN.tmin<=-3)vetRN.push("helada");if(hayCalor(cN))vetRN.push("calor");if(cN.vientoMax>45)vetRN.push("viento fuerte");
   setHTML("verdictNiscalo",resumenCond(rN,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
@@ -1463,7 +1500,7 @@ function renderOronja(){
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rO.terreno,"200–1200 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rO.suelo,"4–6 ±0,5")+
     di("Estación",`${MESO[mes-1]}`,rO.temp,"pico septiembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rO.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rO.flora)}">${floraTxt}</span></div>`);
   const vetRO=[];if(cO.tmin<=2)vetRO.push("helada");if(hayCalor(cO,30))vetRO.push("calor");if(cO.vientoMax>45)vetRO.push("viento fuerte");
   setHTML("verdictOronja",resumenCond(rO,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
@@ -1518,7 +1555,7 @@ function renderChantarella(){
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rC.terreno,"50–1500 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rC.suelo,"4–5,5 ±0,5")+
     di("Estación",`${MESC[mes-1]}`,rC.temp,"pico septiembre")+
-    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rC.flora)}" title="${(fuenteHab?fuenteHab+" — ":"")+habitatTxt}">${floraTxt}</span></div>`);
+    `<div class="mushroom-detail-item"><span class="mushroom-detail-label">Hábitat</span><span class="mushroom-detail-value ${lv(rC.flora)}">${floraTxt}</span></div>`);
   const vetRC=[];if(cC.tmin<=0)vetRC.push("helada");
   setHTML("verdictChantarella",resumenCond(rC,clima,{
     altTxt:alt!=null?Math.round(alt)+" m":"?",sueloTxt:phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH",
