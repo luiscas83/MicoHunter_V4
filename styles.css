@@ -14,6 +14,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:12px}
 .logo-icon{font-size:2.5rem}
+img.logo-icon{width:44px;height:44px;object-fit:cover;border-radius:50%;flex-shrink:0}
 .logo h1{font-size:2rem;font-weight:700;letter-spacing:-.5px}
 .tagline{opacity:.9;font-size:1rem;font-weight:300}
 .version{margin:2px 0 0;font-size:.72rem;font-weight:500;letter-spacing:.4px;color:#e8dcc8;font-variant-numeric:tabular-nums}
@@ -259,5 +260,5 @@ body{-webkit-tap-highlight-color:transparent}
 .mushroom-option-info{flex:1;min-width:0}
 .mushroom-option-name{font-weight:600;font-size:.9rem}
 .mushroom-option-scientific{font-size:.75rem;color:var(--text-light);font-style:italic}
-@media(max-width:768px){#mushroomCards,#fichaGrid{grid-template-columns:minmax(0,1fr)}.map-card .map{min-height:300px}}
+@media(max-width:768px){#mushroomCards,#fichaGrid{grid-template-columns:minmax(0,1fr)}.map-card .map{min-height:300px}img.logo-icon{width:32px;height:32px}}
 @media(max-width:480px){html,body{overflow-x:clip}.header{padding-left:16px;padding-right:16px}.search-row{flex-wrap:wrap}.search-row input{flex:1 1 100%}.map-actions .btn{flex:1 1 100%}.save-fav-row{flex-wrap:wrap}.save-fav-row input{flex:1 1 100%}}
