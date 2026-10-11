@@ -308,7 +308,6 @@ ul.method-list{list-style:disc}
   .nav-btn.active,.search-row .btn,.map-actions .btn:not(.btn-ghost),
   .favorite-btn.load{box-shadow:none}
   .probability-ring{background:none}
-  .ring-text .percentage,.ring-text .label{background:none}
   .logo h1{background:none;color:var(--miel)}
   .mushroom-photo{box-shadow:none}
   .loader{background:rgba(20,16,10,.9)}
