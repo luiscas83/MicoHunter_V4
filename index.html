@@ -19,7 +19,7 @@
       <span class="logo-icon">🍄</span>
       <div>
         <h1>MicoHunter</h1>
-        <p class="version" title="Versión de la aplicación">v2.41</p>
+        <p class="version" title="Versión de la aplicación">v2.42</p>
       </div>
     </div>
     <select class="theme-select" id="themeSelect" title="Estilo de color">
@@ -27,6 +27,7 @@
       <option value="dark">🌙 Oscuro</option>
       <option value="guia">🌿 Guía</option>
     </select>
+    <button class="btn btn-ghost" id="motorToggle" title="Alternar motor de cálculo v1/v2">⚙️ Motor: v1</button>
       </div>
 </header>
 <main class="main">
@@ -337,6 +338,13 @@
   try{ t=localStorage.getItem('mh-theme')||'light'; if(t!=='light'&&t!=='dark'&&t!=='guia')t='light'; }catch(e){}
   apply(t);
   if(sel) sel.addEventListener('change', function(){ apply(sel.value); });
+  var mt=document.getElementById('motorToggle');
+  function paintMotor(){ var v='v1'; try{ if(localStorage.getItem('mh-motor')==='v2')v='v2'; }catch(e){} if(mt)mt.textContent='⚙️ Motor: '+v; }
+  paintMotor();
+  if(mt) mt.addEventListener('click', function(){
+    var v='v1'; try{ v=localStorage.getItem('mh-motor')==='v2'?'v1':'v2'; localStorage.setItem('mh-motor',v); }catch(e){}
+    location.reload();
+  });
 })();
 </script>
 </body>
