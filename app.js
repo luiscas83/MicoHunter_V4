@@ -968,6 +968,9 @@ Calor:"Calor (3 o más días con máxima ≥ 28 ºC en 7 días, 30 ºC en oronja
 Viento:"Viento (racha máxima > 45 km/h): seca la seta en horas aunque el suelo esté húmedo. Es el que más cosechas arruina con buena lluvia."};
 function nivelIcon(n){return n==="excelente"?"🟢":n==="bueno"?"🟡":n==="regular"?"🟠":"🔴";}
 const calcCache=new Map(); // punto -> {t, calc}: sin recargar antes de 10 min
+const climaCache=new Map(); // celda 0.1º (~11 km) -> {t, clima}: el modelo no cambia en 30 min
+const lugarCache=new Map(); // punto 0.01º -> topónimo (no cambia)
+const clon=o=>{try{return structuredClone(o);}catch{return JSON.parse(JSON.stringify(o));}};
 const MODO_TXT={online:"En línea",in_person:"Presencial",unknown:"Sin confirmar",no_permit:"Sin permiso específico",free_registration:"Registro libre"};
 function escH(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function entradaCoto(n){const cs=(typeof COTOS!=="undefined"?COTOS:[]);return cs.find(c=>c.n===n)||null;}
@@ -1089,10 +1092,20 @@ async function predecir(etiqueta){
     const mupLocalP=mupLocal(lat,lon).catch(()=>null);
     const enMupReg=mupRegDe(lat,lon)!=null;
     const amP=aemetOverride(lat,lon).catch(e=>({estado:"error",msg:aemetErrMsg(e)})); // en paralelo con MFE (v2.31)
+    const ck=lat.toFixed(1)+","+lon.toFixed(1); // clima del modelo por celda (v2.33)
+    const cc0=climaCache.get(ck);
+    const climaP=(cc0&&Date.now()-cc0.t<30*60e3)?Promise.resolve(clon(cc0.clima))
+      :fetchClima(lat,lon).then(c=>{climaCache.set(ck,{t:Date.now(),clima:clon(c)});
+        if(climaCache.size>20)climaCache.delete(climaCache.keys().next().value);return c;});
+    const lk=lat.toFixed(2)+","+lon.toFixed(2);
+    const lc0=lugarCache.get(lk);
+    const lugarP=(lc0!==undefined)?Promise.resolve(lc0)
+      :fetchLugar(lat,lon).then(l=>{lugarCache.set(lk,l);
+        if(lugarCache.size>100)lugarCache.delete(lugarCache.keys().next().value);return l;});
     const [clima,suelo,lugar,dem,mup]=await Promise.all([
-      fetchClima(lat,lon),
+      climaP,
       local&&local.suelo?local.suelo:fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
-      fetchLugar(lat,lon),
+      lugarP,
       local&&local.altitud!=null?{elevation:[local.altitud]}:getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
       mupLocalP.then(m=>m??(enMupReg?mupCyL(lat,lon):mupExtraEn(lat,lon).catch(()=>null)))
     ]);
