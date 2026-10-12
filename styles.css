@@ -10,9 +10,15 @@
   --radius:12px;--radius-sm:8px;
 }
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;padding:30px 20px;margin:0 0 20px}
+.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;padding:30px 20px;margin:0 0 20px;position:relative}
 .header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:12px}
+.menu-btn{font-size:1.4rem;line-height:1;padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);color:var(--text);cursor:pointer;min-height:44px}
+.menu-panel{position:absolute;top:100%;left:12px;z-index:1200;display:flex;flex-direction:column;gap:6px;min-width:250px;padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.menu-panel[hidden]{display:none}
+.menu-panel .nav-btn{text-align:left;width:100%}
+.menu-theme{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;font-size:.9rem;font-weight:600;color:var(--text)}
+.menu-theme .theme-select{flex:1}
 .logo-icon{font-size:2.5rem}
 img.logo-icon{width:44px;height:44px;object-fit:cover;border-radius:50%;flex-shrink:0}
 .logo h1{font-size:2rem;font-weight:700;letter-spacing:-.5px}
