@@ -291,35 +291,47 @@ function piezaDe(la,lo){
     if(lo>=minx&&lo<=maxx&&la>=miny&&la<=maxy)return k;}
   return null;
 }
-const _tifCache=new Map(); // url -> {w,h,sx,sy,x0,y0,data}
+const _tifCache=new Map(); // url -> {w,h,sx,sy,x0,y0,data} | null si falta el fichero
 async function tifPixel(prop,la,lo){
-  if(typeof GeoTIFF==="undefined")return null;
-  const pz=piezaDe(la,lo);if(!pz)return null;
+  // undefined = sin fichero/lib (→ online); null = píxel vacío/enmascarado (no reintentar online)
+  if(typeof GeoTIFF==="undefined")return undefined;
+  const pz=piezaDe(la,lo);if(!pz)return undefined;
   const url=`datos_local/${prop}_${pz}.tif`;
   let t=_tifCache.get(url);
-  if(!t){
-    const r=await fetch(url);if(!r.ok)return null;
-    const g=await GeoTIFF.fromArrayBuffer(await r.arrayBuffer());
-    const img=await g.getImage();
-    const[x0,y0]=img.getOrigin(),[sx,sy]=img.getResolution();
-    const data=(await img.readRasters({samples:[0]}))[0];
-    t={w:img.getWidth(),h:img.getHeight(),sx,sy,x0,y0,data};
-    _tifCache.set(url,t);
+  if(t===undefined){
+    try{
+      const r=await fetch(url);if(!r.ok){_tifCache.set(url,null);}
+      else{
+        const g=await GeoTIFF.fromArrayBuffer(await r.arrayBuffer());
+        const img=await g.getImage();
+        const[x0,y0]=img.getOrigin(),[sx,sy]=img.getResolution();
+        const data=(await img.readRasters({samples:[0]}))[0];
+        t={w:img.getWidth(),h:img.getHeight(),sx,sy,x0,y0,data};
+        _tifCache.set(url,t);
+      }
+    }catch{_tifCache.set(url,null);}
+    t=_tifCache.get(url);
   }
+  if(!t)return undefined;
   const col=Math.floor((lo-t.x0)/t.sx),row=Math.floor((t.y0-la)/t.sy);
   if(col<0||row<0||col>=t.w||row>=t.h)return null;
   return t.data[row*t.w+col];
 }
 async function sueloLocal(la,lo){
   const div={ph:10,soc:10,sand:10,silt:10,clay:10},out={};
+  let fichero=false;
   await Promise.all(Object.keys(div).map(async p=>{
-    try{const v=await tifPixel(p,la,lo);if(v!=null&&v>0)out[p]=v/div[p];}catch{}
+    try{const v=await tifPixel(p,la,lo);
+      if(v===undefined)return; // sin fichero: online decidirá
+      fichero=true; // el TIFF cargó: el píxel manda (vacío = enmascarado, sin REST)
+      if(v>0)out[p]=v/div[p];}catch{}
   }));
   if(out.ph!=null)out.ph=+out.ph.toFixed(2);
   if(out.soc!=null)out.soc=+out.soc.toFixed(1);
   for(const p of["sand","silt","clay"])if(out[p]!=null)out[p]=+out[p].toFixed(0);
   if(out.sand!=null){const s=out.sand,c=out.clay;
     out.textura=s>=70?"arenoso":s>=50?(c>=20?"franco-arcillo-arenoso":"franco-arenoso"):c>=35?"arcilloso":s>=30?"franco":"franco-limoso";}
+  if(fichero)out._local=true; // hay TIFF: no llamar al REST aunque venga vacío
   return out;
 }
 async function altLocal(la,lo){
@@ -478,7 +490,7 @@ async function fetchLocal(la,lo,rapido){
       altLocal(la,lo).catch(()=>null),
       habLocal(la,lo,rapido).catch(()=>null)]);
     const out={};
-    if(s&&(s.ph!=null||s.textura))out.suelo=s;
+    if(s&&(s.ph!=null||s.textura||s._local)){const c={...s};delete c._local;out.suelo=c;}
     if(v!=null)out.altitud=v;
     if(h&&h.kind==="mfe")out.mfe={categoria:h.categoria,nota:h.nota,
       etiqueta:h.etiqueta,componentes:h.componentes,especies:h.especies};
