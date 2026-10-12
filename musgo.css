@@ -256,6 +256,8 @@ ul.method-list{list-style:disc}
 .main{padding:0 12px 88px}
 .nav{overflow-x:auto;flex-wrap:nowrap;gap:6px;padding:6px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .nav::-webkit-scrollbar{display:none}
+.nav .theme-select{flex:0 0 auto;background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
+.nav .theme-select option{color:#20251b}
 .nav-btn{white-space:nowrap;padding:10px 16px;font-size:.88rem;scroll-snap-align:start;flex:0 0 auto}
 .dashboard-grid{grid-template-columns:minmax(0,1fr);gap:14px}
 .dashboard-grid .map-card,.dashboard-grid .terrain-card,.dashboard-grid .mushroom-cards-grid{grid-column:1;grid-row:auto}
