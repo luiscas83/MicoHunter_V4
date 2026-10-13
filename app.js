@@ -1129,6 +1129,31 @@ function goTo(la,lo,etiqueta){
   try{if(typeof cotoLayer!=="undefined"&&cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}}catch{}
   predecir(etiqueta||"");
 }
+let _mupIndice=null;
+async function buscarMup(q){
+  // índice local MUP (número o nombre): sin red más allá del fichero estático
+  try{
+    if(!_mupIndice){
+      const r=await fetch("datos_local/mup/mup_indice.json.gz");if(!r.ok)return [];
+      const buf=await r.arrayBuffer();
+      const dec=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+      _mupIndice=JSON.parse(new TextDecoder().decode(dec));
+    }
+    const n=q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+    if(!n)return [];
+    const num=(n.match(/\d+/)||[])[0];
+    const numN=num?String(parseInt(num,10)):"";
+    const res=[];
+    for(const m of _mupIndice){
+      const nm=(m.n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+      if(numN&&/^\d+$/.test(String(m.u))&&String(parseInt(m.u,10))===numN)res.push({m,p:0});
+      else if(nm.includes(n))res.push({m,p:1});
+      if(res.length>=200)break;
+    }
+    res.sort((a,b)=>a.p-b.p);
+    return res.slice(0,6).map(x=>x.m);
+  }catch{return [];}
+}
 async function buscar(){
   const q=document.getElementById("search").value.trim(), box=document.getElementById("results");
   if(!q)return;
@@ -1136,10 +1161,17 @@ async function buscar(){
   const c=parseCoords(q);
   if(c){goTo(c.lat,c.lon,"coord "+c.fmt);return;}
   box.innerHTML="<small>Buscando lugar…</small>";
+  let html="";
+  try{
+    const mups=await buscarMup(q);
+    for(const m of mups)
+      html+=`<button data-muplat="${m.c[1]}" data-muplon="${m.c[0]}" data-mupn="${escH("MUP "+m.u+" · "+m.n)}">🌲 MUP ${escH(m.u)} · ${escH(m.n)} <small>(${escH(m.r)})</small></button>`;
+  }catch{}
   try{
     const r=await getJSON(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=es,pt,ad&limit=5&viewbox=-9.5,35.5,4.5,44&accept-language=es`,15000);
-    if(!r.length){box.innerHTML="<small>Sin resultados. Prueba con coordenadas.</small>";return;}
-    box.innerHTML="";
+    if(!r.length&&!html){box.innerHTML="<small>Sin resultados. Prueba con coordenadas.</small>";return;}
+    box.innerHTML=html;
+    box.querySelectorAll("[data-muplat]").forEach(b=>{b.onclick=()=>{box.innerHTML="";goTo(+b.dataset.muplat,+b.dataset.muplon,b.dataset.mupn);};});
     r.forEach(p=>{
       const b=document.createElement("button");
       b.textContent=(p.display_name||"").split(",").slice(0,3).join(",");
