@@ -1379,6 +1379,7 @@ function renderDescripciones(){
       if(e.suf!=="C"&&k.vientoMax>45)circum.push(`las rachas de <strong>${Math.round(k.vientoMax)} km/h</strong> activaron su veto por viento`);
       if(k.p14<e.aguaMin)circum.push(`la lluvia (<strong>${coma(k.p14)} L/m²</strong>) no alcanza su mínimo (<strong>${e.aguaMin} L/m²</strong>)`);
       if(!habBad&&!altBad&&!sueloBad&&!circum.length)continue; // sin causa clara: mantiene banner+causa
+      let htmlCausa=null;
       if((habBad||altBad||sueloBad)&&!circum.length){ // estructural (sitio): una sola causa por orden hábitat → pH → altitud
         let txt;
         if(habBad)txt=`Para <strong>${e.latin}</strong> no hay fructificación posible en ${hab} (exige ${e.habReq}).`;
@@ -1386,7 +1387,7 @@ function renderDescripciones(){
         else txt=altBad.dir>0
           ?`Para <strong>${e.latin}</strong> no hay fructificación posible a <strong>${Math.round(alt)} m</strong> (techo <strong>${altBad.lim} m</strong>).`
           :`Para <strong>${e.latin}</strong> no hay fructificación posible a <strong>${Math.round(alt)} m</strong> (base <strong>${altBad.lim} m</strong>).`;
-        setHTML("bannerTxt"+e.suf,txt);
+        htmlCausa=txt;
       }else{ // con causa meteo: desarrollada
         const causas=[...circum];
         if(habBad)causas.push(`${hab} no es su hábitat (exige ${e.habReq})`);
@@ -1394,8 +1395,16 @@ function renderDescripciones(){
           ?`los <strong>${Math.round(alt)} m</strong> de altitud superan su techo (<strong>${altBad.lim} m</strong>) para poder fructificar`
           :`los <strong>${Math.round(alt)} m</strong> de altitud están bajo su base (<strong>${altBad.lim} m</strong>) para poder fructificar`);
         if(sueloBad)causas.push(`el pH (<strong>${coma(phV)}</strong>) queda fuera de su rango (<strong>${e.phR}</strong>)`);
-        setHTML("bannerTxt"+e.suf,`Para <strong>${e.latin}</strong> no hay fructificación posible porque ${causas.join("; además, ")}.`);
+        htmlCausa=`Para <strong>${e.latin}</strong> no hay fructificación posible porque ${causas.join("; además, ")}.`;
       }
+      if(!htmlCausa)continue;
+      setHTML("bannerTxt"+e.suf,htmlCausa);
+      setHTML("porqueTxt"+e.suf,"");
+      const rfN=document.getElementById("ringFill"+e.suf);if(rfN)rfN.style.strokeDasharray=`0 ${RING_C}`; // sin fructificación: campos en nulo (v2.69)
+      const rpN=document.getElementById("ringPct"+e.suf);if(rpN)rpN.textContent="—";
+      const rnN=document.getElementById("ringNivel"+e.suf);if(rnN)rnN.textContent="nulo";
+      document.querySelectorAll("#condList"+e.suf+" .condition-value").forEach(el=>{el.textContent="—";el.classList.remove("lv-ok","lv-mid","lv-bad");});
+      document.querySelectorAll("#detailList"+e.suf+" .mushroom-detail-value").forEach(el=>{el.textContent="—";el.classList.remove("lv-ok","lv-mid","lv-bad");});
     }
     setHTML("porqueTxt"+e.suf,"");
   }
