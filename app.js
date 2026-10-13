@@ -426,7 +426,7 @@ async function tifPixel(prop,la,lo){
     t=_tifCache.get(url);
   }
   if(!t)return undefined;
-  const col=Math.floor((lo-t.x0)/t.sx),row=Math.floor((t.y0-la)/t.sy);
+  const col=Math.floor((lo-t.x0)/t.sx),row=Math.floor((t.y0-la)/Math.abs(t.sy)); // sy viene negativo de geotiff.js
   if(col<0||row<0||col>=t.w||row>=t.h)return null;
   return t.data[row*t.w+col];
 }
@@ -1126,6 +1126,7 @@ function tokensSinLetras(t){
 function goTo(la,lo,etiqueta){
   lat=+la;lon=+lo;
   marker.setLatLng([lat,lon]);map.setView([lat,lon],11);
+  try{if(typeof cotoLayer!=="undefined"&&cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}}catch{}
   predecir(etiqueta||"");
 }
 async function buscar(){
