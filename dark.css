@@ -341,3 +341,6 @@ html,body{overflow-x:clip}
 .param-table{font-size:.78rem}
 .param-table th,.param-table td{padding:6px 8px}
 }
+.mushroom-detail-value.lv-ok{color:var(--success)}
+.mushroom-detail-value.lv-mid{color:var(--warning)}
+.mushroom-detail-value.lv-bad{color:var(--danger)}

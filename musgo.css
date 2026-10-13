@@ -309,3 +309,6 @@ html,body{overflow-x:clip}
   *,*::before,*::after{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+.mushroom-detail-value.lv-ok{color:var(--success)}
+.mushroom-detail-value.lv-mid{color:var(--warning)}
+.mushroom-detail-value.lv-bad{color:var(--danger)}
