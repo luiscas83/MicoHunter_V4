@@ -1025,7 +1025,7 @@ async function aemetOverride(la,lo){
   const r15=retro(15), r10=retro(10), r21=retro(21), r13=retro(13),
     r9=retro(9), r8=retro(8), r7=retro(7);
   const NS=MOTOR_V2?90:30;
-  const semana=[];for(let i=NS-1;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null});}
+  const semana=[];for(let i=NS-1;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null,tx:v&&v.tmax!=null?v.tmax:null,tn:v&&v.tmin!=null?v.tmin:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,tmin7:e7.tmin7,calor:e7.hot,calor30:e7.hot30,
@@ -1810,14 +1810,16 @@ function renderMeteo(){
   const fcD=(clima.fc||[]);
   setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
+  const semT={};if(prov&&prov.semana)for(const s of prov.semana)if(s.tx!=null||s.tn!=null)semT[s.f]=s; // máx/mín de la estación por día
   let ac=0;
   const obsRows=(clima.obsDia||[]).map(o=>{
     const g=sem[o.f], p=g!=null?g:o.p;
     if(p!=null)ac+=p;
-    return{f:o.f,p,tx:o.tx,tn:o.tn,ac};
+    const st=semT[o.f], tx=st&&st.tx!=null?st.tx:o.tx, tn=st&&st.tn!=null?st.tn:o.tn;
+    return{f:o.f,p,tx,tn,ac,st:!!st};
   });
-  setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º":"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
-  T2("metNote",prov?`* lluvia de pluviómetro AEMET ${prov.est} (el cálculo usa el pluviómetro; el resto, modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
+  setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null&&o.tn!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º"+(o.st?" *":""):"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
+  T2("metNote",prov?`* estación AEMET ${prov.est} (lluvia y temperaturas con *; sin marca = modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
 function renderNiscalo(){
