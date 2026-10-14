@@ -1372,7 +1372,7 @@ function renderDescripciones(){
     if(rest!=null&&rest>0){
       const f=new Date();f.setDate(f.getDate()+rest);
       picoTxt=` y el pico para fructificar sería alrededor de <strong>${rest} días</strong>, sobre el <strong>${f.getDate()} de ${MESES_L[f.getMonth()]}</strong>`;
-    }else if(rest===0)picoTxt=` y el pico para fructificar sería <strong>hoy</strong>`;
+    }else if(rest===0)picoTxt=`: el pico es <strong>hoy</strong>`; // pico hoy: caja verde + texto propio (v2.77)
     const phJusto=phV!=null&&r.suelo<1&&r.suelo>0; // pH a medias: avisa del margen en vez de darlo por favorable (v2.76)
     const sueloTxt=(alt!=null&&phV!=null&&c.suelo&&c.suelo.textura)
       ?(phJusto
@@ -1380,7 +1380,10 @@ function renderDescripciones(){
         :` La altitud (<strong>${Math.round(alt)} m</strong>), el pH (<strong>${coma(phV)}</strong>) y el suelo ${c.suelo.textura} también son favorables para su correcto fructificado.`)
       :` La altitud, el pH y el suelo también acompañan.`;
     setHTML("bannerTxt"+e.suf,
-      `Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
+      rest===0
+      ?`¡Hoy es el día en ${hab}! Las lluvias de los últimos días dejaron una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`
+      :`Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
+    if(rest===0){const bH=document.getElementById("banner"+e.suf);if(bH)bH.className="prediction-banner nivel-alto";}
     }else{ // inadecuado: causa de la no fructificación con cifras reales
       const circum=[],habBad=r.flora===0;
       const altBad=(alt!=null&&r.terreno<0.05&&(alt>e.alt[1]||alt<e.alt[0]))?(alt>e.alt[1]?{dir:1,lim:e.alt[1]}:{dir:-1,lim:e.alt[0]}):null;
