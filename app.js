@@ -1,7 +1,7 @@
 // Motor Boletus edulis — port exacto de boletus_engine.py (NO TOCAR pesos)
 const FLORA = {"Pinar":1,"Hayedo":1,"Robledal":1,"Castañeral":1,"Quercíneas":0,"Pradera":0,"Pasto":0,"Bosque mixto":1,"Matorral":0}; // binario v1.40: hábitat de la especie = 1, resto = 0
-const fP14=p=>p<30?0:p<60?.3+.4*(p-30)/30:1;
-const fRes=p=>p<30?.2:p<70?.2+.6*(p-30)/40:p<110?.8+.2*(p-70)/40:1; // reserva P30d
+const fP14=p=>{const e=p<60?p+2:p;return e<30?0:e<60?.3+.4*(e-30)/30:1;}; // perdón +2 L hacia el óptimo (v2.85)
+const fRes=p=>{const e=p<70?p+2:p;return e<30?.2:e<70?.2+.6*(e-30)/40:e<110?.8+.2*(e-70)/40:1;}; // reserva P30d
 const fTA=t=>{if(t<6||t>28)return 0;const e=t>16.2?t-3:t<10.2?t+3:13.2;return Math.exp(-((e-13.2)**2)/(2*25));};
 const fTS=s=>{if(s<7||s>21)return 0;if(s>=12&&s<=16)return 1;if(s>=10&&s<12)return .6+.4*(s-10)/2;if(s>16&&s<=18)return 1-.3*(s-16)/2;return s<10?.3+.3*(s-7)/3:.5;};
 const fHR=h=>h>=80?1:h>=75?.8:h>=65?.4+.4*(h-65)/10:0;
@@ -18,8 +18,8 @@ const NIS_LAG=21; // primeros 7-15 d, pico ~21 d
 const fTA2=t=>{if(t<5||t>24)return 0;const e=t<12?t+3:t>18?t-3:t;if(e>=12&&e<=18)return 1;
   if(e>=8&&e<12)return .5+.5*(e-8)/4;if(e>=5&&e<8)return .2+.3*(e-5)/3;
   if(e>18&&e<=20)return 1-.5*(e-18)/2;return .5-.4*(e-20)/4;};
-const fP14_2=p=>{if(p<25)return 0;if(p<50)return .3+.4*(p-25)/25;return 1;};
-const fRes2=p=>{if(p<30)return .2;if(p<70)return .2+.6*(p-30)/40;if(p<110)return .8+.2*(p-70)/40;return 1;};
+const fP14_2=p=>{p=p<50?p+2:p;if(p<25)return 0;if(p<50)return .3+.4*(p-25)/25;return 1;};
+const fRes2=p=>{p=p<70?p+2:p;if(p<30)return .2;if(p<70)return .2+.6*(p-30)/40;if(p<110)return .8+.2*(p-70)/40;return 1;};
 const fPH2=p=>{const e=p<4.5?p+0.5:p>8?p-0.5:p;if(e<4)return .2;if(e<4.5)return .2+.8*(e-4)/.5;if(e<=8)return 1;
   if(e<=8.5)return 1-.6*(e-8)/.5;return 0;};
 const fAlt2=h=>{h=h>1600?h-200:h<100?h+200:h;if(h>=100&&h<=1600)return 1;if(h>=0&&h<100)return .6;
@@ -30,7 +30,7 @@ const fMes2=m=>m===11?1:m===10?.9:m===9?.85:m===12?.6:m===8?.3:.1;
 const ORO_LAG=21;
 const fTA3=t=>{if(t<10||t>28)return 0;const e=t<16?t+3:t>24?t-3:t;if(e>=16&&e<=24)return 1;
   if(e>=12&&e<16)return .4+.6*(e-12)/4;if(e>24&&e<=28)return 1-.7*(e-24)/4;return .2;};
-const fP14_3=p=>{if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;return 1;};
+const fP14_3=p=>{p=p<50?p+2:p;if(p<30)return 0;if(p<50)return .3+.4*(p-30)/20;return 1;};
 const fPH3=p=>{const e=p<4?p+0.5:p>6?p-0.5:p;if(e>=4&&e<=6)return 1;if(e>6&&e<=7)return .4;if(e>=3.5&&e<4)return .6;return 0;};
 const fAlt3=h=>{h=h>1200?h-200:h<200?h+200:h;if(h>=200&&h<=1200)return 1;if(h>1200&&h<=1500)return 1-.5*(h-1200)/300;
   if(h>=100&&h<200)return .6;return 0;};
@@ -58,7 +58,7 @@ const CHAN_LAG=10;
 const fTA4=t=>{if(t<8||t>26)return 0;const e=t<15?t+3:t>20?t-3:t;if(e>=15&&e<=20)return 1;
   if(e>=12&&e<15)return .5+.5*(e-12)/3;if(e>20&&e<=23)return 1-.5*(e-20)/3;
   if(e>=8&&e<12)return .2+.3*(e-8)/4;return .5-.3*(e-23)/3;}; // 23-26: .5 -> .2
-const fP14_4=p=>{if(p<30)return 0;if(p<60)return (p-30)/30;return 1;}; // óptimo 60-100, sin penalizar el exceso
+const fP14_4=p=>{p=p<60?p+2:p;if(p<30)return 0;if(p<60)return (p-30)/30;return 1;}; // óptimo 60-100, sin penalizar el exceso
 const fPH4=p=>{const e=p<4?p+0.5:p>5.5?p-0.5:p;if(e>=4&&e<=5.5)return 1;if(e>5.5&&e<=6)return .5;if(e>=3.5&&e<4)return .6;return 0;};
 const fAlt4=h=>{h=h>1400?h-200:h<100?h+200:h;if(h>=100&&h<=1400)return 1;if(h>=50&&h<100)return (h-50)/50;
   if(h>1400&&h<=1500)return 1-(h-1400)/100;return 0;};
@@ -88,7 +88,7 @@ function floraNiscalo(cat,componentes){ // solo pinar; mixto con pino vale
 // Traducción aprobada: lag=L(V2), trigger=Ro×2, aire/pH/alt prestados o
 // copiados según tabla. Todo marcado estimado en ficha y leyenda.
 const AER_LAG=9, AES_LAG=9, CAM_LAG=7, PRO_LAG=7, ERY_LAG=10, NUD_LAG=9;
-const fP14U=(p,lo)=>{const hi=lo*2;return p<lo?0:p<hi?.3+.4*(p-lo)/(hi-lo):1;}; // rampa genérica trigger=Ro×2
+const fP14U=(p,lo)=>{const hi=lo*2;p=p<hi?p+2:p;return p<lo?0:p<hi?.3+.4*(p-lo)/(hi-lo):1;}; // rampa genérica trigger=Ro×2
 const fAltAer=h=>{h=h>1100?h-200:h<50?h+200:h;if(h>=50&&h<=1100)return 1;if(h>=0&&h<50)return .5+.5*h/50;
   if(h>1100&&h<=1500)return 1-.5*(h-1100)/400;return 0;};
 const fAltAes=h=>{h=h>1300?h-200:h<300?h+200:h;if(h>=300&&h<=1300)return 1;if(h>=0&&h<300)return .3+.7*h/300;
@@ -245,7 +245,7 @@ async function getJSON(url,ms,headers,reintento){
 const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
 const MESES_S=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 function diasTrig(arr,umb){ // días hacia atrás del primer día de la racha (o del último calificado); null sin disparador
-  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s+2>=umb;};
   let racha=0;
   for(let i=arr.length-1;i>=13&&cal(i);i--)racha++;
   if(racha)return racha-1;
@@ -261,7 +261,7 @@ function fechaTrig(arr,umb,ancla){
 function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando hoy: días que faltan al pico
   // racha de días seguidos (hasta hoy) con ventana de 14 d por encima del umbral: un solo episodio,
   // fijado el primer día que se cumplió; si hoy no califica, se busca el último día que sí hacia atrás
-  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s+2>=umb;};
   let racha=0;
   for(let i=arr.length-1;i>=13&&cal(i);i--)racha++;
   if(racha)return Math.max(0,lag-(racha-1));
@@ -270,7 +270,7 @@ function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando
 }
 function diasPico(arr,lag,umb){ // días desde el pico (0 = hoy, >0 = pasado, <0 = faltan, null sin disparador) (v2.78)
   // misma racha que restantes() pero sin redondear a 0: el pico pasado se cuenta
-  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s+2>=umb;};
   let racha=0;
   for(let i=arr.length-1;i>=13&&cal(i);i--)racha++;
   if(racha)return (racha-1)-lag;
@@ -295,7 +295,7 @@ function recorteTemp(arr,sp){ // quita lo anterior al inicio de temporada (v2)
 }
 function episodios(arr,umb){
   // episodios con disparador: [{trig, pico, hace}] (hace = días desde el pico)
-  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s+2>=umb;};
   const eps=[];let i=arr.length-1;
   const min=Math.min(13,arr.length-1);
   while(i>=Math.max(13,min)){
@@ -1237,7 +1237,7 @@ const mfeCache=new Map();
 let lastCalc=null; // {clima,alt,mes,lugar,fuenteHab,habitatTxt,suelo} para recalcular sin red
 const RING_C=2*Math.PI*54;
 function badge(nota){return nota>=0.8?'<span class="condition-status ok">Bien</span>':nota>=0.4?'<span class="condition-status warning">Flojo</span>':'<span class="condition-status danger">Mal</span>';}
-const lv=n=>n>=0.8?"lv-ok":n>=0.4?"lv-mid":"lv-bad";
+const lv=n=>n>=0.65?"lv-ok":n>=0.4?"lv-mid":"lv-bad"; // verde desde 0,65 (v2.84): el casi-óptimo (58/60, 69/70) ya no ámbar
 function txtCond(n){return n==="excelente"?"Condiciones excelentes de fructificación":n==="bueno"?"Condiciones buenas de fructificación":n==="regular"?"Condiciones regulares de fructificación":"Sin condiciones de fructificación";}
 function nivelClase(n){return n==="excelente"?"nivel-alto":n==="bueno"?"nivel-medio":n==="regular"?"nivel-bajo":"nivel-nulo";}
 function T2(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
