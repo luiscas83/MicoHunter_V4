@@ -1818,7 +1818,7 @@ function renderMeteo(){
     const st=semT[o.f], tx=st&&st.tx!=null?st.tx:o.tx, tn=st&&st.tn!=null?st.tn:o.tn;
     return{f:o.f,p,tx,tn,ac,st:!!st};
   });
-  setHTML("metObsBody",obsRows.map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null&&o.tn!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º"+(o.st?" *":""):"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
+  setHTML("metObsBody",obsRows.slice().reverse().map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null&&o.tn!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º"+(o.st?" *":""):"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
   T2("metNote",prov?`* estación AEMET ${prov.est} (lluvia y temperaturas con *; sin marca = modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
