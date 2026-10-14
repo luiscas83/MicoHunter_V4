@@ -1373,8 +1373,11 @@ function renderDescripciones(){
       const f=new Date();f.setDate(f.getDate()+rest);
       picoTxt=` y el pico para fructificar sería alrededor de <strong>${rest} días</strong>, sobre el <strong>${f.getDate()} de ${MESES_L[f.getMonth()]}</strong>`;
     }else if(rest===0)picoTxt=` y el pico para fructificar sería <strong>hoy</strong>`;
+    const phJusto=phV!=null&&r.suelo<1&&r.suelo>0; // pH a medias: avisa del margen en vez de darlo por favorable (v2.76)
     const sueloTxt=(alt!=null&&phV!=null&&c.suelo&&c.suelo.textura)
-      ?` La altitud (<strong>${Math.round(alt)} m</strong>), el pH (<strong>${coma(phV)}</strong>) y el suelo ${c.suelo.textura} también son favorables para su correcto fructificado.`
+      ?(phJusto
+        ?` La altitud (<strong>${Math.round(alt)} m</strong>) y el suelo ${c.suelo.textura} acompañan, pero el pH (<strong>${coma(phV)}</strong>) va justo para <strong>${e.latin}</strong> (pide <strong>${e.phR}</strong>): aun así puede fructificar, con menos margen.`
+        :` La altitud (<strong>${Math.round(alt)} m</strong>), el pH (<strong>${coma(phV)}</strong>) y el suelo ${c.suelo.textura} también son favorables para su correcto fructificado.`)
       :` La altitud, el pH y el suelo también acompañan.`;
     setHTML("bannerTxt"+e.suf,
       `Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
