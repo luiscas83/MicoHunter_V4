@@ -1347,6 +1347,7 @@ function pintar(calc,ageMin){
   renderAll();
   renderDescripciones();
   renderMeteo();
+  autoOcultar();
 }
 const DESC_SP=[ // descripción en banner (v2.63 favorable, v2.66 causa): plantilla aprobada, cifras del cálculo real
   {suf:"",sp:"edulis",lag:15,umb:60,latin:"Boletus edulis",res:"r",trig:"trigB",rest:"restB",frost:0,heat:28,habReq:"pinar, hayedo, robledal o castañar",alt:[200,2200],phR:"4,5–6,5",aguaMin:30},
@@ -2393,17 +2394,17 @@ document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{
   if(b.dataset.section==="dashboard")setTimeout(()=>map.invalidateSize(),50);
 });
 const SPECIES=[
-  {id:"edulis",name:"Boleto / Hongo",latin:"Boletus edulis",color:"#8b4513",card:"cardEdulis",an:"anEdulis"},
-  {id:"niscalo",name:"Níscalo / Rovelló",latin:"Lactarius deliciosus",color:"#e07b1a",card:"cardNiscalo",an:"anNiscalo"},
-  {id:"oronja",name:"Oronja / Huevo de rey",latin:"Amanita caesarea",color:"#d4a017",card:"cardOronja",an:"anOronja"},
-  {id:"chantarella",name:"Chantarela / Rebozuelo",latin:"Cantharellus cibarius",color:"#eab308",card:"cardChantarella",an:"anChantarella"},
-  {id:"pinophilus",name:"Boleto pinícola / Hongo de pino",latin:"Boletus pinophilus",color:"#a0522d",card:"cardPinophilus",an:"anPinophilus"},
-  {id:"aereus",name:"Boleto bronce / Hongo negro",latin:"Boletus aereus",color:"#7a3b1e",card:"cardAereus",an:"anAereus"},
-  {id:"aestivalis",name:"Boleto reticulado de verano",latin:"Boletus reticulatus",color:"#b5893b",card:"cardAestivalis",an:"anAestivalis"},
-  {id:"campestris",name:"Champiñón silvestre",latin:"Agaricus campestris",color:"#9aa06b",card:"cardCampestris",an:"anCampestris"},
-  {id:"procera",name:"Parasol",latin:"Macrolepiota procera",color:"#8a7a5c",card:"cardProcera",an:"anProcera"},
-  {id:"eryngii",name:"Seta de cardo",latin:"Pleurotus eryngii",color:"#7a8c5a",card:"cardEryngii",an:"anEryngii"},
-  {id:"nuda",name:"Seta de pie azul",latin:"Lepista nuda",color:"#7a6a9a",card:"cardNuda",an:"anNuda"}
+  {id:"edulis",fut:"r",cos:"rR",name:"Boleto / Hongo",latin:"Boletus edulis",color:"#8b4513",card:"cardEdulis",an:"anEdulis"},
+  {id:"niscalo",fut:"rN",cos:"rNR",name:"Níscalo / Rovelló",latin:"Lactarius deliciosus",color:"#e07b1a",card:"cardNiscalo",an:"anNiscalo"},
+  {id:"oronja",fut:"rO",cos:"rOR",name:"Oronja / Huevo de rey",latin:"Amanita caesarea",color:"#d4a017",card:"cardOronja",an:"anOronja"},
+  {id:"chantarella",fut:"rC",cos:"rCR",name:"Chantarela / Rebozuelo",latin:"Cantharellus cibarius",color:"#eab308",card:"cardChantarella",an:"anChantarella"},
+  {id:"pinophilus",fut:"rP",cos:"rPR",name:"Boleto pinícola / Hongo de pino",latin:"Boletus pinophilus",color:"#a0522d",card:"cardPinophilus",an:"anPinophilus"},
+  {id:"aereus",fut:"rAer",cos:"rAerR",name:"Boleto bronce / Hongo negro",latin:"Boletus aereus",color:"#7a3b1e",card:"cardAereus",an:"anAereus"},
+  {id:"aestivalis",fut:"rAes",cos:"rAesR",name:"Boleto reticulado de verano",latin:"Boletus reticulatus",color:"#b5893b",card:"cardAestivalis",an:"anAestivalis"},
+  {id:"campestris",fut:"rCam",cos:"rCamR",name:"Champiñón silvestre",latin:"Agaricus campestris",color:"#9aa06b",card:"cardCampestris",an:"anCampestris"},
+  {id:"procera",fut:"rPro",cos:"rProR",name:"Parasol",latin:"Macrolepiota procera",color:"#8a7a5c",card:"cardProcera",an:"anProcera"},
+  {id:"eryngii",fut:"rEry",cos:"rEryR",name:"Seta de cardo",latin:"Pleurotus eryngii",color:"#7a8c5a",card:"cardEryngii",an:"anEryngii"},
+  {id:"nuda",fut:"rNud",cos:"rNudR",name:"Seta de pie azul",latin:"Lepista nuda",color:"#7a6a9a",card:"cardNuda",an:"anNuda"}
 ];
 const VIS_KEY="especies_visibles_v1";
 const getVis=()=>{try{return Object.assign({edulis:true,niscalo:true,oronja:true,chantarella:true,pinophilus:true,aereus:true,aestivalis:true,campestris:true,procera:true,eryngii:true,nuda:true},JSON.parse(localStorage.getItem(VIS_KEY))||{});}catch{return{edulis:true,niscalo:true,oronja:true,chantarella:true,pinophilus:true,aereus:true,aestivalis:true,campestris:true,procera:true,eryngii:true,nuda:true};}};
@@ -2484,6 +2485,16 @@ function renderSpeciesSelector(){
     localStorage.setItem(VIS_KEY,JSON.stringify(v));
     applyVisibility();renderSpeciesSelector();
   });
+}
+function autoOcultar(){ // v2.81: sin previsión (futuro y cosecha <40 = banner rojo) la tarjeta sale del dashboard y su check se desactiva; con previsión no se toca nada (se respeta el apagado manual) y en urbano/fallo no se toca nada
+  if(!lastCalc||lastCalc.urbano)return;
+  const v=getVis();let cambia=false;
+  for(const sp of SPECIES){
+    const f=lastCalc[sp.fut],c=lastCalc[sp.cos];
+    if(f&&c&&f.score<40&&c.score<40&&v[sp.id]!==false){v[sp.id]=false;cambia=true;}
+  }
+  if(cambia)localStorage.setItem(VIS_KEY,JSON.stringify(v));
+  applyVisibility();renderSpeciesSelector();
 }
 function applyVisibility(){
   const vis=getVis();
