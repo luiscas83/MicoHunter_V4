@@ -8,6 +8,11 @@ const fHR=h=>h>=80?1:h>=75?.8:h>=65?.4+.4*(h-65)/10:0;
 const fAlt=h=>{h=h>1800?h-200:h<600?h+200:h;return h>=600&&h<=1800?1:h>=500&&h<600?.5+.5*(h-500)/100:h>1800&&h<=2000?1-.5*(h-1800)/200:h>=400&&h<500?.3:0;};
 const fPH=p=>{const e=p<4.5?p+0.5:p>6.5?p-0.5:p;return e>=4.5&&e<=6.5?1:e>6.5&&e<=7.2?.5:e>=4&&e<4.5?.6:0;};
 const fMes=m=>m===10?1:(m===9||m===11)?.85:(m===8||m===12)?.4:.1;
+const LAPSE=0.0065; // °C/m: la estación mide a su altitud; el cálculo lleva sus temperaturas a la del punto (v2.75)
+function fTAdias(arr,scalar,f){ // puntúa cada día y promedia (v2.75); sin serie diaria, puntúa la media como antes
+  if(arr&&arr.length){const v=arr.filter(x=>x!=null&&!isNaN(x)).map(f);if(v.length)return v.reduce((a,b)=>a+b,0)/v.length;}
+  return f(scalar);
+}
 // --- Níscalo (Lactarius deliciosus): valores del usuario ---
 const NIS_LAG=21; // primeros 7-15 d, pico ~21 d
 const fTA2=t=>{if(t<5||t>24)return 0;const e=t<12?t+3:t>18?t-3:t;if(e>=12&&e<=18)return 1;
@@ -39,7 +44,7 @@ function floraOronja(cat,especies){ // binario v1.40: robledal/castañar/mixto/q
 }
 function scoreOronja(o){
   const veto=hayHelada(o,2)||hayCalor(o,30)||o.viento;
-  const d={P14:fP14_3(o.p14),res:fRes2(o.p30),TA:fTA3(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14_3(o.p14),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA3),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAlt3(o.alt),sue=fPH3(o.ph),flo=o.floraNota??0.70,tem=fMes3(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -66,7 +71,7 @@ function floraChantarella(cat,especies){ // pinar, hayedo, robledal, castañar, 
 }
 function scoreChantarella(o){
   const veto=hayHelada(o,0); // solo helada: sin veto de viento ni de máxima aislada (la curva TA ya anula >26 de media)
-  const d={P14:fP14_4(o.p14),res:fRes2(o.p30),TA:fTA4(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14_4(o.p14),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA4),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAlt4(o.alt),sue=fPH4(o.ph),flo=o.floraNota??0.70,tem=fMes4(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -126,7 +131,7 @@ function floraNuda(cat){ // hojarasca: hayedo/robledal/castañar/pinar/mixto/mat
 }
 function scoreAer(o){ // aereus: aire oronja, pH boleto, veto 0
   const veto=hayHelada(o,0)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTA3(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA3),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltAer(o.alt),sue=fPH(o.ph),flo=o.floraNota??0.70,tem=fMesAer(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -135,7 +140,7 @@ function scoreAer(o){ // aereus: aire oronja, pH boleto, veto 0
 }
 function scoreAes(o){ // aestivalis: aire oronja, pH amplio, veto 0
   const veto=hayHelada(o,0)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,30),res:fRes2(o.p30),TA:fTA3(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,30),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA3),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltAes(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMesAes(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -144,7 +149,7 @@ function scoreAes(o){ // aestivalis: aire oronja, pH amplio, veto 0
 }
 function scoreCam(o){ // campestris: aire chantarela, pH amplio, veto -1
   const veto=hayHelada(o,-1)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,20),res:fRes2(o.p30),TA:fTA4(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,20),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA4),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltCam(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMesCam(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -153,7 +158,7 @@ function scoreCam(o){ // campestris: aire chantarela, pH amplio, veto -1
 }
 function scorePro(o){ // procera: aire oronja, pH amplio, veto +1
   const veto=hayHelada(o,1)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTA3(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA3),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltPro(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMesPro(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -162,7 +167,7 @@ function scorePro(o){ // procera: aire oronja, pH amplio, veto +1
 }
 function scoreEry(o){ // eryngii: aire chantarela, pH amplio, veto +3
   const veto=hayHelada(o,3)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTA4(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,25),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA4),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltEry(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMesEry(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -171,7 +176,7 @@ function scoreEry(o){ // eryngii: aire chantarela, pH amplio, veto +3
 }
 function scoreNud(o){ // nuda: aire boleto, pH amplio, veto -1
   const veto=hayHelada(o,-1)||hayCalor(o)||o.viento;
-  const d={P14:fP14U(o.p14,30),res:fRes2(o.p30),TA:fTA(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14U(o.p14,30),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAltNud(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMesNud(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -184,7 +189,7 @@ function scoreNud(o){ // nuda: aire boleto, pH amplio, veto -1
 const PINO_LAG=13;
 function scorePinophilus(o){
   const veto=hayHelada(o,0)||hayCalor(o)||o.viento;
-  const d={P14:fP14(o.p14),res:fRes(o.p30),TA:fTA(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14(o.p14),res:fRes(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAlt(o.alt),sue=fPH(o.ph),flo=o.floraNota??0.70,tem=fMes(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -208,7 +213,7 @@ function vetoDe(c,umbMin){ // umbrales por especie: edulis 0, níscalo -3
 }
 function scoreNiscalo(o){
   const vd=vetoDe(o, -3);
-  const d={P14:fP14_2(o.p14),res:fRes2(o.p30),TA:fTA2(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14_2(o.p14),res:fRes2(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA2),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(vd.veto)clima=0;
   const ter=fAlt2(o.alt),sue=fPH2(o.ph),flo=o.floraNota??0.70,tem=fMes2(o.mes);
   const prob=clima*ter*sue*flo*tem, sc=+(prob*100).toFixed(1);
@@ -217,7 +222,7 @@ function scoreNiscalo(o){
 }
 function score(o){
   const veto=hayHelada(o,0)||hayCalor(o)||o.viento;
-  const d={P14:fP14(o.p14),res:fRes(o.p30),TA:fTA(o.ta),TS:fTS(o.ts),HR:fHR(o.hr)};
+  const d={P14:fP14(o.p14),res:fRes(o.p30),TA:fTAdias(o.ta7d,o.ta,fTA),TS:fTS(o.ts),HR:fHR(o.hr)};
   let clima=.4*d.P14+.2*d.res+.2*d.TA+.1*d.TS+.1*d.HR; if(veto)clima=0;
   const ter=fAlt(o.alt),sue=fPH(o.ph),flo=FLORA[o.flora]??0,tem=fMes(o.mes);
   const prob=clima*ter*sue*flo*tem;
@@ -356,20 +361,20 @@ async function fetchClima(la,lo){
   const tsP=avg(HT.slice(-(PINO_LAG*24+168),-(PINO_LAG*24)));
   const HnP=H.slice(-(PINO_LAG+7),-PINO_LAG), WnP=W.slice(-(PINO_LAG+7),-PINO_LAG);
   const mkR=lag=>({p14:P.slice(-(lag+14),-lag).reduce((a,v)=>a+v,0),p30:P.slice(-(lag+30),-lag).reduce((a,v)=>a+v,0),
-    ta:avg(T.slice(-(lag+7),-lag)),ts:avg(HT.slice(-(lag*24+168),-(lag*24))),hr:avg(H.slice(-(lag+7),-lag)),
+    ta:avg(T.slice(-(lag+7),-lag)),ta7d:T.slice(-(lag+7),-lag),ts:avg(HT.slice(-(lag*24+168),-(lag*24))),hr:avg(H.slice(-(lag+7),-lag)),
     tmin:Math.min(...Mn.slice(-(lag+7),-lag)),tmin7:Mn.slice(-(lag+7),-lag),tmax:Math.max(...Mx.slice(-(lag+7),-lag)),
     vientoMax:Math.max(...W.slice(-(lag+7),-lag)),
     calor:Mx.slice(-(lag+7),-lag).filter(v=>v!=null&&v>=28).length,
     calor30:Mx.slice(-(lag+7),-lag).filter(v=>v!=null&&v>=30).length});
   const retro9=mkR(9), retro8=mkR(8), retro7=mkR(7);
   const retro13={p14:P.slice(-(PINO_LAG+14),-PINO_LAG).reduce((a,v)=>a+v,0),p30:P.slice(-(PINO_LAG+30),-PINO_LAG).reduce((a,v)=>a+v,0),
-    ta:avg(t7p),ts:tsP,hr:avg(HnP),tmin:Math.min(...mn7p),tmin7:mn7p,tmax:Math.max(...mx7p),vientoMax:Math.max(...WnP),calor:mx7p.filter(v=>v!=null&&v>=28).length,calor30:mx7p.filter(v=>v!=null&&v>=30).length};
+    ta:avg(t7p),ta7d:t7p.slice(),ts:tsP,hr:avg(HnP),tmin:Math.min(...mn7p),tmin7:mn7p,tmax:Math.max(...mx7p),vientoMax:Math.max(...WnP),calor:mx7p.filter(v=>v!=null&&v>=28).length,calor30:mx7p.filter(v=>v!=null&&v>=30).length};
   const retro10={p14:P.slice(-(CHAN_LAG+14),-CHAN_LAG).reduce((a,v)=>a+v,0),p30:P.slice(-(CHAN_LAG+30),-CHAN_LAG).reduce((a,v)=>a+v,0),
-    ta:avg(t7c),ts:tsC,hr:avg(HnC),tmin:Math.min(...mn7c),tmin7:mn7c,tmax:Math.max(...mx7c),vientoMax:Math.max(...WnC),calor:mx7c.filter(v=>v!=null&&v>=28).length,calor30:mx7c.filter(v=>v!=null&&v>=30).length};
+    ta:avg(t7c),ta7d:t7c.slice(),ts:tsC,hr:avg(HnC),tmin:Math.min(...mn7c),tmin7:mn7c,tmax:Math.max(...mx7c),vientoMax:Math.max(...WnC),calor:mx7c.filter(v=>v!=null&&v>=28).length,calor30:mx7c.filter(v=>v!=null&&v>=30).length};
   const retro21={p14:P.slice(-(NIS_LAG+14),-NIS_LAG).reduce((a,v)=>a+v,0),p30:P.slice(-(NIS_LAG+30),-NIS_LAG).reduce((a,v)=>a+v,0),
-    ta:avg(t7n),ts:tsN,hr:avg(Hn),tmin:Math.min(...mn7n),tmin7:mn7n,tmax:Math.max(...mx7n),vientoMax:Math.max(...Wn),calor:mx7n.filter(v=>v!=null&&v>=28).length,calor30:mx7n.filter(v=>v!=null&&v>=30).length};
+    ta:avg(t7n),ta7d:t7n.slice(),ts:tsN,hr:avg(Hn),tmin:Math.min(...mn7n),tmin7:mn7n,tmax:Math.max(...mx7n),vientoMax:Math.max(...Wn),calor:mx7n.filter(v=>v!=null&&v>=28).length,calor30:mx7n.filter(v=>v!=null&&v>=30).length};
   const retro={p14:P.slice(-29,-15).reduce((a,v)=>a+v,0),p30:P.slice(-45,-15).reduce((a,v)=>a+v,0),
-    ta:avg(t7r),ts:tsR,hr:avg(Hr),tmin:Math.min(...mn7r),tmin7:mn7r,tmax:Math.max(...mx7r),vientoMax:Math.max(...Wr),calor:mx7r.filter(v=>v!=null&&v>=28).length,calor30:mx7r.filter(v=>v!=null&&v>=30).length};
+    ta:avg(t7r),ta7d:t7r.slice(),ts:tsR,hr:avg(Hr),tmin:Math.min(...mn7r),tmin7:mn7r,tmax:Math.max(...mx7r),vientoMax:Math.max(...Wr),calor:mx7r.filter(v=>v!=null&&v>=28).length,calor30:mx7r.filter(v=>v!=null&&v>=30).length};
   const fc=[]; // previsión 7 días desde hoy
   for(let i=n;i<Math.min(n+8,D.time.length);i++)fc.push({d:D.time[i],tx:D.temperature_2m_max[i]??null,tn:D.temperature_2m_min[i]??null,pp:D.precipitation_sum[i]??0,prob:D.precipitation_probability_max?D.precipitation_probability_max[i]??null:null,w:D.wind_speed_10m_max[i]??null});
   const C=d.current||{};
@@ -391,7 +396,7 @@ async function fetchClima(la,lo){
     }
   }catch(e){hoyTramos=[];}
   const modDia={};for(let i=Math.max(0,n-14);i<n;i++)modDia[D.time[i]]=D.precipitation_sum[i]??0; // modelo reciente, solo para el hueco AEMET
-  return {p14,p30,ta:avg(t7),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmin7:mn7,tmax:Math.max(...mx7),calor:mx7.filter(v=>v!=null&&v>=28).length,calor30:mx7.filter(v=>v!=null&&v>=30).length,
+  return {p14,p30,ta:avg(t7),ta7d:t7.slice(),ts,hr:avg(H.slice(-7)),tmin:Math.min(...mn7),tmin7:mn7,tmax:Math.max(...mx7),calor:mx7.filter(v=>v!=null&&v>=28).length,calor30:mx7.filter(v=>v!=null&&v>=30).length,
     vientoMax:Math.max(...W.slice(-7)),hoyP,retro,retro10,retro21,retro13,retro9,retro8,retro7,ahora,fc,obsDia,hoyTramos,modDia,
     restB:restantes(hist45,15,60),restN:restantes(hist45,21,50),restC:restantes(hist45,10,60),restP:restantes(hist45,13,60),
     restAer:restantes(hist45,9,50),restAes:restantes(hist45,9,60),restCam:restantes(hist45,7,40),
@@ -886,7 +891,7 @@ async function fetchLugar(la,lo){
 // --- 6) AEMET OpenData (opcional): pluviómetro real más cercano. Clave gratuita
 // en opendata.aemet.es; se guarda SOLO en este navegador (localStorage), nunca en el repo.
 const AEMET_BASE="https://opendata.aemet.es/opendata";
-const AEMET_KEY="aemet_key_v1", AEMET_INV="aemet_inv_v1";
+const AEMET_KEY="aemet_key_v1", AEMET_INV="aemet_inv_v2"; // v2: con altitud de estación (lapse-rate v2.75)
 // Clave ofuscada (invertida + base64) para no dejarla legible en el código.
 // Ojo: ofuscación, no cifrado real — el navegador la necesita en claro para llamar a AEMET.
 const AEMET_KX="RS04bHF4cUwzTmthd3pucl9FWGhuM2ZkVHlxb0NLdTFLY2VodkZOaFhJcy45SmlJNklTWnM5bWNpd2lJNFlETzFnalo1RURaM01UTXRjVE9tSldMMUFUWTAwU1p5a2pZdGNETWhKRFppVkdNaW9qSWtsa2NsTlhkaXdTTjJJek01TVRNNWNUTTZJQ2RobG1Jc0lDVkYxVVJCSmlPaU0zY3BKQ0wxWWpNek1ETXdBRE94b2pJd2hYWml3aUk0WURPMWdqWjVFRFozTVRNdGNUT21KV0wxQVRZMDBTWnlrall0Y0RNaEpEWmlWR01pb2pJcFJuYWl3aUl0OTJZdXdXYWgxMlpBTkRPekYyWXpsV2RzSmlPaUlXZHpKeWUuOUppTjFJelVJSmlPaWNHYmhKeWU=";
@@ -954,7 +959,8 @@ async function aemetInventario(){ // ~900 estaciones; caché 90 días
     if(c&&Date.now()-c.t<90*864e5&&c.list&&c.list.length){aemetInvMem=c.list;return c.list;}}catch{}
   const list=await aemetGet("/api/valores/climatologicos/inventarioestaciones/todasestaciones");
   const norm=(list||[]).map(e=>({ind:e.indicativo,nombre:e.nombre,
-    la:coordA(e.latitud,true),lo:coordA(e.longitud,false)}))
+    la:coordA(e.latitud,true),lo:coordA(e.longitud,false),
+    alts:e.altitud!=null&&!isNaN(parseFloat(String(e.altitud).replace(",",".")))?parseFloat(String(e.altitud).replace(",",".")):null})) // m (v2.75)
     .filter(e=>e.ind&&e.la!=null&&e.lo!=null);
   if(!norm.length)throw new Error("inventario AEMET vacío");
   aemetInvMem=norm;
@@ -998,29 +1004,31 @@ async function aemetOverride(la,lo){
   const dia=n=>{const d=new Date(ultD);d.setUTCDate(d.getUTCDate()-n);return d.toISOString().slice(0,10);};
   const rec=k=>serie.by[k];
   const suma=n=>{let s=0,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v.prec!=null){s+=v.prec;c++;}}return{s,c};};
-  const ext=n=>{let mn=null,mx=null,c=0,hot=0,hot30=0,tm=[];for(let i=0;i<n;i++){const v=rec(dia(i));if(!v){tm.push(null);continue;}
+  const ext=n=>{let mn=null,mx=null,c=0,hot=0,hot30=0,tm=[],tx7=[],td7=[];for(let i=0;i<n;i++){const v=rec(dia(i));if(!v){tm.push(null);tx7.push(null);td7.push(null);continue;}
     if(v.tmin!=null){mn=mn==null?v.tmin:Math.min(mn,v.tmin);tm.push(v.tmin);}else tm.push(null);
-    if(v.tmax!=null){mx=mx==null?v.tmax:Math.max(mx,v.tmax);}
+    if(v.tmax!=null){mx=mx==null?v.tmax:Math.max(mx,v.tmax);tx7.push(v.tmax);}else tx7.push(null);
+    td7.push(v.tmed!=null?v.tmed:null);
     if(v.tmax!=null&&v.tmax>=28)hot++;
     if(v.tmax!=null&&v.tmax>=30)hot30++;
-    if(v.tmin!=null||v.tmax!=null)c++;}return{mn,mx,c,hot,hot30,tmin7:tm};};
+    if(v.tmin!=null||v.tmax!=null)c++;}return{mn,mx,c,hot,hot30,tmin7:tm,tmax7:tx7,tmed7:td7};};
   const s14=suma(14), s30=suma(30), e7=ext(7);
   const media=(n,k)=>{let s=0,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v[k]!=null){s+=v[k];c++;}}return{s,c};};
   const rmax=n=>{let m=null,c=0;for(let i=0;i<n;i++){const v=rec(dia(i));if(v&&v.racha!=null){m=m==null?v.racha:Math.max(m,v.racha);c++;}}return{m,c};};
   const ta7=media(7,"tmed"), hr7=media(7,"hrmed"), w7=rmax(7);
   if(s14.c<10||s30.c<20||e7.mn==null||e7.mx==null||e7.c<5){sinDatos=true;continue;}
-  const retro=lag=>{let p14=0,p30=0,c14=0,mn=null,mx=null,sta=0,shr=0,cta=0,chr=0,vm=null,hot=0,hot30=0,tmn=[];
+  const retro=lag=>{let p14=0,p30=0,c14=0,mn=null,mx=null,sta=0,shr=0,cta=0,chr=0,vm=null,hot=0,hot30=0,tmn=[],tmx=[],tmd=[];
     for(let i=0;i<14;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null){p14+=v.prec;c14++;}}
     for(let i=0;i<30;i++){const v=rec(dia(lag+i));if(v&&v.prec!=null)p30+=v.prec;}
-    for(let i=0;i<7;i++){const v=rec(dia(lag+i));if(!v){tmn.push(null);continue;}
+    for(let i=0;i<7;i++){const v=rec(dia(lag+i));if(!v){tmn.push(null);tmx.push(null);tmd.push(null);continue;}
       if(v.tmin!=null){mn=mn==null?v.tmin:Math.min(mn,v.tmin);tmn.push(v.tmin);}else tmn.push(null);
-      if(v.tmax!=null)mx=mx==null?v.tmax:Math.max(mx,v.tmax);
+      if(v.tmax!=null){mx=mx==null?v.tmax:Math.max(mx,v.tmax);tmx.push(v.tmax);}else tmx.push(null);
+      tmd.push(v.tmed!=null?v.tmed:null);
       if(v.tmax!=null&&v.tmax>=28)hot++;
       if(v.tmax!=null&&v.tmax>=30)hot30++;
       if(v.tmed!=null){sta+=v.tmed;cta++;}
       if(v.hrmed!=null){shr+=v.hrmed;chr++;}
       if(v.racha!=null)vm=vm==null?v.racha:Math.max(vm,v.racha);}
-    return{p14,p30,tmin:mn,tmax:mx,calor:hot,calor30:hot30,tmin7:tmn,ok:c14>=10&&mn!=null&&mx!=null,
+    return{p14,p30,tmin:mn,tmax:mx,calor:hot,calor30:hot30,tmin7:tmn,tmax7:tmx,tmed7:tmd,ok:c14>=10&&mn!=null&&mx!=null,
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r10=retro(10), r21=retro(21), r13=retro(13),
     r9=retro(9), r8=retro(8), r7=retro(7);
@@ -1028,6 +1036,7 @@ async function aemetOverride(la,lo){
   const semana=[];for(let i=NS-1;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null,tx:v&&v.tmax!=null?v.tmax:null,tn:v&&v.tmin!=null?v.tmin:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
+    alts:best.alts??null,tmax7:e7.tmax7,tmed7:e7.tmed7, // series diarias crudas + altitud: la corrección se aplica al fusionar (v2.75)
     p14:+s14.s.toFixed(1),p30:+s30.s.toFixed(1),tmin:e7.mn,tmax:e7.mx,tmin7:e7.tmin7,calor:e7.hot,calor30:e7.hot30,
     ta:ta7.c>=5?+(ta7.s/ta7.c).toFixed(1):null,hr:hr7.c>=5?+(hr7.s/hr7.c).toFixed(0):null,vmax:w7.m,
     r15,r10,r21,r13,r9,r8,r7,serie45};
@@ -1564,10 +1573,16 @@ async function predecir(etiqueta){
       clima.trigB=fechaTrig(arr45,60,ancla);clima.trigN=fechaTrig(arr45,50,ancla);clima.trigC=fechaTrig(arr45,60,ancla);clima.trigP=fechaTrig(arr45,60,ancla);
       clima.trigAer=fechaTrig(arr45,50,ancla);clima.trigAes=fechaTrig(arr45,60,ancla);clima.trigCam=fechaTrig(arr45,40,ancla);
       clima.trigPro=fechaTrig(arr45,50,ancla);clima.trigEry=fechaTrig(arr45,50,ancla);clima.trigNud=fechaTrig(arr45,60,ancla);
-      clima.tmin=prov.tmin;clima.tmax=prov.tmax;clima.tmin7=prov.tmin7;
-      if(prov.calor!=null)clima.calor=prov.calor;
-      if(prov.calor30!=null)clima.calor30=prov.calor30;
-      if(prov.ta!=null)clima.ta=prov.ta;
+      // Lapse-rate (v2.75): la estación mide a su altitud; se lleva al punto (0,65 °C/100 m). Sin altitudes, sin corrección.
+      const corr=(prov.alts!=null&&alt!=null)?LAPSE*(prov.alts-alt):0;
+      const shC=v=>v==null?null:+(v+corr).toFixed(1);
+      const shA=a=>(a||[]).map(v=>v==null?null:+(v+corr).toFixed(1));
+      const ok7=a=>a&&a.filter(v=>v!=null).length>=5;
+      clima.tmin=shC(prov.tmin);clima.tmax=shC(prov.tmax);clima.tmin7=shA(prov.tmin7);
+      if(prov.tmax7) {clima.calor=prov.tmax7.filter(v=>v!=null&&v+corr>=28).length;clima.calor30=prov.tmax7.filter(v=>v!=null&&v+corr>=30).length;}
+      else{if(prov.calor!=null)clima.calor=prov.calor;if(prov.calor30!=null)clima.calor30=prov.calor30;}
+      if(prov.ta!=null)clima.ta=shC(prov.ta);
+      if(ok7(prov.tmed7))clima.ta7d=shA(prov.tmed7); // días para puntuar uno a uno (si no, queda el modelo)
       if(prov.hr!=null)clima.hr=prov.hr;
       if(prov.vmax!=null)clima.vientoMax=prov.vmax;
       Object.assign(clima.retro,{p14:prov.r15.p14,p30:prov.r15.p30});
@@ -1577,19 +1592,18 @@ async function predecir(etiqueta){
       Object.assign(clima.retro7,{p14:prov.r7.p14,p30:prov.r7.p30});
       Object.assign(clima.retro10,{p14:prov.r10.p14,p30:prov.r10.p30});
       Object.assign(clima.retro21,{p14:prov.r21.p14,p30:prov.r21.p30});
-      if(prov.r15.ok)Object.assign(clima.retro,{tmin:prov.r15.tmin,tmax:prov.r15.tmax,tmin7:prov.r15.tmin7,calor:prov.r15.calor,calor30:prov.r15.calor30});
-      if(prov.r13.ok)Object.assign(clima.retro13,{tmin:prov.r13.tmin,tmax:prov.r13.tmax,tmin7:prov.r13.tmin7,calor:prov.r13.calor,calor30:prov.r13.calor30});
-      if(prov.r9.ok)Object.assign(clima.retro9,{tmin:prov.r9.tmin,tmax:prov.r9.tmax,tmin7:prov.r9.tmin7,calor:prov.r9.calor,calor30:prov.r9.calor30});
-      if(prov.r8.ok)Object.assign(clima.retro8,{tmin:prov.r8.tmin,tmax:prov.r8.tmax,tmin7:prov.r8.tmin7,calor:prov.r8.calor,calor30:prov.r8.calor30});
-      if(prov.r7.ok)Object.assign(clima.retro7,{tmin:prov.r7.tmin,tmax:prov.r7.tmax,tmin7:prov.r7.tmin7,calor:prov.r7.calor,calor30:prov.r7.calor30});
-      if(prov.r10.ok)Object.assign(clima.retro10,{tmin:prov.r10.tmin,tmax:prov.r10.tmax,tmin7:prov.r10.tmin7,calor:prov.r10.calor,calor30:prov.r10.calor30});
-      if(prov.r21.ok)Object.assign(clima.retro21,{tmin:prov.r21.tmin,tmax:prov.r21.tmax,tmin7:prov.r21.tmin7,calor:prov.r21.calor,calor30:prov.r21.calor30});
       for(const par of[[clima.retro,prov.r15],[clima.retro10,prov.r10],[clima.retro21,prov.r21],[clima.retro13,prov.r13],[clima.retro9,prov.r9],[clima.retro8,prov.r8],[clima.retro7,prov.r7]]){
-        if(par[1].ta!=null)par[0].ta=par[1].ta;
-        if(par[1].hr!=null)par[0].hr=par[1].hr;
-        if(par[1].vmax!=null)par[0].vientoMax=par[1].vmax;
-        if(par[1].calor!=null)par[0].calor=par[1].calor;
-        if(par[1].calor30!=null)par[0].calor30=par[1].calor30;
+        const O=par[0],R=par[1];
+        if(R.ta!=null)O.ta=shC(R.ta);
+        if(R.hr!=null)O.hr=R.hr;
+        if(R.vmax!=null)O.vientoMax=R.vmax;
+        if(R.tmax7){O.calor=R.tmax7.filter(v=>v!=null&&v+corr>=28).length;O.calor30=R.tmax7.filter(v=>v!=null&&v+corr>=30).length;}
+        else{if(R.calor!=null)O.calor=R.calor;if(R.calor30!=null)O.calor30=R.calor30;}
+        if(R.ok){
+          if(R.tmin7){O.tmin7=shA(R.tmin7);const m=O.tmin7.filter(v=>v!=null);if(m.length)O.tmin=Math.min(...m);}
+          if(R.tmax7){const mx=R.tmax7.map(v=>v==null?null:v+corr).filter(v=>v!=null);if(mx.length)O.tmax=Math.max(...mx);}
+          if(ok7(R.tmed7))O.ta7d=shA(R.tmed7);
+        }
       }
     }
     const mes=new Date().getMonth()+1;
@@ -1819,7 +1833,7 @@ function renderMeteo(){
     return{f:o.f,p,tx,tn,ac,st:!!st};
   });
   setHTML("metObsBody",obsRows.slice().reverse().map(o=>`<tr><td>${fD(o.f)}</td><td class="num">${o.p!=null?o.p.toFixed(1)+" mm"+(sem[o.f]!=null?" *":""):"—"}</td><td class="num">${o.tx!=null&&o.tn!=null?o.tx.toFixed(0)+"º / "+o.tn.toFixed(0)+"º"+(o.st?" *":""):"—"}</td><td class="num">${o.ac.toFixed(1)} mm</td></tr>`).join(""));
-  T2("metNote",prov?`* estación AEMET ${prov.est} (lluvia y temperaturas con *; sin marca = modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
+  T2("metNote",prov?`* estación AEMET ${prov.est} (lluvia y temperaturas con *; el cálculo lleva sus temperaturas a la altitud del punto; sin marca = modelo).`:`Observado del modelo (sin pluviómetro AEMET en 25 km).`);
 }
 let specAn="edulis";
 function renderNiscalo(){
