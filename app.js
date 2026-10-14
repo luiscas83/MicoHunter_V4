@@ -1368,7 +1368,7 @@ function renderDescripciones(){
       ?` La altitud (<strong>${Math.round(alt)} m</strong>), el pH (<strong>${coma(phV)}</strong>) y el suelo ${c.suelo.textura} también son favorables para su correcto fructificado.`
       :` La altitud, el pH y el suelo también acompañan.`;
     setHTML("bannerTxt"+e.suf,
-      `Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para su fructificación; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
+      `Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
     }else{ // inadecuado: causa de la no fructificación con cifras reales
       const circum=[],habBad=r.flora===0;
       const altBad=(alt!=null&&r.terreno<0.05&&(alt>e.alt[1]||alt<e.alt[0]))?(alt>e.alt[1]?{dir:1,lim:e.alt[1]}:{dir:-1,lim:e.alt[0]}):null;
