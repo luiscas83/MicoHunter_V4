@@ -151,7 +151,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 
 /* ── Banner + porqué ──────────────────────────────── */
 .prediction-banner{display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:10px;border-radius:var(--radius-sm);
-  font-size:.85rem;font-weight:600;text-align:left;border:1px solid}
+  font-size:.85rem;font-weight:600;text-align:justify;border:1px solid}
+.prediction-text{flex:1;text-align:justify;hyphens:auto}
 .prediction-banner.nivel-alto,.prediction-banner.nivel-medio{background:#eef3df;color:#42522a;border-color:#b9cc60}
 .prediction-banner.nivel-bajo{background:#f7f0d8;color:#7a6420;border-color:#d9c46a}
 .prediction-banner.nivel-nulo{background:#f7e8e4;color:#96402e;border-color:#d9a8a0}
