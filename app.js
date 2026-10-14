@@ -268,10 +268,17 @@ function restantes(arr,lag,umb){ // arr cronológico de lluvia diaria terminando
   for(let d=arr.length-2;d>=13;d--)if(cal(d))return Math.max(0,lag-(arr.length-1-d));
   return lag; // sin disparador claro: el plazo entero
 }
-// --- Motor v2 (prueba): corte por temporada + restos pasados. v1 por defecto.
-// Cambiar: localStorage.setItem("mh-motor","v2") (o "v1") + recargar.
-let MOTOR_V2=false;
-try{if(localStorage.getItem("mh-motor")==="v2")MOTOR_V2=true;}catch{}
+function diasPico(arr,lag,umb){ // días desde el pico (0 = hoy, >0 = pasado, <0 = faltan, null sin disparador) (v2.78)
+  // misma racha que restantes() pero sin redondear a 0: el pico pasado se cuenta
+  const cal=i=>{let s=0;for(let j=i-13;j<=i;j++)s+=arr[j]??0;return s>=umb;};
+  let racha=0;
+  for(let i=arr.length-1;i>=13&&cal(i);i--)racha++;
+  if(racha)return (racha-1)-lag;
+  for(let d=arr.length-2;d>=13;d--)if(cal(d))return (arr.length-1-d)-lag;
+  return null;
+}
+// --- Motor v2 siempre (v1 retirado en v2.78): corte por temporada + restos pasados ---
+const MOTOR_V2=true; // permanente; el selector y la rama v1 están eliminados
 const TEMP_INICIO={edulis:8,niscalo:8,oronja:7,chantarella:6,pinophilus:8,
   aereus:6,aestivalis:5,campestris:6,procera:7,eryngii:3,nuda:9}; // mes de corte
 const PERSISTE={edulis:30,niscalo:30,oronja:20,chantarella:20,pinophilus:30,
@@ -279,7 +286,6 @@ const PERSISTE={edulis:30,niscalo:30,oronja:20,chantarella:20,pinophilus:30,
 const MATA={edulis:[0,28],niscalo:[-3,28],oronja:[2,30],chantarella:[0,99],pinophilus:[0,28],
   aereus:[0,28],aestivalis:[0,28],campestris:[-1,28],procera:[1,28],eryngii:[3,28],nuda:[-1,28]}; // [helada,calor] que pudre restos
 function recorteTemp(arr,sp){ // quita lo anterior al inicio de temporada (v2)
-  if(!MOTOR_V2)return arr;
   const hoy=new Date();
   let ini=new Date(hoy.getFullYear(),(TEMP_INICIO[sp]||8)-1,1);
   if(hoy<ini)ini=new Date(hoy.getFullYear()-1,(TEMP_INICIO[sp]||8)-1,1);
@@ -301,8 +307,8 @@ function episodios(arr,umb){
   return eps.map(e=>({...e,pico:e.trig,hace:n-e.trig})).filter(e=>e.trig>=13);
 }
 function restosPasados(sp,lag,umb){
-  // picos pasados con seta quizá aún en el campo (v2). [] en v1 o sin datos.
-  if(!MOTOR_V2||!lastCalc||!lastCalc.clima)return[];
+  // picos pasados con seta quizá aún en el campo. [] sin datos.
+  if(!lastCalc||!lastCalc.clima)return[];
   const c=lastCalc.clima;
   if(!c.serie||c.serie.length<28||!c.fechas65)return[];
   const arr=recorteTemp(c.serie.slice(),sp);
@@ -328,8 +334,7 @@ function restosPasados(sp,lag,umb){
 }
 // --- 1) Open-Meteo: 30 días atrás + hoy (observado), suelo 18 cm (micorriza) ---
 async function fetchClima(la,lo){
-  const PD=MOTOR_V2?92:65; // v2: 90 días de observado para restos
-  const NOBS=MOTOR_V2?90:30;
+  const PD=92, NOBS=90; // 90 días de observado para restos (v2 siempre)
   const [d,h,hh]=await Promise.all([
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_probability_max&timezone=auto&past_days=${PD}&forecast_days=8&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`,20000),
     getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=soil_temperature_18cm&timezone=auto&past_days=40&forecast_days=1`,20000),
@@ -977,7 +982,7 @@ async function aemetOverride(la,lo){
   if(!cands.length)return{estado:"lejos"};
   const hoy=new Date(), pad=n=>String(n).padStart(2,"0");
   const f=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const ini=new Date(hoy);ini.setDate(ini.getDate()-(MOTOR_V2?92:62));
+  const ini=new Date(hoy);ini.setDate(ini.getDate()-92);
   let falloRed=null, sinDatos=false;
   for(const{ e:best, bd }of cands){
     let serie=aemetDayCache.get(best.ind);
@@ -1032,7 +1037,7 @@ async function aemetOverride(la,lo){
       ta:cta>=5?+(sta/cta).toFixed(1):null,hr:chr>=5?+(shr/chr).toFixed(0):null,vmax:vm};};
   const r15=retro(15), r10=retro(10), r21=retro(21), r13=retro(13),
     r9=retro(9), r8=retro(8), r7=retro(7);
-  const NS=MOTOR_V2?90:30;
+  const NS=90;
   const semana=[];for(let i=NS-1;i>=0;i--){const k=dia(i),v=rec(k);semana.push({f:k,p:v&&v.prec!=null?v.prec:null,tx:v&&v.tmax!=null?v.tmax:null,tn:v&&v.tmin!=null?v.tmin:null});}
   const serie45=[];for(let i=43;i>=0;i--){const k=dia(i),v=rec(k);serie45.push(v&&v.prec!=null?v.prec:0);}
   return{estado:"ok",ind:best.ind,est:best.nombre||best.ind,dist:+bd.toFixed(1),fecha:ultG,semana,
@@ -1344,17 +1349,17 @@ function pintar(calc,ageMin){
   renderMeteo();
 }
 const DESC_SP=[ // descripción en banner (v2.63 favorable, v2.66 causa): plantilla aprobada, cifras del cálculo real
-  {suf:"",latin:"Boletus edulis",res:"r",trig:"trigB",rest:"restB",frost:0,heat:28,habReq:"pinar, hayedo, robledal o castañar",alt:[200,2200],phR:"4,5–6,5",aguaMin:30},
-  {suf:"N",latin:"Lactarius deliciosus",res:"rN",trig:"trigN",rest:"restN",frost:-3,heat:28,habReq:"pinar",alt:[0,2100],phR:"4,5–8",aguaMin:25},
-  {suf:"O",latin:"Amanita caesarea",res:"rO",trig:"trigN",rest:"restN",frost:2,heat:30,habReq:"quercíneas o castañar",alt:[0,1700],phR:"4–6",aguaMin:30},
-  {suf:"C",latin:"Cantharellus cibarius",res:"rC",trig:"trigC",rest:"restC",frost:0,heat:null,habReq:"pinar, hayedo, robledal o castañar",alt:[50,1700],phR:"4–5,5",aguaMin:30},
-  {suf:"P",latin:"Boletus pinophilus",res:"rP",trig:"trigP",rest:"restP",frost:0,heat:28,habReq:"pinar",alt:[200,2200],phR:"4,5–6,5",aguaMin:30},
-  {suf:"Aer",latin:"Boletus aereus",res:"rAer",trig:"trigAer",rest:"restAer",frost:0,heat:28,habReq:"robledal, castañar o quercíneas",alt:[0,1700],phR:"4,5–6,5",aguaMin:50},
-  {suf:"Aes",latin:"Boletus reticulatus",res:"rAes",trig:"trigAes",rest:"restAes",frost:0,heat:28,habReq:"hayedo o robledal",alt:[0,2000],phR:"4,5–8",aguaMin:60},
-  {suf:"Cam",latin:"Agaricus campestris",res:"rCam",trig:"trigCam",rest:"restCam",frost:-1,heat:28,habReq:"pradera o pasto",alt:[0,1500],phR:"4,5–8",aguaMin:40},
-  {suf:"Pro",latin:"Macrolepiota procera",res:"rPro",trig:"trigPro",rest:"restPro",frost:1,heat:28,habReq:"claros, pradera o matorral",alt:[0,1600],phR:"4,5–8",aguaMin:50},
-  {suf:"Ery",latin:"Pleurotus eryngii",res:"rEry",trig:"trigEry",rest:"restEry",frost:3,heat:28,habReq:"pradera con cardos",alt:[0,1400],phR:"4,5–8",aguaMin:50},
-  {suf:"Nud",latin:"Lepista nuda",res:"rNud",trig:"trigNud",rest:"restNud",frost:-1,heat:28,habReq:"bosque o matorral",alt:[0,2200],phR:"4,5–8",aguaMin:60}];
+  {suf:"",sp:"edulis",lag:15,umb:60,latin:"Boletus edulis",res:"r",trig:"trigB",rest:"restB",frost:0,heat:28,habReq:"pinar, hayedo, robledal o castañar",alt:[200,2200],phR:"4,5–6,5",aguaMin:30},
+  {suf:"N",sp:"niscalo",lag:21,umb:50,latin:"Lactarius deliciosus",res:"rN",trig:"trigN",rest:"restN",frost:-3,heat:28,habReq:"pinar",alt:[0,2100],phR:"4,5–8",aguaMin:25},
+  {suf:"O",sp:"oronja",lag:21,umb:50,latin:"Amanita caesarea",res:"rO",trig:"trigN",rest:"restN",frost:2,heat:30,habReq:"quercíneas o castañar",alt:[0,1700],phR:"4–6",aguaMin:30},
+  {suf:"C",sp:"chantarella",lag:10,umb:60,latin:"Cantharellus cibarius",res:"rC",trig:"trigC",rest:"restC",frost:0,heat:null,habReq:"pinar, hayedo, robledal o castañar",alt:[50,1700],phR:"4–5,5",aguaMin:30},
+  {suf:"P",sp:"pinophilus",lag:13,umb:60,latin:"Boletus pinophilus",res:"rP",trig:"trigP",rest:"restP",frost:0,heat:28,habReq:"pinar",alt:[200,2200],phR:"4,5–6,5",aguaMin:30},
+  {suf:"Aer",sp:"aereus",lag:9,umb:50,latin:"Boletus aereus",res:"rAer",trig:"trigAer",rest:"restAer",frost:0,heat:28,habReq:"robledal, castañar o quercíneas",alt:[0,1700],phR:"4,5–6,5",aguaMin:50},
+  {suf:"Aes",sp:"aestivalis",lag:9,umb:60,latin:"Boletus reticulatus",res:"rAes",trig:"trigAes",rest:"restAes",frost:0,heat:28,habReq:"hayedo o robledal",alt:[0,2000],phR:"4,5–8",aguaMin:60},
+  {suf:"Cam",sp:"campestris",lag:7,umb:40,latin:"Agaricus campestris",res:"rCam",trig:"trigCam",rest:"restCam",frost:-1,heat:28,habReq:"pradera o pasto",alt:[0,1500],phR:"4,5–8",aguaMin:40},
+  {suf:"Pro",sp:"procera",lag:7,umb:50,latin:"Macrolepiota procera",res:"rPro",trig:"trigPro",rest:"restPro",frost:1,heat:28,habReq:"claros, pradera o matorral",alt:[0,1600],phR:"4,5–8",aguaMin:50},
+  {suf:"Ery",sp:"eryngii",lag:10,umb:50,latin:"Pleurotus eryngii",res:"rEry",trig:"trigEry",rest:"restEry",frost:3,heat:28,habReq:"pradera con cardos",alt:[0,1400],phR:"4,5–8",aguaMin:50},
+  {suf:"Nud",sp:"nuda",lag:9,umb:60,latin:"Lepista nuda",res:"rNud",trig:"trigNud",rest:"restNud",frost:-1,heat:28,habReq:"bosque o matorral",alt:[0,2200],phR:"4,5–8",aguaMin:60}];
 const HAB_DESC={Pinar:"el pinar",Hayedo:"el hayedo",Robledal:"el robledal",Castañeral:"el castañar","Bosque mixto":"el bosque mixto",Pradera:"la pradera",Pasto:"el pasto",Matorral:"el matorral","Quercíneas":"las quercíneas"};
 function renderDescripciones(){
   if(!lastCalc||lastCalc.urbano)return;
@@ -1366,13 +1371,23 @@ function renderDescripciones(){
     const r=c[e.res];
     if(!r)continue;
     if(r.score>=40){ // favorable: plantilla aprobada
-    const trig=k[e.trig],rest=k[e.rest];
+    const vv=v2rt(e.sp,e.lag,e.umb,k[e.rest],k[e.trig]); // v2 siempre: temporada + restos + días desde el pico
+    const trig=vv.trig,rest=vv.rest,past=vv.past,restos=vv.restos;
     const trigTxt=trig?`alrededor del <strong>${trig}</strong>`:`en los últimos días`;
-    let picoTxt="";
-    if(rest!=null&&rest>0){
-      const f=new Date();f.setDate(f.getDate()+rest);
-      picoTxt=` y el pico para fructificar sería alrededor de <strong>${rest} días</strong>, sobre el <strong>${f.getDate()} de ${MESES_L[f.getMonth()]}</strong>`;
-    }else if(rest===0)picoTxt=`: el pico es <strong>hoy</strong>`; // pico hoy: caja verde + texto propio (v2.77)
+    let cierre="",esHoy=false,esPasado=false;
+    if(past!=null&&past>0){ // B: el pico ya pasó y la seta sigue en el monte (tope = persistencia)
+      const xp=Math.min(past,PERSISTE[e.sp]??30);
+      cierre=`respondió ${trigTxt}: el pico fue hace <strong>${xp} días</strong> y las setas llevan <strong>${xp} días</strong> en el monte`;
+      esPasado=true;
+    }else{
+      let picoTxt="";
+      if(rest!=null&&rest>0){
+        const f=new Date();f.setDate(f.getDate()+rest);
+        picoTxt=` y el pico para fructificar sería alrededor de <strong>${rest} días</strong>, sobre el <strong>${f.getDate()} de ${MESES_L[f.getMonth()]}</strong>`;
+        if(restos.length)picoTxt+=` Aún aguantan en el monte restos del pico de hace <strong>${restos[0]} días</strong>.`; // ventana nueva con restos viejos en pie
+      }else if(rest===0){picoTxt=`: el pico de fructificación es <strong>hoy</strong>`;esHoy=true;} // A: pico hoy
+      cierre=`debería haber respondido ${trigTxt}${picoTxt}`;
+    }
     const phJusto=phV!=null&&r.suelo<1&&r.suelo>0; // pH a medias: avisa del margen en vez de darlo por favorable (v2.76)
     const sueloTxt=(alt!=null&&phV!=null&&c.suelo&&c.suelo.textura)
       ?(phJusto
@@ -1380,10 +1395,10 @@ function renderDescripciones(){
         :` La altitud (<strong>${Math.round(alt)} m</strong>), el pH (<strong>${coma(phV)}</strong>) y el suelo ${c.suelo.textura} también son favorables para su correcto fructificado.`)
       :` La altitud, el pH y el suelo también acompañan.`;
     setHTML("bannerTxt"+e.suf,
-      rest===0
-      ?`¡Hoy es el día en ${hab}! Las lluvias de los últimos días dejaron una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`
-      :`Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> debería haber respondido ${trigTxt}${picoTxt}.`);
-    if(rest===0){const bH=document.getElementById("banner"+e.suf);if(bH)bH.className="prediction-banner nivel-alto";}
+      esHoy
+      ?`¡Hoy es el día en ${hab}! Las lluvias de los últimos días dejaron una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> ${cierre}.`
+      :`Las lluvias de los últimos días dejaron ${hab} con una lluvia acumulada de <strong>${coma(k.p14)} L/m²</strong>, lo que lo hace idóneo para la fructificación de <strong>${e.latin}</strong>; las temperaturas (<strong>${k.ta!=null?coma(k.ta):"?"}°</strong> en aire y <strong>${k.ts!=null?coma(k.ts):"?"}°</strong> en suelo) también fueron ideales, sin heladas ni calor.${sueloTxt} Con esas condiciones el <strong>${e.latin}</strong> ${cierre}.`);
+    if(esHoy||esPasado){const bH=document.getElementById("banner"+e.suf);if(bH)bH.className="prediction-banner nivel-alto";}
     }else{ // inadecuado: causa de la no fructificación con cifras reales
       const circum=[],habBad=r.flora===0;
       const altBad=(alt!=null&&r.terreno<0.05&&(alt>e.alt[1]||alt<e.alt[0]))?(alt>e.alt[1]?{dir:1,lim:e.alt[1]}:{dir:-1,lim:e.alt[0]}):null;
@@ -1724,12 +1739,12 @@ function resumenCond(r, clima, o){
   return h;
 }
 function v2rt(sp,lag,umb,rest0,trig0){
-  // v1 → valores tal cual; v2 → recorte por temporada + restos pasados
-  if(!MOTOR_V2||!lastCalc||!lastCalc.clima||!lastCalc.clima.serie||lastCalc.clima.serie.length<28)
-    return{rest:rest0,trig:trig0,restos:[]};
+  // v2 siempre: recorte por temporada + restos pasados + días desde el pico (v2.78)
+  if(!lastCalc||!lastCalc.clima||!lastCalc.clima.serie||lastCalc.clima.serie.length<28)
+    return{rest:rest0,trig:trig0,restos:[],past:null};
   const a=recorteTemp(lastCalc.clima.serie.slice(),sp);
   return{rest:restantes(a,lag,umb),trig:fechaTrig(a,umb,new Date()),
-    restos:restosPasados(sp,lag,umb)};
+    restos:restosPasados(sp,lag,umb),past:diasPico(a,lag,umb)};
 }
 function renderAll(){
   if(!lastCalc)return;
@@ -1779,7 +1794,7 @@ function renderAll(){
   const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   setHTML("detailList",
-    di("Disparador de fructificación",vB.trig?`${vB.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vB.restos.length?`pico hace ${vB.restos.join(" / ")} días`:"sin restos localizables",vB.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vB.trig?`${vB.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vB.restos.length?`pico hace ${vB.restos.join(" / ")} días`:"sin restos localizables",vB.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,r.terreno,"600–1800 m")+
     di("pH del suelo",`${sueloTxt}`,r.suelo,"4,5–6,5 ±0,5")+
     di("Estación",`${MESES[mes-1]}`,r.temp,"pico octubre")+
@@ -1826,7 +1841,7 @@ function renderMeteo(){
   const DIAS=["dom","lun","mar","mié","jue","vie","sáb"];
   const fD=s=>{const d=new Date(String(s).slice(0,10)+"T12:00");return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;};
   T2("metTitle",(lastCalc.lugar?lastCalc.lugar.split(",").slice(0,2).join(","):"Punto")+` · ${lat.toFixed(4)}, ${lon.toFixed(4)}`+(alt!=null?` · ${Math.round(alt)} m`:"")+(prov?` · ${prov.est} (${prov.dist} km)`:""));
-  T2("metObsTitle",`Observado últimos ${MOTOR_V2?90:30} días`);
+  T2("metObsTitle",`Observado últimos 90 días`);
   const fcD=(clima.fc||[]);
   setHTML("metFcBody",fcD.map(f=>`<tr><td>${fD(f.d)}</td><td class="num">${f.tx!=null?f.tx.toFixed(0)+"º / "+f.tn.toFixed(0)+"º":"—"}</td><td class="num">${f.pp.toFixed(1)} mm</td><td class="num">${f.prob!=null?f.prob+" %":"—"}</td><td class="num">${f.w!=null?f.w.toFixed(0)+" km/h":"—"}</td></tr>`).join(""));
   const sem={};if(prov&&prov.semana)for(const s of prov.semana)sem[s.f]=s.p;
@@ -1881,7 +1896,7 @@ function renderNiscalo(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESESN=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListN",
-    di("Disparador de fructificación",vN.trig?`${vN.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vN.restos.length?`pico hace ${vN.restos.join(" / ")} días`:"sin restos localizables",vN.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vN.trig?`${vN.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vN.restos.length?`pico hace ${vN.restos.join(" / ")} días`:"sin restos localizables",vN.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rN.terreno,"100–1600 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rN.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESESN[mes-1]}`,rN.temp,"pico noviembre")+
@@ -1936,7 +1951,7 @@ function renderOronja(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESO=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListO",
-    di("Disparador de fructificación",vO.trig?`${vO.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vO.restos.length?`pico hace ${vO.restos.join(" / ")} días`:"sin restos localizables",vO.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vO.trig?`${vO.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vO.restos.length?`pico hace ${vO.restos.join(" / ")} días`:"sin restos localizables",vO.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rO.terreno,"200–1200 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rO.suelo,"4–6 ±0,5")+
     di("Estación",`${MESO[mes-1]}`,rO.temp,"pico septiembre")+
@@ -1991,7 +2006,7 @@ function renderChantarella(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESC=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListC",
-    di("Disparador de fructificación",vC.trig?`${vC.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vC.restos.length?`pico hace ${vC.restos.join(" / ")} días`:"sin restos localizables",vC.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vC.trig?`${vC.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vC.restos.length?`pico hace ${vC.restos.join(" / ")} días`:"sin restos localizables",vC.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rC.terreno,"50–1500 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rC.suelo,"4–5,5 ±0,5")+
     di("Estación",`${MESC[mes-1]}`,rC.temp,"pico septiembre")+
@@ -2052,7 +2067,7 @@ function renderPinophilus(){
   const di=(k,v,n,obj)=>{const t=obj?` <span class="target">(obj. ${obj})</span>`:"";
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   setHTML("detailListP",
-    di("Disparador de fructificación",vP.trig?`${vP.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vP.restos.length?`pico hace ${vP.restos.join(" / ")} días`:"sin restos localizables",vP.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vP.trig?`${vP.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vP.restos.length?`pico hace ${vP.restos.join(" / ")} días`:"sin restos localizables",vP.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rP.terreno,"600–1800 m")+
     di("pH del suelo",`${sueloTxt}`,rP.suelo,"4,5–6,5 ±0,5")+
     di("Estación",`${MESESP[mes-1]}`,rP.temp,"pico octubre")+
@@ -2096,7 +2111,7 @@ function renderAer(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListAer",
-    di("Disparador de fructificación",vAer.trig?`${vAer.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vAer.restos.length?`pico hace ${vAer.restos.join(" / ")} días`:"sin restos localizables",vAer.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vAer.trig?`${vAer.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vAer.restos.length?`pico hace ${vAer.restos.join(" / ")} días`:"sin restos localizables",vAer.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rAer.terreno,"50–1100 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rAer.suelo,"4,5–6,5 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rAer.temp,"jun–oct")+
@@ -2141,7 +2156,7 @@ function renderAes(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListAes",
-    di("Disparador de fructificación",vAes.trig?`${vAes.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vAes.restos.length?`pico hace ${vAes.restos.join(" / ")} días`:"sin restos localizables",vAes.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vAes.trig?`${vAes.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vAes.restos.length?`pico hace ${vAes.restos.join(" / ")} días`:"sin restos localizables",vAes.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rAes.terreno,"300–1300 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rAes.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rAes.temp,"may–jul")+
@@ -2186,7 +2201,7 @@ function renderCam(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListCam",
-    di("Disparador de fructificación",vCam.trig?`${vCam.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vCam.restos.length?`pico hace ${vCam.restos.join(" / ")} días`:"sin restos localizables",vCam.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vCam.trig?`${vCam.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vCam.restos.length?`pico hace ${vCam.restos.join(" / ")} días`:"sin restos localizables",vCam.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rCam.terreno,"0–900 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rCam.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rCam.temp,"jun–oct")+
@@ -2231,7 +2246,7 @@ function renderPro(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListPro",
-    di("Disparador de fructificación",vPro.trig?`${vPro.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vPro.restos.length?`pico hace ${vPro.restos.join(" / ")} días`:"sin restos localizables",vPro.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vPro.trig?`${vPro.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vPro.restos.length?`pico hace ${vPro.restos.join(" / ")} días`:"sin restos localizables",vPro.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rPro.terreno,"0–1000 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rPro.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rPro.temp,"jul–oct")+
@@ -2276,7 +2291,7 @@ function renderEry(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListEry",
-    di("Disparador de fructificación",vEry.trig?`${vEry.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vEry.restos.length?`pico hace ${vEry.restos.join(" / ")} días`:"sin restos localizables",vEry.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vEry.trig?`${vEry.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vEry.restos.length?`pico hace ${vEry.restos.join(" / ")} días`:"sin restos localizables",vEry.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rEry.terreno,"0–800 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rEry.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rEry.temp,"abr–may+sep–nov")+
@@ -2321,7 +2336,7 @@ function renderNud(){
   return `<div class="mushroom-detail-item"><span class="mushroom-detail-label">${k}${t}</span><span class="mushroom-detail-value ${n==null?"":lv(n)}">${v}</span></div>`;};
   const MESX=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   setHTML("detailListNud",
-    di("Disparador de fructificación",vNud.trig?`${vNud.trig} · empezó la cuenta`:"sin disparador claro")+(MOTOR_V2?di("Posibles restos",vNud.restos.length?`pico hace ${vNud.restos.join(" / ")} días`:"sin restos localizables",vNud.restos.length?0.5:null):"")+
+    di("Disparador de fructificación",vNud.trig?`${vNud.trig} · empezó la cuenta`:"sin disparador claro")+di("Posibles restos",vNud.restos.length?`pico hace ${vNud.restos.join(" / ")} días`:"sin restos localizables",vNud.restos.length?0.5:null)+
     di("Altitud",`${alt!=null?Math.round(alt)+" m":"?"}`,rNud.terreno,"100–1400 m")+
     di("pH del suelo",`${phV!=null?`pH ${phV.toFixed(1)}`:"sin dato de pH"}`,rNud.suelo,"4,5–8 ±0,5")+
     di("Estación",`${MESX[mes-1]}`,rNud.temp,"sep–dic")+

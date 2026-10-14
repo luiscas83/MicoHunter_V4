@@ -19,7 +19,7 @@
       <button class="menu-btn" id="menuBtn" title="Menú">☰</button>
       <div>
         <h1>MicoHunter</h1>
-        <p class="version" title="Versión de la aplicación">v2.77</p>
+        <p class="version" title="Versión de la aplicación">v2.78</p>
       </div>
       <img class="logo-icon" src="img/edulis.png" alt="MicoHunter" width="72" height="72">
     </div>
@@ -39,10 +39,6 @@
         <option value="musgo">🌿 Musgo</option>
       </select></label>
     </div>
-    <select class="theme-select" id="motorSelect" title="Motor de cálculo">
-      <option value="v1">⚙️ Motor v1</option>
-      <option value="v2">⚙️ Motor v2</option>
-    </select>
       </div>
 </header>
 <main class="main">
@@ -434,7 +430,7 @@
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="cotos.js?v=2.18"></script>
-<script src="app.js?v=2.77"></script>
+<script src="app.js?v=2.78"></script>
 <script>
 (function(){
   var dark=document.getElementById('themeDark'), guia=document.getElementById('themeMusgo'), sel=document.getElementById('themeSelect');
@@ -449,15 +445,6 @@
   try{ t=localStorage.getItem('mh-theme')||'musgo'; if(t==='guia')t='musgo'; if(t!=='light'&&t!=='dark'&&t!=='musgo')t='musgo'; }catch(e){}
   apply(t);
   if(sel) sel.addEventListener('change', function(){ apply(sel.value); });
-  var ms=document.getElementById('motorSelect');
-  if(ms){
-    var mv='v1'; try{ if(localStorage.getItem('mh-motor')==='v2')mv='v2'; }catch(e){}
-    ms.value=mv;
-    ms.addEventListener('change', function(){
-      try{ localStorage.setItem('mh-motor',ms.value); }catch(e){}
-      location.reload();
-    });
-  }
   var mb=document.getElementById('menuBtn'), mp=document.getElementById('menuPanel');
   if(mb&&mp){
     mb.addEventListener('click', function(e){ e.stopPropagation(); mp.hidden=!mp.hidden; });
