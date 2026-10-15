@@ -1221,7 +1221,10 @@ async function buscar(){
 }
 // --- mapa ---
 const map=L.map("dashboardMap",{preferCanvas:true}).setView([41.76,-2.46],6);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
+const baseOSM=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
+const basePNOA=L.tileLayer("https://www.ign.es/wmts/pnoa-ma?layer=OI.OrthoimageCoverage&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}",{maxZoom:19,attribution:"© IGN-CNIG PNOA"});
+const baseTopo=L.tileLayer("https://tile.opentopomap.org/{z}/{x}/{y}.png",{maxZoom:17,attribution:"© OpenStreetMap · SRTM · OpenTopoMap"});
+L.control.layers({"🗺️ Callejero":baseOSM,"🛰️ Satélite":basePNOA,"⛰️ Topográfico":baseTopo},null,{position:"topright"}).addTo(map); // botón de capas (v2.91)
 let marker=L.marker([41.76,-2.46]).addTo(map), lat=41.76, lon=-2.46;
 map.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);
   if(cotoLayer){map.removeLayer(cotoLayer);cotoLayer=null;}predecir();});
