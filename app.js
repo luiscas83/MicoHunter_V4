@@ -2451,7 +2451,13 @@ const SPECIES=[
   {id:"nuda",fut:"rNud",cos:"rNudR",name:"Seta de pie azul",latin:"Lepista nuda",color:"#7a6a9a",card:"cardNuda",an:"anNuda"}
 ];
 const VIS_KEY="especies_visibles_v1";
+const VIS_AUTO_KEY="especies_autoocultas_v1"; // v2.97: marcas de auto-ocultado (distinto del apagado manual)
 const getVis=()=>{try{return Object.assign({edulis:true,niscalo:true,oronja:true,chantarella:true,pinophilus:true,aereus:true,aestivalis:true,campestris:true,procera:true,eryngii:true,nuda:true},JSON.parse(localStorage.getItem(VIS_KEY))||{});}catch{return{edulis:true,niscalo:true,oronja:true,chantarella:true,pinophilus:true,aereus:true,aestivalis:true,campestris:true,procera:true,eryngii:true,nuda:true};}};
+const getAuto=()=>{try{return JSON.parse(localStorage.getItem(VIS_AUTO_KEY))||{};}catch{return{};}};
+const setAuto=o=>{try{localStorage.setItem(VIS_AUTO_KEY,JSON.stringify(o));}catch{}};
+try{ // migración v1->v2 (una sola vez): el auto-ocultado antiguo no distinguía manual; se parte de todo visible
+  if(!localStorage.getItem("especies_visibles_v2")){localStorage.removeItem(VIS_KEY);localStorage.removeItem(VIS_AUTO_KEY);localStorage.setItem("especies_visibles_v2","1");}
+}catch{}
 function estadoEspecie(id){
   // líneas de estado para el punto actual; null si aún no hay cálculo
   if(!lastCalc||!lastCalc.r)return null;
@@ -2527,17 +2533,25 @@ function renderSpeciesSelector(){
   box.querySelectorAll("input").forEach(cb=>cb.onchange=()=>{
     const v=getVis();v[cb.dataset.sp]=cb.checked;
     localStorage.setItem(VIS_KEY,JSON.stringify(v));
+    const a=getAuto();if(a[cb.dataset.sp]){delete a[cb.dataset.sp];setAuto(a);} // pasa a control manual
     applyVisibility();renderSpeciesSelector();
   });
 }
-function autoOcultar(){ // v2.81: sin previsión (futuro y cosecha <40 = banner rojo) la tarjeta sale del dashboard y su check se desactiva; con previsión no se toca nada (se respeta el apagado manual) y en urbano/fallo no se toca nada
+function autoOcultar(){ // v2.97: oculta las especies sin previsión (futuro y cosecha <40) y REACTIVA las auto-ocultadas cuando vuelve la previsión; el apagado manual nunca se toca
   if(!lastCalc||lastCalc.urbano)return;
-  const v=getVis();let cambia=false;
+  const v=getVis(),a=getAuto();let cambia=false,cambiaA=false;
   for(const sp of SPECIES){
     const f=lastCalc[sp.fut],c=lastCalc[sp.cos];
-    if(f&&c&&f.score<40&&c.score<40&&v[sp.id]!==false){v[sp.id]=false;cambia=true;}
+    if(!f||!c)continue;
+    if(f.score<40&&c.score<40){ // sin previsión: ocultar (si no estaba ya a mano)
+      if(v[sp.id]!==false){v[sp.id]=false;a[sp.id]=1;cambia=true;cambiaA=true;}
+    }else if(a[sp.id]){ // hay previsión y estaba auto-ocultada: volver a mostrarla
+      if(v[sp.id]===false){v[sp.id]=true;cambia=true;}
+      delete a[sp.id];cambiaA=true;
+    }
   }
   if(cambia)localStorage.setItem(VIS_KEY,JSON.stringify(v));
+  if(cambiaA)setAuto(a);
   applyVisibility();renderSpeciesSelector();
 }
 function applyVisibility(){
