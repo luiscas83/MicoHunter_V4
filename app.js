@@ -833,6 +833,33 @@ async function mupRegion(la,lo){
   return{mups:fs.map(f=>mapF(f.properties)),nombre:l0.nombre,num:l0.num,geo:{type:"FeatureCollection",features:feats}};
 }
 async function mupCyL(la,lo){return mupRegion(la,lo);}
+// MUP oficial IEPF (v2.94): el punto se busca en el catálogo nacional troceado
+// por provincia (datos_local/mup/iepf/), la misma caché que usa la capa 🌲 MUP.
+function pipGeom(la,lo,g){
+  if(!g)return false;
+  const coords=g.type==="Polygon"?[g.coordinates]:g.coordinates;
+  return enPoli(la,lo,coords);
+}
+async function mupIEPFEn(la,lo){
+  const idx=await cargarIdxMup().catch(()=>null);
+  if(!idx)return null;
+  for(const code in idx){
+    const bb=idx[code].bb; // [S,W,N,E]
+    if(la<bb[0]||la>bb[2]||lo<bb[1]||lo>bb[3])continue;
+    let fc=null;try{fc=await cargarProvMup(code);}catch{}
+    if(!fc)continue;
+    for(const f of fc.features||[]){
+      if(f.geometry&&pipGeom(la,lo,f.geometry)){
+        const p=f.properties||{};
+        return{num:p.u||null,nombre:p.n||"MUP",
+          mups:[{num:p.u,nombre:p.n,pert:null,sup:null}],
+          geo:{type:"FeatureCollection",features:[{type:"Feature",
+            properties:{mup:p.u,nombre:p.n},geometry:f.geometry}]}};
+      }
+    }
+  }
+  return null;
+}
 // Respaldo MITECO-IEPF para CCAA sin WFS: polígonos precargados (mup_extra.js, perezoso)
 let mupExtraLoading=null;
 function mupExtraZonas(){
@@ -1331,7 +1358,7 @@ function pintar(calc,ageMin){
   T("soilTypeValue",suelo.textura?`${suelo.textura[0].toUpperCase()+suelo.textura.slice(1)}${suelo.soc!=null?", "+(suelo.soc>=25?"muy fértil":suelo.soc>=12?"fértil":suelo.soc>=6?"fertilidad media":"pobre"):""}`:"?");
   T("phValue",suelo.ph!=null?suelo.ph.toFixed(1):"sin dato");
   if(det){det.textContent=floraEtiq||"sin determinar";det.removeAttribute("title");}
-  T("mupValue",calc.mup?`MUP ${calc.mup.num} · ${calc.mup.nombre}`:"—");
+  T("mupValue",calc.mup?(calc.mup.num?`MUP ${calc.mup.num} · ${calc.mup.nombre}`:calc.mup.nombre):"—");
   const cotoEl=document.getElementById("cotoValue");
   if(cotoEl){
     if(calc.coto&&calc.coto.e)cotoEl.innerHTML=cotoFichaCorta(calc.coto);
@@ -1339,8 +1366,15 @@ function pintar(calc,ageMin){
   }
   try{
     if(mupLayer){map.removeLayer(mupLayer);mupLayer=null;}
-    if(calc.mup&&calc.mup.geo){mupLayer=L.geoJSON(calc.mup.geo,{style:{color:"#2471a3",weight:2,fillOpacity:0.10}}).addTo(map);
-      try{mupLayer.eachLayer(l=>l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();}));}catch{}}
+    if(calc.mup&&calc.mup.geo){
+      mupLayer=L.geoJSON(calc.mup.geo,{style:{color:"#2471a3",weight:2,fillOpacity:0.10}}).addTo(map);
+      const mupTxt=`<strong>${escH(calc.mup.nombre||"MUP")}</strong>`+(calc.mup.num?`<br>Nº ${escH(calc.mup.num)}`:"");
+      try{mupLayer.eachLayer(l=>{l.bindPopup(mupTxt);l.on("click",e=>{lat=+e.latlng.lat.toFixed(4);lon=+e.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});});}catch{}
+      // Nombre del monte en la flecha azul al pinchar el mapa (como el popup de la capa 🌲 MUP)
+      try{marker.bindPopup(mupTxt,{offset:[0,-38]});marker.openPopup();}catch{}
+    }else{
+      try{marker.unbindPopup();}catch{}
+    }
   }catch(e){console.warn("mup:",e);}
   const dw=document.getElementById("dataWarn");
   if(dw){const av=calc.avisos||[];
@@ -1512,7 +1546,7 @@ async function predecir(etiqueta){
       local&&local.suelo?local.suelo:fetchSuelo(lat,lon).catch(()=>{avisos.push("suelo (pH y textura)");return{};}),
       lugarP,
       local&&local.altitud!=null?{elevation:[local.altitud]}:getJSON(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,15000).catch(()=>{avisos.push("altitud");return{elevation:[null]};}),
-      mupLocalP.then(m=>m??(enMupReg?mupCyL(lat,lon):mupExtraEn(lat,lon).catch(()=>null)))
+      mupIEPFEn(lat,lon).catch(()=>null).then(m=>m||mupLocalP).then(m=>m??(enMupReg?mupCyL(lat,lon):mupExtraEn(lat,lon).catch(()=>null)))
     ]);
     const alt=dem.elevation?.[0]??null;
     // MFE con caché y progreso (solo España; fuera, manual)
@@ -2668,6 +2702,81 @@ document.getElementById("togglePNSG").onclick=()=>{
     }catch(e){console.warn("capa PNSG:",e);}
   });
 };
+// Capa MUP oficial (Catálogo IEPF_CMUP, v2.93): botón 🌲 MUP. Los contornos
+// vienen troceados por provincia en datos_local/mup/iepf/ (gz) + índice con
+// bbox; se cargan solo las provincias que intersecan la vista y se cachean.
+const MUP_IE={idx:null,loading:null,prov:new Map(),capas:new Map(),seq:0};
+let mupOn=false, mupMove=null, mupTmr=null;
+function cargarIdxMup(){
+  if(MUP_IE.idx)return Promise.resolve(MUP_IE.idx);
+  if(!MUP_IE.loading)MUP_IE.loading=fetch("datos_local/mup/iepf/mup_iepf_index.json")
+    .then(r=>r.ok?r.json():null).then(d=>{if(d)MUP_IE.idx=d;return MUP_IE.idx;});
+  return MUP_IE.loading;
+}
+async function cargarProvMup(code){
+  if(MUP_IE.prov.has(code))return MUP_IE.prov.get(code);
+  const ent=MUP_IE.idx&&MUP_IE.idx[code];if(!ent)return null;
+  const r=await fetch("datos_local/mup/iepf/"+ent.f);if(!r.ok)return null;
+  const buf=await r.arrayBuffer();
+  const txt=await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  const fc=JSON.parse(txt);
+  MUP_IE.prov.set(code,fc);
+  return fc;
+}
+function estiloMup(){return{color:"#1e8449",weight:1.5,fillColor:"#2ecc71",fillOpacity:0.10};}
+async function pintarMup(){
+  if(!mupOn||!MUP_IE.idx)return;
+  const seq=++MUP_IE.seq;
+  const b=map.getBounds(),s=b.getSouth(),w=b.getWest(),n=b.getNorth(),e=b.getEast();
+  const dentro=[];
+  for(const code in MUP_IE.idx){
+    const bb=MUP_IE.idx[code].bb; // [S,W,N,E]
+    if(bb[0]<=n&&bb[2]>=s&&bb[1]<=e&&bb[3]>=w)
+      dentro.push([code,(Math.min(n,bb[2])-Math.max(s,bb[0]))*(Math.min(e,bb[3])-Math.max(w,bb[1]))]);
+  }
+  dentro.sort((a,b)=>b[1]-a[1]);
+  const z=map.getZoom();
+  const lim=z<7?8:(z<8?16:(z<10?30:60)); // acota cuántas provincias se cargan de golpe
+  const sel=new Set(dentro.slice(0,lim).map(x=>x[0]));
+  for(const code of sel){
+    if(MUP_IE.capas.has(code))continue;
+    let fc=null;
+    try{fc=await cargarProvMup(code);}catch{}
+    if(!mupOn||seq!==MUP_IE.seq)return;
+    if(!fc)continue;
+    const cap=L.geoJSON(fc,{style:estiloMup(),onEachFeature:(f,l)=>{
+      const p=f.properties||{};
+      l.bindPopup(`<strong>${escH(p.n||"MUP")}</strong>`+(p.u?`<br>Nº ${escH(p.u)}`:"")+(p.p?` · ${escH(p.p)}`:""));
+      l.on("click",ev=>{lat=+ev.latlng.lat.toFixed(4);lon=+ev.latlng.lng.toFixed(4);marker.setLatLng([lat,lon]);predecir();});
+    }});
+    MUP_IE.capas.set(code,cap);
+    if(mupOn)cap.addTo(map);
+  }
+  for(const [code,cap] of MUP_IE.capas){
+    if(sel.has(code)){if(!map.hasLayer(cap))cap.addTo(map);}
+    else if(map.hasLayer(cap))map.removeLayer(cap);
+  }
+}
+document.getElementById("toggleMUP").onclick=()=>{
+  const btn=document.getElementById("toggleMUP");
+  if(mupOn){
+    mupOn=false;MUP_IE.seq++;
+    for(const [,cap] of MUP_IE.capas)if(map.hasLayer(cap))map.removeLayer(cap);
+    if(mupMove){map.off("moveend",mupMove);mupMove=null;}
+    btn.classList.add("btn-ghost");
+    return;
+  }
+  btn.textContent="⏳ MUP…";
+  cargarIdxMup().then(()=>{
+    if(!MUP_IE.idx){btn.textContent="🌲 MUP";return;}
+    btn.textContent="🌲 MUP";
+    mupOn=true;
+    mupMove=()=>{clearTimeout(mupTmr);mupTmr=setTimeout(pintarMup,250);};
+    map.on("moveend",mupMove);
+    pintarMup();
+    btn.classList.remove("btn-ghost");
+  }).catch(()=>{btn.textContent="🌲 MUP";});
+};
 document.getElementById("saveFavBtn").onclick=()=>{
   const p=document.getElementById("saveFavPanel");p.hidden=!p.hidden;
   document.getElementById("saveFavCoords").textContent=`${lat}, ${lon}`;
@@ -2703,4 +2812,5 @@ renderSpeciesSelector();
 renderCotosTab();
 
 // punto inicial: vista de Soria con marcador; el cálculo solo arranca al pulsar el mapa, GPS o un setal (v1.43: sin cálculo inicial)
+
 
